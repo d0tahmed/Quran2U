@@ -46,3 +46,8 @@ app.*.map.json
 
 # Hide Environment Variables
 .env
+
+# Sensitive Android Signing Files (CRITICAL)
+**/*.jks
+**/*.keystore
+**/key.properties
