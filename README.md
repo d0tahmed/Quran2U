@@ -8,7 +8,7 @@
 
 Quran2U is a beautifully crafted, lightning-fast, and completely free Quran app. Designed with a stunning Glassmorphic UI, it features an advanced offline caching engine, dual-audio interleaved recitation, and robust background playback.
 
-**100% Vibecoded.** Designed and architected purely through AI prompt engineering and senior-level system design.
+**Vibecoded.** Designed and architected purely through AI prompt engineering and senior-level system design.
 
 ---
 
