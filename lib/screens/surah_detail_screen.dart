@@ -948,7 +948,7 @@ class _DownloadSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // SENIOR FIX: SafeArea and SingleChildScrollView prevent BottomSheet overflow
+  // SafeArea and SingleChildScrollView prevent BottomSheet overflow
     return SafeArea(
       child: SingleChildScrollView(
         child: Padding(
