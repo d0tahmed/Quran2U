@@ -1,0 +1,1 @@
+Premium offline-first Quran app with dual-audio interleaving.
