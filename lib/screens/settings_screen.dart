@@ -241,6 +241,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             // Download Entire Quran
             _QuranDownloadTile(bulkState: bulkState),
+            const SizedBox(height: 10),
+
+            // Tajweed Guide
+            _GlassCard(
+              child: InkWell(
+                onTap: () => _showTajweedGuide(context),
+                borderRadius: BorderRadius.circular(14),
+                child: Row(children: [
+                  _IconBox(icon: Icons.palette_rounded, color: _kGold),
+                  const SizedBox(width: 14),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Tajweed Guide',
+                        style: GoogleFonts.outfit(
+                            color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                    Text('Color-coded pronunciation rules',
+                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+                  ])),
+                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 13),
+                ]),
+              ),
+            ),
             const SizedBox(height: 24),
 
             // ── Current Reciter ──────────────────────────────────────────────
@@ -316,6 +337,248 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
+
+  void _showTajweedGuide(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0E1421),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => const _TajweedGuideSheet(),
+    );
+  }
+}
+
+// ── Tajweed Guide Sheet ────────────────────────────────────────────────────────
+class _TajweedGuideSheet extends StatelessWidget {
+  const _TajweedGuideSheet();
+
+  static const _rules = <_TajweedRule>[
+    _TajweedRule(
+      name: 'Ghunnah', nameArabic: 'غُنَّة',
+      color: Color(0xFFFF7E1E),
+      description: 'Nasal sound held for 2 counts',
+      example: 'مِنَ', exampleHighlight: 'نَ',
+    ),
+    _TajweedRule(
+      name: 'Ikhfa', nameArabic: 'إِخْفَاء',
+      color: Color(0xFFD500B2),
+      description: 'Hidden pronunciation of noon sakinah/tanween',
+      example: 'مِنْ بَعْدِ', exampleHighlight: 'نْ',
+    ),
+    _TajweedRule(
+      name: 'Ikhfa Shafawi', nameArabic: 'إِخْفَاء شَفَوِي',
+      color: Color(0xFFD500B2),
+      description: 'Hidden meem sakinah before baa',
+      example: 'تَرْمِيهِمْ بِحِجَارَةٍ', exampleHighlight: 'مْ بِ',
+    ),
+    _TajweedRule(
+      name: 'Idgham', nameArabic: 'إِدْغَام',
+      color: Color(0xFF169200),
+      description: 'Merging noon sakinah into the next letter',
+      example: 'مِنْ وَلِيٍّ', exampleHighlight: 'نْ وَ',
+    ),
+    _TajweedRule(
+      name: 'Iqlab', nameArabic: 'إِقْلَاب',
+      color: Color(0xFF26BFFD),
+      description: 'Noon sakinah converts to meem before baa',
+      example: 'مِنۢ بَعْدِ', exampleHighlight: 'نۢ',
+    ),
+    _TajweedRule(
+      name: 'Qalqalah', nameArabic: 'قَلْقَلَة',
+      color: Color(0xFFDD0000),
+      description: 'Echoing bounce on letters ق ط ب ج د',
+      example: 'يَخْلُقْ', exampleHighlight: 'قْ',
+    ),
+    _TajweedRule(
+      name: 'Madd (Normal)', nameArabic: 'مَدّ طَبِيعِي',
+      color: Color(0xFF537FFF),
+      description: 'Natural elongation — 2 counts',
+      example: 'قَالَ', exampleHighlight: 'ـَا',
+    ),
+    _TajweedRule(
+      name: 'Madd (Permissible)', nameArabic: 'مَدّ جَائِز',
+      color: Color(0xFF4050FF),
+      description: 'Elongation 2-4-6 counts at end of verse',
+      example: 'الرَّحِيمِ', exampleHighlight: 'ِي',
+    ),
+    _TajweedRule(
+      name: 'Madd (Obligatory)', nameArabic: 'مَدّ لَازِم',
+      color: Color(0xFF2144C1),
+      description: 'Obligatory elongation — 6 counts',
+      example: 'الضَّآلِّين', exampleHighlight: 'ٓا',
+    ),
+    _TajweedRule(
+      name: 'Madd (Necessary)', nameArabic: 'مَدّ وَاجِب',
+      color: Color(0xFF000EBC),
+      description: 'Required elongation — 4-5 counts',
+      example: 'جَآءَ', exampleHighlight: 'ٓا',
+    ),
+    _TajweedRule(
+      name: 'Laam Shamsiyah', nameArabic: 'لَام شَمْسِيَّة',
+      color: Color(0xFFAAAAAA),
+      description: 'Silent laam that assimilates into sun letters',
+      example: 'الشَّمْسِ', exampleHighlight: 'ل',
+    ),
+    _TajweedRule(
+      name: 'Hamzat ul-Wasl', nameArabic: 'هَمْزَة الْوَصْل',
+      color: Color(0xFFAAAAAA),
+      description: 'Connecting hamza — silent when continuing',
+      example: 'ٱلْحَمْدُ', exampleHighlight: 'ٱ',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.96,
+      expand: false,
+      builder: (ctx, scrollCtrl) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF0E1421),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.white12, borderRadius: BorderRadius.circular(2)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: _kGold.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.palette_rounded, color: _kGold, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Tajweed Guide',
+                      style: GoogleFonts.outfit(
+                          color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Color-coded pronunciation rules',
+                      style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+                ]),
+              ]),
+            ),
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white10, height: 1),
+            // Rules list
+            Expanded(
+              child: ListView.separated(
+                controller: scrollCtrl,
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+                itemCount: _rules.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (_, i) {
+                  final rule = _rules[i];
+                  return Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: rule.color.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: rule.color.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        // Color dot
+                        Container(
+                          width: 14, height: 14,
+                          decoration: BoxDecoration(
+                            color: rule.color,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: rule.color.withValues(alpha: 0.4), blurRadius: 6),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Info
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(rule.name,
+                                  style: GoogleFonts.outfit(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600)),
+                              Text(rule.nameArabic,
+                                  style: TextStyle(
+                                      color: rule.color,
+                                      fontSize: 13,
+                                      fontFamily: GoogleFonts.amiri().fontFamily)),
+                              const SizedBox(height: 2),
+                              Text(rule.description,
+                                  style: GoogleFonts.outfit(
+                                      color: Colors.white38, fontSize: 11, height: 1.3)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Arabic example
+                        Container(
+                          constraints: const BoxConstraints(maxWidth: 90),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            rule.example,
+                            textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 16,
+                              fontFamily: GoogleFonts.amiri().fontFamily,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TajweedRule {
+  final String name;
+  final String nameArabic;
+  final Color color;
+  final String description;
+  final String example;
+  final String exampleHighlight;
+
+  const _TajweedRule({
+    required this.name,
+    required this.nameArabic,
+    required this.color,
+    required this.description,
+    required this.example,
+    required this.exampleHighlight,
+  });
 }
 
 // ── Download Entire Quran tile ─────────────────────────────────────────────────

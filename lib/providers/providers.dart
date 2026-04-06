@@ -32,6 +32,10 @@ final downloadServiceProvider = Provider((ref) => DownloadService());
 
 final tarjumahModeProvider = StateProvider<bool>((ref) => false);
 
+/// When true, the current Surah repeats automatically on completion.
+/// Only applies to regular recitation (not tarjumah mode).
+final loopProvider = StateProvider<bool>((ref) => false);
+
 // ── Ayah tracking (interleaved tarjumah) ──────────────────────────────────────
 
 final currentAyahNumberProvider = StreamProvider<int?>((ref) async* {
@@ -323,4 +327,9 @@ final mushafPageProvider =
     FutureProvider.family<String, (int, String)>((ref, params) async {
   final (page, script) = params;
   return ref.watch(mushafApiServiceProvider).getPageText(page, script);
+});
+
+final tajweedPageProvider =
+    FutureProvider.family<List<Map<String, String>>, int>((ref, page) async {
+  return ref.watch(mushafApiServiceProvider).getPageTajweedData(page);
 });

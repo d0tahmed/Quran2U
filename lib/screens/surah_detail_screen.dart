@@ -288,7 +288,8 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
             color: Colors.white.withValues(alpha: 0.03),
             border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
           ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          // FIX: reduced top from 16→8 (saves 8px of the 26px overflow)
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: SafeArea(
         top: false,
         child: Column(
@@ -296,7 +297,8 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
           children: [
             // ── Info row — clean, no overflow ──────────────────────────────
             Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              // FIX: reduced bottom from 10→4 (saves 6px of the 26px overflow)
+              padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 children: [
                   if (tarjumahMode) ...[
@@ -382,122 +384,121 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
                 _timeText(durAsync, isStart: false),
               ],
             ),
-            const SizedBox(height: 4),
+            // FIX: removed SizedBox(height: 4) here (saves 4px of the 26px overflow)
             _buildDownloadRow(surahNumber, selectedImam),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _CtrlBtn(
-                    icon: Icons.skip_previous_rounded,
-                    enabled: surahNumber > 1,
+            // FIX: removed padding.only(bottom: 8) (saves 8px of the 26px overflow)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _CtrlBtn(
+                  icon: Icons.skip_previous_rounded,
+                  enabled: surahNumber > 1,
+                  onTap: () async {
+                    if (tarjumahMode) {
+                      await interleavedSvc.pause();
+                    } else {
+                      await audioPlayer.pause();
+                    }
+                    ref.read(currentSurahProvider.notifier).state = surahNumber - 1;
+                  },
+                ),
+                _CtrlBtn(
+                  icon: Icons.replay_5_rounded,
+                  onTap: () => tarjumahMode
+                      ? interleavedSvc.seek(
+                          (interleavedSvc.player.position - const Duration(seconds: 5))
+                              .isNegative ? Duration.zero
+                              : interleavedSvc.player.position - const Duration(seconds: 5))
+                      : audioPlayer.skipBackward5Seconds(),
+                ),
+                AnimatedBuilder(
+                  animation: _pulseAnim,
+                  builder: (_, child) => Transform.scale(
+                    scale: isPlaying ? _pulseAnim.value : 1.0,
+                    child: child,
+                  ),
+                  child: GestureDetector(
                     onTap: () async {
-                      if (tarjumahMode) {
-                        await interleavedSvc.pause();
-                      } else {
-                        await audioPlayer.pause();
-                      }
-                      ref.read(currentSurahProvider.notifier).state = surahNumber - 1;
-                    },
-                  ),
-                  _CtrlBtn(
-                    icon: Icons.replay_5_rounded,
-                    onTap: () => tarjumahMode
-                        ? interleavedSvc.seek(
-                            (interleavedSvc.player.position - const Duration(seconds: 5))
-                                .isNegative ? Duration.zero
-                                : interleavedSvc.player.position - const Duration(seconds: 5))
-                        : audioPlayer.skipBackward5Seconds(),
-                  ),
-                  AnimatedBuilder(
-                    animation: _pulseAnim,
-                    builder: (_, child) => Transform.scale(
-                      scale: isPlaying ? _pulseAnim.value : 1.0,
-                      child: child,
-                    ),
-                    child: GestureDetector(
-                      onTap: () async {
-                        if (isPlaying) {
-                          if (tarjumahMode) {
-                            await interleavedSvc.pause();
-                          } else {
-                            await audioPlayer.pause();
-                          }
-                          if (mounted) setState(() {});
+                      if (isPlaying) {
+                        if (tarjumahMode) {
+                          await interleavedSvc.pause();
                         } else {
-                          if (tarjumahMode) {
-                            final imam = ref.read(selectedImamProvider);
-                            await interleavedSvc.buildAndPlay(
-                              surahNumber: surahNumber,
-                              ayahCount: widget.surah.ayahCount,
-                              imamId: imam?.id ?? 1,
-                            );
-                          } else {
-                            if (audioPlayer.currentUrl == audioUrl) {
-                              await audioPlayer.play();
-                            } else {
-                              await audioPlayer.loadAndPlay(
-                                audioUrl,
-                                surahNumber: surahNumber,
-                                imamId: selectedImam?.id,
-                              );
-                            }
-                          }
-                          if (mounted) setState(() {});
+                          await audioPlayer.pause();
                         }
-                      },
-                      child: Container(
-                        width: 62,
-                        height: 62,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF3CA86A), Color(0xFF1F6B3A)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                        if (mounted) setState(() {});
+                      } else {
+                        if (tarjumahMode) {
+                          final imam = ref.read(selectedImamProvider);
+                          await interleavedSvc.buildAndPlay(
+                            surahNumber: surahNumber,
+                            ayahCount: widget.surah.ayahCount,
+                            imamId: imam?.id ?? 1,
+                          );
+                        } else {
+                          if (audioPlayer.currentUrl == audioUrl) {
+                            await audioPlayer.play();
+                          } else {
+                            await audioPlayer.loadAndPlay(
+                              audioUrl,
+                              surahNumber: surahNumber,
+                              imamId: selectedImam?.id,
+                            );
+                          }
+                        }
+                        if (mounted) setState(() {});
+                      }
+                    },
+                    child: Container(
+                      width: 62,
+                      height: 62,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF3CA86A), Color(0xFF1F6B3A)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _kGreen.withValues(alpha:
+                                isPlaying ? 0.5 : 0.25),
+                            blurRadius: isPlaying ? 20 : 10,
+                            spreadRadius: isPlaying ? 2 : 0,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _kGreen.withValues(alpha:
-                                  isPlaying ? 0.5 : 0.25),
-                              blurRadius: isPlaying ? 20 : 10,
-                              spreadRadius: isPlaying ? 2 : 0,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          isPlaying
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 32,
-                        ),
+                        ],
+                      ),
+                      child: Icon(
+                        isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 32,
                       ),
                     ),
                   ),
-                  _CtrlBtn(
-                    icon: Icons.forward_5_rounded,
-                    onTap: () => tarjumahMode
-                        ? interleavedSvc.seek(
-                            interleavedSvc.player.position + const Duration(seconds: 5))
-                        : audioPlayer.skipForward5Seconds(),
-                  ),
-                  _CtrlBtn(
-                    icon: Icons.skip_next_rounded,
-                    enabled: surahNumber < 114,
-                    onTap: () async {
-                      if (tarjumahMode) {
-                        await interleavedSvc.pause();
-                      } else {
-                        await audioPlayer.pause();
-                      }
-                      ref.read(currentSurahProvider.notifier).state = surahNumber + 1;
-                    },
-                  ),
-                ],
-              ),
+                ),
+                _CtrlBtn(
+                  icon: Icons.forward_5_rounded,
+                  onTap: () => tarjumahMode
+                      ? interleavedSvc.seek(
+                          interleavedSvc.player.position + const Duration(seconds: 5))
+                      : audioPlayer.skipForward5Seconds(),
+                ),
+                _CtrlBtn(
+                  icon: Icons.skip_next_rounded,
+                  enabled: surahNumber < 114,
+                  onTap: () async {
+                    if (tarjumahMode) {
+                      await interleavedSvc.pause();
+                    } else {
+                      await audioPlayer.pause();
+                    }
+                    ref.read(currentSurahProvider.notifier).state = surahNumber + 1;
+                  },
+                ),
+              ],
             ),
+            const SizedBox(height: 4),
           ],
         ),
       ),
@@ -558,11 +559,36 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
     }
 
     final downloaded = _isRecDownloaded || _isUrduDownloaded;
+    final tarjumahMode = ref.watch(tarjumahModeProvider);
+    final audioPlayer = ref.watch(audioPlayerServiceProvider);
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          // Loop button on the left corner
+          Builder(builder: (ctx) {
+            final isLoop = ref.watch(loopProvider);
+            return IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              icon: Icon(
+                Icons.repeat_rounded,
+                color: tarjumahMode
+                    ? Colors.white24
+                    : isLoop
+                        ? _kGreen
+                        : Colors.white38,
+                size: 18,
+              ),
+              onPressed: tarjumahMode
+                  ? null
+                  : () {
+                      final newVal = !isLoop;
+                      ref.read(loopProvider.notifier).state = newVal;
+                      audioPlayer.setLoopMode(newVal);
+                    },
+            );
+          }),
           if (downloaded)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

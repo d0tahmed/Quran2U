@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,17 +31,25 @@ class _MainShellState extends ConsumerState<MainShell> {
     SettingsScreen(),
   ];
 
+  StreamSubscription<String?>? _notifSub;
+
   @override
   void initState() {
     super.initState();
     // Listen for 6 AM notification taps and push the Daily screen directly!
-    NotificationService.onNotifications.stream.listen((payload) {
+    _notifSub = NotificationService.onNotifications.stream.listen((payload) {
       if (payload == 'daily_tab' && mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const DailyInspirationScreen())
         );
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _notifSub?.cancel();
+    super.dispose();
   }
 
   @override

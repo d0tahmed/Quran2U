@@ -152,27 +152,24 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
                             ),
                           ),
                           
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.navigation_rounded, 
-                                  size: 80, 
-                                  color: _isFacingQibla ? _kGreen : Colors.white,
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.navigation_rounded, 
+                                size: 80, 
+                                color: _isFacingQibla ? _kGreen : Colors.white,
+                              ),
+                              const SizedBox(height: 8),
+                              AnimatedOpacity(
+                                opacity: _isFacingQibla ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 200),
+                                child: Text(
+                                  'Facing Qibla',
+                                  style: GoogleFonts.outfit(color: _kGreen, fontWeight: FontWeight.bold, fontSize: 18),
                                 ),
-                                const SizedBox(height: 8),
-                                AnimatedOpacity(
-                                  opacity: _isFacingQibla ? 1.0 : 0.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: Text(
-                                    'Facing Qibla',
-                                    style: GoogleFonts.outfit(color: _kGreen, fontWeight: FontWeight.bold, fontSize: 18),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

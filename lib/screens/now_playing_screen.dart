@@ -74,7 +74,12 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
         ? ref.watch(audioUrlProvider((surahNumber, selectedImam?.id ?? 1)))
         : '';
 
-    isPlaying ? _pulse.repeat(reverse: true) : _pulse.stop();
+    final shouldPulse = isPlaying;
+    if (shouldPulse && !_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    } else if (!shouldPulse && _pulse.isAnimating) {
+      _pulse.stop();
+    }
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -91,7 +96,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 90),
+            padding: const EdgeInsets.only(bottom: 110),
             child: Column(
               children: [
                 const SizedBox(height: 20),
@@ -180,8 +185,8 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                 const Spacer(flex: 1),
 
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  padding: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   decoration: BoxDecoration(
                     color: _kSlate,
                     borderRadius: BorderRadius.circular(32),
@@ -321,100 +326,128 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
 
                       const SizedBox(height: 16),
 
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      Stack(
+                        alignment: Alignment.center,
                         children: [
-                          _CtrlBtn(
-                            icon: Icons.skip_previous_rounded,
-                            size: 32,
-                            enabled: (surahNumber ?? 0) > 1,
-                            onTap: () async {
-                              if (tarjumahMode) {
-                                await audioPlayer.player.stop(); // SENIOR FIX
-                                await interleavedSvc.pause();
-                              } else {
-                                await interleavedSvc.player.stop(); // SENIOR FIX
-                                await audioPlayer.pause();
-                              }
-                              if (surahNumber != null) {
-                                ref.read(currentSurahProvider.notifier).state = surahNumber - 1;
-                              }
-                            },
-                          ),
-                          _CtrlBtn(
-                            icon: Icons.replay_5_rounded,
-                            size: 28,
-                            onTap: () => audioPlayer.skipBackward5Seconds(),
-                          ),
-                          GestureDetector(
-                            onTap: () async {
-                              if (isPlaying) {
-                                if (tarjumahMode) {
-                                  await interleavedSvc.pause();
-                                } else {
-                                  await audioPlayer.pause();
-                                }
-                                if (mounted) setState(() {});
-                              } else {
-                                if (tarjumahMode) {
-                                  // SENIOR FIX: Force opposite player to release the lock!
-                                  await audioPlayer.player.stop(); 
-                                  final imam = ref.read(selectedImamProvider);
-                                  final sNum = ref.read(currentSurahProvider);
-                                  final surahs = ref.read(surahsProvider).asData?.value ?? [];
-                                  final s = surahs.cast<Surah?>().firstWhere((s) => s?.number == sNum, orElse: () => null);
-                                  if (sNum != null && s != null) {
-                                    await interleavedSvc.buildAndPlay(surahNumber: sNum, ayahCount: s.ayahCount, imamId: imam?.id ?? 1);
+                          // Centered controls: prev, play/pause, next
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _CtrlBtn(
+                                icon: Icons.skip_previous_rounded,
+                                size: 32,
+                                enabled: (surahNumber ?? 0) > 1,
+                                onTap: () async {
+                                  if (tarjumahMode) {
+                                    await audioPlayer.player.stop(); // SENIOR FIX
+                                    await interleavedSvc.pause();
+                                  } else {
+                                    await interleavedSvc.player.stop(); // SENIOR FIX
+                                    await audioPlayer.pause();
                                   }
-                                } else {
-                                  // SENIOR FIX: Force opposite player to release the lock!
-                                  await interleavedSvc.player.stop(); 
-                                  if (audioUrl.isNotEmpty) {
-                                    if (audioPlayer.currentUrl == audioUrl) {
-                                      await audioPlayer.play();
+                                  if (surahNumber != null) {
+                                    ref.read(currentSurahProvider.notifier).state = surahNumber - 1;
+                                  }
+                                },
+                              ),
+                              const SizedBox(width: 16),
+                              GestureDetector(
+                                onTap: () async {
+                                  if (isPlaying) {
+                                    if (tarjumahMode) {
+                                      await interleavedSvc.pause();
                                     } else {
-                                      await audioPlayer.loadAndPlay(audioUrl);
+                                      await audioPlayer.pause();
                                     }
+                                    if (mounted) setState(() {});
+                                  } else {
+                                    if (tarjumahMode) {
+                                      // SENIOR FIX: Force opposite player to release the lock!
+                                      await audioPlayer.player.stop(); 
+                                      final imam = ref.read(selectedImamProvider);
+                                      final sNum = ref.read(currentSurahProvider);
+                                      final surahs = ref.read(surahsProvider).asData?.value ?? [];
+                                      final s = surahs.cast<Surah?>().firstWhere((s) => s?.number == sNum, orElse: () => null);
+                                      if (sNum != null && s != null) {
+                                        await interleavedSvc.buildAndPlay(surahNumber: sNum, ayahCount: s.ayahCount, imamId: imam?.id ?? 1);
+                                      }
+                                    } else {
+                                      // SENIOR FIX: Force opposite player to release the lock!
+                                      await interleavedSvc.player.stop(); 
+                                      if (audioUrl.isNotEmpty) {
+                                        if (audioPlayer.currentUrl == audioUrl) {
+                                          await audioPlayer.play();
+                                        } else {
+                                          await audioPlayer.loadAndPlay(audioUrl);
+                                        }
+                                      }
+                                    }
+                                    if (mounted) setState(() {}); 
                                   }
-                                }
-                                if (mounted) setState(() {}); 
-                              }
-                            },
-                            child: Container(
-                              width: 64, 
-                              height: 64,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _kGreen,
+                                },
+                                child: Container(
+                                  width: 64, 
+                                  height: 64,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _kGreen,
+                                  ),
+                                  child: Icon(
+                                    isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                                    color: Colors.white,
+                                    size: 36,
+                                  ),
+                                ),
                               ),
-                              child: Icon(
-                                isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                                color: Colors.white,
-                                size: 36,
+                              const SizedBox(width: 16),
+                              _CtrlBtn(
+                                icon: Icons.skip_next_rounded,
+                                size: 32,
+                                enabled: (surahNumber ?? 115) < 114,
+                                onTap: () async {
+                                  if (tarjumahMode) {
+                                    await audioPlayer.player.stop(); // SENIOR FIX
+                                    await interleavedSvc.pause();
+                                  } else {
+                                    await interleavedSvc.player.stop(); // SENIOR FIX
+                                    await audioPlayer.pause();
+                                  }
+                                  if (surahNumber != null) {
+                                    ref.read(currentSurahProvider.notifier).state = surahNumber + 1;
+                                  }
+                                },
                               ),
-                            ),
+                            ],
                           ),
-                          _CtrlBtn(
-                            icon: Icons.forward_5_rounded,
-                            size: 28,
-                            onTap: () => audioPlayer.skipForward5Seconds(),
-                          ),
-                          _CtrlBtn(
-                            icon: Icons.skip_next_rounded,
-                            size: 32,
-                            enabled: (surahNumber ?? 115) < 114,
-                            onTap: () async {
-                              if (tarjumahMode) {
-                                await audioPlayer.player.stop(); // SENIOR FIX
-                                await interleavedSvc.pause();
-                              } else {
-                                await interleavedSvc.player.stop(); // SENIOR FIX
-                                await audioPlayer.pause();
-                              }
-                              if (surahNumber != null) {
-                                ref.read(currentSurahProvider.notifier).state = surahNumber + 1;
-                              }
-                            },
+                          // Loop button pinned to the right corner
+                          Positioned(
+                            right: 0,
+                            child: Builder(builder: (ctx) {
+                              final isLoop = ref.watch(loopProvider);
+                              return IconButton(
+                                icon: Icon(
+                                  Icons.repeat_rounded,
+                                  color: tarjumahMode
+                                      ? Colors.white24
+                                      : isLoop
+                                          ? _kGreen
+                                          : Colors.white38,
+                                  size: 18,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 32,
+                                  minHeight: 32,
+                                ),
+                                onPressed: tarjumahMode
+                                    ? null
+                                    : () {
+                                        final newVal = !isLoop;
+                                        ref.read(loopProvider.notifier).state = newVal;
+                                        audioPlayer.setLoopMode(newVal);
+                                      },
+                              );
+                            }),
                           ),
                         ],
                       ),

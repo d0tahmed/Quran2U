@@ -1,0 +1,155 @@
+Date : 2026-04-06 03:32:51
+Directory : c:\Users\FC\Desktop\Quran app\Quran2U
+Total : 75 files,  9433 codes, 454 comments, 1038 blanks, all 10925 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| Dart       |         23 |      7,458 |        230 |        666 |      8,354 |
+| C++        |         16 |        564 |        136 |        191 |        891 |
+| XML        |         10 |        506 |         28 |         16 |        550 |
+| CMake      |          8 |        464 |          0 |         92 |        556 |
+| JSON       |          4 |        248 |          0 |          4 |        252 |
+| Swift      |          7 |         75 |          7 |         25 |        107 |
+| Markdown   |          2 |         47 |          0 |         20 |         67 |
+| YAML       |          2 |         45 |         30 |         17 |         92 |
+| HTML       |          1 |         19 |         23 |          5 |         47 |
+| Properties |          2 |          7 |          0 |          2 |          9 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                | files      | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                   |         75 |      9,433 |        454 |      1,038 |     10,925 |
+| . (Files)                                                                                           |          4 |        132 |         33 |         44 |        209 |
+| android                                                                                             |          9 |        109 |         26 |         15 |        150 |
+| android (Files)                                                                                     |          1 |          2 |          0 |          1 |          3 |
+| android\app                                                                                         |          7 |        102 |         26 |         13 |        141 |
+| android\app\src                                                                                     |          7 |        102 |         26 |         13 |        141 |
+| android\app\src\debug                                                                               |          1 |          3 |          4 |          1 |          8 |
+| android\app\src\main                                                                                |          5 |         96 |         18 |         11 |        125 |
+| android\app\src\main (Files)                                                                        |          1 |         66 |          0 |          9 |         75 |
+| android\app\src\main\res                                                                            |          4 |         30 |         18 |          2 |         50 |
+| android\app\src\main\res\drawable                                                                   |          1 |          6 |          0 |          0 |          6 |
+| android\app\src\main\res\drawable-v21                                                               |          1 |          6 |          0 |          0 |          6 |
+| android\app\src\main\res\values                                                                     |          1 |          9 |          9 |          1 |         19 |
+| android\app\src\main\res\values-night                                                               |          1 |          9 |          9 |          1 |         19 |
+| android\app\src\profile                                                                             |          1 |          3 |          4 |          1 |          8 |
+| android\gradle                                                                                      |          1 |          5 |          0 |          1 |          6 |
+| android\gradle\wrapper                                                                              |          1 |          5 |          0 |          1 |          6 |
+| ios                                                                                                 |          9 |        235 |          4 |         17 |        256 |
+| ios\Runner                                                                                          |          8 |        228 |          2 |         13 |        243 |
+| ios\Runner (Files)                                                                                  |          3 |         19 |          0 |          7 |         26 |
+| ios\RunnerTests                                                                                     |          1 |          7 |          2 |          4 |         13 |
+| ios\Runner\Assets.xcassets                                                                          |          3 |        148 |          0 |          4 |        152 |
+| ios\Runner\Assets.xcassets\AppIcon.appiconset                                                       |          1 |        122 |          0 |          1 |        123 |
+| ios\Runner\Assets.xcassets\LaunchImage.imageset                                                     |          2 |         26 |          0 |          3 |         29 |
+| ios\Runner\Base.lproj                                                                               |          2 |         61 |          2 |          2 |         65 |
+| lib                                                                                                 |         22 |      7,415 |        227 |        657 |      8,299 |
+| lib (Files)                                                                                         |          1 |        137 |          4 |          9 |        150 |
+| lib\models                                                                                          |          3 |      1,831 |        101 |        185 |      2,117 |
+| lib\providers                                                                                       |          1 |        252 |         20 |         54 |        326 |
+| lib\screens                                                                                         |         11 |      4,345 |         74 |        263 |      4,682 |
+| lib\services                                                                                        |          6 |        850 |         28 |        146 |      1,024 |
+| linux                                                                                               |          9 |        344 |         42 |         94 |        480 |
+| linux (Files)                                                                                       |          1 |        104 |          0 |         25 |        129 |
+| linux\flutter                                                                                       |          4 |        110 |          9 |         27 |        146 |
+| linux\runner                                                                                        |          4 |        130 |         33 |         42 |        205 |
+| macos                                                                                               |          6 |        461 |          5 |         17 |        483 |
+| macos\Flutter                                                                                       |          1 |         20 |          3 |          4 |         27 |
+| macos\Runner                                                                                        |          4 |        434 |          0 |          9 |        443 |
+| macos\Runner (Files)                                                                                |          2 |         23 |          0 |          7 |         30 |
+| macos\RunnerTests                                                                                   |          1 |          7 |          2 |          4 |         13 |
+| macos\Runner\Assets.xcassets                                                                        |          1 |         68 |          0 |          1 |         69 |
+| macos\Runner\Assets.xcassets\AppIcon.appiconset                                                     |          1 |         68 |          0 |          1 |         69 |
+| macos\Runner\Base.lproj                                                                             |          1 |        343 |          0 |          1 |        344 |
+| web                                                                                                 |          2 |         54 |         23 |          6 |         83 |
+| windows                                                                                             |         14 |        683 |         94 |        188 |        965 |
+| windows (Files)                                                                                     |          1 |         89 |          0 |         20 |        109 |
+| windows\flutter                                                                                     |          4 |        132 |          9 |         29 |        170 |
+| windows\runner                                                                                      |          9 |        462 |         85 |        139 |        686 |
++-----------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                                                            | language   | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| c:\Users\FC\Desktop\Quran app\Quran2U\README.md                                                     | Markdown   |         44 |          0 |         18 |         62 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\analysis_options.yaml                                         | YAML       |          3 |         22 |          4 |         29 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\android\app\src\debug\AndroidManifest.xml                     | XML        |          3 |          4 |          1 |          8 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\android\app\src\main\AndroidManifest.xml                      | XML        |         66 |          0 |          9 |         75 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\android\app\src\main\res\drawable-v21\launch_background.xml   | XML        |          6 |          0 |          0 |          6 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\android\app\src\main\res\drawable\launch_background.xml       | XML        |          6 |          0 |          0 |          6 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\android\app\src\main\res\values-night\styles.xml              | XML        |          9 |          9 |          1 |         19 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\android\app\src\main\res\values\styles.xml                    | XML        |          9 |          9 |          1 |         19 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\android\app\src\profile\AndroidManifest.xml                   | XML        |          3 |          4 |          1 |          8 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\android\gradle.properties                                     | Properties |          2 |          0 |          1 |          3 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\android\gradle\wrapper\gradle-wrapper.properties              | Properties |          5 |          0 |          1 |          6 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\ios\RunnerTests\RunnerTests.swift                             | Swift      |          7 |          2 |          4 |         13 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\ios\Runner\AppDelegate.swift                                  | Swift      |         14 |          0 |          3 |         17 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\ios\Runner\Assets.xcassets\AppIcon.appiconset\Contents.json   | JSON       |        122 |          0 |          1 |        123 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\ios\Runner\Assets.xcassets\LaunchImage.imageset\Contents.json | JSON       |         23 |          0 |          1 |         24 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\ios\Runner\Assets.xcassets\LaunchImage.imageset\README.md     | Markdown   |          3 |          0 |          2 |          5 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\ios\Runner\Base.lproj\LaunchScreen.storyboard                 | XML        |         36 |          1 |          1 |         38 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\ios\Runner\Base.lproj\Main.storyboard                         | XML        |         25 |          1 |          1 |         27 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\ios\Runner\Runner-Bridging-Header.h                           | C++        |          1 |          0 |          1 |          2 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\ios\Runner\SceneDelegate.swift                                | Swift      |          4 |          0 |          3 |          7 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\main.dart                                                 | Dart       |        137 |          4 |          9 |        150 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\models\models.dart                                        | Dart       |         95 |         21 |         16 |        132 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\models\models.freezed.dart                                | Dart       |      1,602 |         76 |        152 |      1,830 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\models\models.g.dart                                      | Dart       |        134 |          4 |         17 |        155 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\providers\providers.dart                                  | Dart       |        252 |         20 |         54 |        326 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\bookmarks_screen.dart                             | Dart       |        180 |          6 |         10 |        196 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\daily_inspiration_screen.dart                     | Dart       |        389 |         38 |         10 |        437 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\downloads_screen.dart                             | Dart       |        318 |          3 |         17 |        338 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\home_screen.dart                                  | Dart       |        438 |          2 |         34 |        474 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\main_shell.dart                                   | Dart       |        109 |          5 |          9 |        123 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\now_playing_screen.dart                           | Dart       |        497 |          2 |         36 |        535 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\prayer_times_screen.dart                          | Dart       |        126 |          0 |         10 |        136 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\qibla_screen.dart                                 | Dart       |        195 |          0 |         23 |        218 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\read_quran_screen.dart                            | Dart       |        264 |          2 |         18 |        284 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\settings_screen.dart                              | Dart       |        750 |         13 |         45 |        808 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\screens\surah_detail_screen.dart                          | Dart       |      1,079 |          3 |         51 |      1,133 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\services\audio_player_service.dart                        | Dart       |         75 |          1 |         16 |         92 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\services\download_service.dart                            | Dart       |        336 |          5 |         54 |        395 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\services\interleaved_audio_service.dart                   | Dart       |        154 |          5 |         34 |        193 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\services\mushaf_api_service.dart                          | Dart       |         39 |          0 |          8 |         47 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\services\notification_service.dart                        | Dart       |         88 |          5 |          9 |        102 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\lib\services\quran_api_service.dart                           | Dart       |        158 |         12 |         25 |        195 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\linux\CMakeLists.txt                                          | CMake      |        104 |          0 |         25 |        129 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\linux\flutter\CMakeLists.txt                                  | CMake      |         79 |          0 |         10 |         89 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\linux\flutter\generated_plugin_registrant.cc                  | C++        |          7 |          4 |          5 |         16 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\linux\flutter\generated_plugin_registrant.h                   | C++        |          5 |          5 |          6 |         16 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\linux\flutter\generated_plugins.cmake                         | CMake      |         19 |          0 |          6 |         25 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\linux\runner\CMakeLists.txt                                   | CMake      |         21 |          0 |          6 |         27 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\linux\runner\main.cc                                          | C++        |          5 |          0 |          2 |          7 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\linux\runner\my_application.cc                                | C++        |         94 |         26 |         29 |        149 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\linux\runner\my_application.h                                 | C++        |         10 |          7 |          5 |         22 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\macos\Flutter\GeneratedPluginRegistrant.swift                 | Swift      |         20 |          3 |          4 |         27 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\macos\RunnerTests\RunnerTests.swift                           | Swift      |          7 |          2 |          4 |         13 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\macos\Runner\AppDelegate.swift                                | Swift      |         11 |          0 |          3 |         14 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\macos\Runner\Assets.xcassets\AppIcon.appiconset\Contents.json | JSON       |         68 |          0 |          1 |         69 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\macos\Runner\Base.lproj\MainMenu.xib                          | XML        |        343 |          0 |          1 |        344 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\macos\Runner\MainFlutterWindow.swift                          | Swift      |         12 |          0 |          4 |         16 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\pubspec.yaml                                                  | YAML       |         42 |          8 |         13 |         63 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\test_urls.dart                                                | Dart       |         43 |          3 |          9 |         55 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\web\index.html                                                | HTML       |         19 |         23 |          5 |         47 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\web\manifest.json                                             | JSON       |         35 |          0 |          1 |         36 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\CMakeLists.txt                                        | CMake      |         89 |          0 |         20 |        109 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\flutter\CMakeLists.txt                                | CMake      |         98 |          0 |         12 |        110 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\flutter\generated_plugin_registrant.cc                | C++        |          9 |          4 |          5 |         18 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\flutter\generated_plugin_registrant.h                 | C++        |          5 |          5 |          6 |         16 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\flutter\generated_plugins.cmake                       | CMake      |         20 |          0 |          6 |         26 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\runner\CMakeLists.txt                                 | CMake      |         34 |          0 |          7 |         41 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\runner\flutter_window.cpp                             | C++        |         49 |          7 |         16 |         72 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\runner\flutter_window.h                               | C++        |         20 |          5 |          9 |         34 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\runner\main.cpp                                       | C++        |         30 |          4 |         10 |         44 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\runner\resource.h                                     | C++        |          9 |          6 |          2 |         17 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\runner\utils.cpp                                      | C++        |         54 |          2 |         10 |         66 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\runner\utils.h                                        | C++        |          8 |          6 |          6 |         20 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\runner\win32_window.cpp                               | C++        |        210 |         24 |         55 |        289 |
+| c:\Users\FC\Desktop\Quran app\Quran2U\windows\runner\win32_window.h                                 | C++        |         48 |         31 |         24 |        103 |
+| Total                                                                                               |            |      9,433 |        454 |      1,038 |     10,925 |
++-----------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+

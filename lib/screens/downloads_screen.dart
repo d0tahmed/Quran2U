@@ -262,7 +262,9 @@ class _DownloadedTileState extends State<_DownloadedTile> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.imamName.split(' ').skip(1).join(' '),
+                  widget.imamName.split(' ').length > 1
+                      ? widget.imamName.split(' ').skip(1).join(' ')
+                      : widget.imamName,
                   style: GoogleFonts.outfit(
                       color: Colors.white38, fontSize: 11),
                 ),

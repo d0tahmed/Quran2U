@@ -5,7 +5,11 @@ import 'package:quran_recitation/models/models.dart';
 
 class QuranApiService {
   static const String baseUrl = 'https://api.quran.com/api/v4';
-  static const String _surahCacheKey = 'cached_surahs_v1';
+  // Bumped to v2 so the corrected Surah 38 name is picked up on next launch
+  static const String _surahCacheKey = 'cached_surahs_v2';
+
+  // API returns "Sad" for Surah 38 — correct display name is "Suad"
+  static const _nameOverrides = <int, String>{38: 'Suad'};
 
   final Dio _dio;
 
@@ -46,13 +50,15 @@ class QuranApiService {
   }
 
   Surah _surahFromMap(Map<String, dynamic> ch) {
+    final id = ch['id'] as int;
+    final apiName = ch['name_simple'] as String;
     return Surah(
-      number: ch['id'],
-      name: ch['name_simple'],
+      number: id,
+      name: _nameOverrides[id] ?? apiName,
       nameArabic: ch['name_arabic'],
       nameTranslation: ch['translated_name'] != null
-          ? (ch['translated_name']['name'] ?? ch['name_simple'])
-          : ch['name_simple'],
+          ? (ch['translated_name']['name'] ?? apiName)
+          : apiName,
       ayahCount: ch['verses_count'],
       revelationType: ch['revelation_place'] == 'makkah' ? 'Meccan' : 'Medinan',
     );

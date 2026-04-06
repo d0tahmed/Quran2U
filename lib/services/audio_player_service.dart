@@ -76,6 +76,14 @@ class AudioPlayerService {
     catch (e) { debugPrint('AudioPlayerService.setSpeed: $e'); }
   }
 
+  Future<void> setLoopMode(bool loop) async {
+    try {
+      await _audioPlayer.setLoopMode(loop ? LoopMode.one : LoopMode.off);
+    } catch (e) {
+      debugPrint('AudioPlayerService.setLoopMode: $e');
+    }
+  }
+
   PlaybackState getCurrentState(int currentSurahNumber) => PlaybackState(
     isPlaying: _audioPlayer.playing,
     currentPosition: _audioPlayer.position,
