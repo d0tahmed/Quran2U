@@ -3,13 +3,9 @@
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)
 ![Architecture](https://img.shields.io/badge/Architecture-Riverpod-10B981)
-![Vibecoded](https://img.shields.io/badge/100%25-Vibecoded_with_AI-EAB308)
 ![License](https://img.shields.io/badge/License-GPL_v3-blue)
 
 Quran2U is a beautifully crafted, lightning-fast, and completely free Quran app. Designed with a stunning Glassmorphic UI, it features an advanced offline caching engine, dual-audio interleaved recitation, and robust background playback.
-
-**Vibecoded.** Designed and architected purely through AI prompt engineering and senior-level system design.
-
 ---
 
 ## ✨ Enterprise-Grade Features
