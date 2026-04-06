@@ -6,12 +6,13 @@
 ![License](https://img.shields.io/badge/License-GPL_v3-blue)
 
 Quran2U is a beautifully crafted, lightning-fast, and completely free Quran app. Designed with a stunning Glassmorphic UI, it features an advanced offline caching engine, dual-audio interleaved recitation, and robust background playback.
+
 ---
 
 ## ✨ Enterprise-Grade Features
 
 * 🌍 **Smart Offline Engine:** Download entire Surahs—or the entire Quran—for true offline playback. The app intelligently manages your local storage.
-* 🎧 **Dual-Audio Interleaving:** Listen to Arabic recitation seamlessly interleaved with Urdu translation of (Shamshad Ali Khan) ayah-by-ayah.
+* 🎧 **Dual-Audio Interleaving:** Listen to Arabic recitation seamlessly interleaved with Urdu translation (Shamshad Ali Khan) ayah-by-ayah.
 * 📖 **Instant Reading Engine:** High-speed, cached Uthmani and Indo-Pak script reading modes with a beautifully ornamented UI.
 * 🕌 **Prayer Times & Qibla Compass:** 100% offline, mathematically calculated prayer times based on your GPS coordinates, featuring a buttery-smooth, haptic-enabled Qibla compass.
 * 🌅 **Daily Inspiration Engine:** Wakes up with you. A scheduled background notification delivers a daily Ayah and Hadith exactly at 6:00 AM.
