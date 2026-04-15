@@ -45,7 +45,7 @@ This project abandons heavy, bloated architectures in favor of a lean, high-perf
 ### Run Locally
 ```bash
 # 1. Clone the repository
-git clone [https://github.com/d0tahmed/quran-recitation.git](https://github.com/d0tahmed/quran-recitation.git)
+git clone https://github.com/d0tahmed/quran-recitation.git 
 cd quran-recitation
 
 # 2. Fetch dependencies
