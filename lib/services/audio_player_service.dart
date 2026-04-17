@@ -38,7 +38,8 @@ class AudioPlayerService {
           : AudioSource.uri(Uri.parse(audioUrl), tag: mediaItem);
 
       if (_loadedUrl != audioUrl) {
-        await _audioPlayer.setAudioSource(source, preload: false);
+        // Prepare immediately so UI state matches real playback sooner.
+        await _audioPlayer.setAudioSource(source);
         _loadedUrl = audioUrl;
       }
       await play();

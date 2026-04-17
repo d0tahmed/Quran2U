@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/ui_v2/app_colors.dart';
 
-const _kGreen = Color(0xFF10B981);
-const _kGold = Color(0xFFEAB308);
-const _kBg = Color(0xFF05080F);
+const _kGreen = AppColorsV2.primary;
+const _kGold = AppColorsV2.tertiary;
+const _kBg = AppColorsV2.bg;
 
 // ── Tajweed color map ──────────────────────────────────────────────────────────
 const Map<String, Color> _tajweedColors = {
@@ -51,15 +53,12 @@ class ReadQuranScreen extends ConsumerStatefulWidget {
   ConsumerState<ReadQuranScreen> createState() => _ReadQuranScreenState();
 }
 
-class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with SingleTickerProviderStateMixin {
+class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   late PageController _uthmaniController;
   late PageController _indoPakController;
   late PageController _tajweedController;
-  
-  int _currentUthmaniPage = 1;
-  int _currentIndoPakPage = 1;
-  int _currentTajweedPage = 1;
+  late AnimationController _sheetAnimController;
   
   bool _isImmersive = false;
 
@@ -70,6 +69,9 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with SingleTi
     _uthmaniController = PageController(initialPage: 0);
     _indoPakController = PageController(initialPage: 0);
     _tajweedController = PageController(initialPage: 0);
+    _sheetAnimController = BottomSheet.createAnimationController(this)
+      ..duration = const Duration(milliseconds: 420)
+      ..reverseDuration = const Duration(milliseconds: 320);
   }
 
   void _toggleImmersiveMode() {
@@ -83,12 +85,242 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with SingleTi
     }
   }
 
+  Future<void> _openSurahIndexSheet() async {
+    // Keep local state inside the sheet to avoid polluting screen state.
+    final searchController = TextEditingController();
+    final searchFocusNode = FocusNode();
+    var query = '';
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      transitionAnimationController: _sheetAnimController,
+      builder: (context) {
+        final surahsAsync = ref.watch(surahsProvider);
+
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: _kBg.withValues(alpha: 0.98),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: StatefulBuilder(
+                  builder: (context, setSheetState) {
+                    List<Surah> filter(List<Surah> list) {
+                      final q = query.trim().toLowerCase();
+                      if (q.isEmpty) return list;
+                      return list.where((s) {
+                        return s.number.toString() == q ||
+                            s.name.toLowerCase().contains(q) ||
+                            s.nameArabic.toLowerCase().contains(q) ||
+                            s.nameTranslation.toLowerCase().contains(q);
+                      }).toList();
+                    }
+
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 42,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                'Surahs',
+                                style: GoogleFonts.manrope(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                tooltip: 'Search',
+                                onPressed: () {
+                                  FocusScope.of(context).requestFocus(searchFocusNode);
+                                },
+                                icon: const Icon(Icons.search_rounded, color: Colors.white70),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: TextField(
+                            controller: searchController,
+                            focusNode: searchFocusNode,
+                            onChanged: (v) => setSheetState(() => query = v),
+                            style: GoogleFonts.manrope(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: 'Search surah by name or number…',
+                              hintStyle: GoogleFonts.manrope(color: Colors.white38, fontWeight: FontWeight.w600),
+                              prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.06),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide(color: _kGold.withValues(alpha: 0.35)),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: surahsAsync.when(
+                            loading: () => const Center(
+                              child: CircularProgressIndicator(color: _kGreen),
+                            ),
+                            error: (e, _) => Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Center(
+                                child: Text(
+                                  'Failed to load surahs.\n$e',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.manrope(
+                                    color: Colors.white54,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            data: (surahs) {
+                              final list = filter(surahs);
+                              if (list.isEmpty) {
+                                return Center(
+                                  child: Text(
+                                    'No surahs found',
+                                    style: GoogleFonts.manrope(
+                                      color: Colors.white38,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return ListView.separated(
+                                controller: scrollController,
+                                padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                                itemCount: list.length,
+                                separatorBuilder: (_, __) => Divider(
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                  height: 1,
+                                ),
+                                itemBuilder: (context, i) {
+                                  final s = list[i];
+                                  return ListTile(
+                                    onTap: () {
+                                      // Stay in Read Quran: jump to surah's start page.
+                                      Navigator.of(context).pop();
+                                      _jumpToSurah(s);
+                                    },
+                                    leading: Container(
+                                      width: 40,
+                                      height: 40,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: _kGold.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: _kGold.withValues(alpha: 0.18)),
+                                      ),
+                                      child: Text(
+                                        s.number.toString().padLeft(2, '0'),
+                                        style: GoogleFonts.manrope(
+                                          color: _kGold,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      s.name,
+                                      style: GoogleFonts.manrope(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      '${s.nameTranslation} • ${s.ayahCount} verses',
+                                      style: GoogleFonts.manrope(
+                                        color: Colors.white54,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    trailing: Text(
+                                      s.nameArabic,
+                                      textDirection: TextDirection.rtl,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.85),
+                                        fontSize: 18,
+                                        fontFamily: GoogleFonts.amiri().fontFamily,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _jumpToSurah(Surah surah) async {
+    try {
+      final startPage =
+          await ref.read(quranApiServiceProvider).fetchSurahStartPage(surah.number);
+      final targetIndex = (startPage - 1).clamp(0, 603);
+
+      final controller = _tabController.index == 0
+          ? _uthmaniController
+          : _tabController.index == 1
+              ? _indoPakController
+              : _tajweedController;
+
+      if (!controller.hasClients) return;
+      controller.jumpToPage(targetIndex);
+    } catch (_) {
+      // If anything fails, we do nothing (reading still works).
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
     _uthmaniController.dispose();
     _indoPakController.dispose();
     _tajweedController.dispose();
+    _sheetAnimController.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge); 
     super.dispose();
   }
@@ -117,7 +349,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with SingleTi
             right: 0,
             child: ClipRRect(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
                 child: Container(
                   padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
                   decoration: BoxDecoration(
@@ -132,35 +364,27 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with SingleTi
                         child: Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
                               onPressed: () {
                                 SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
                                 Navigator.pop(context);
                               },
                             ),
-                            Text('Read Quran', style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 18, color: Colors.white)),
+                            Text(
+                              'Read Quran',
+                              style: GoogleFonts.manrope(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 18,
+                                color: Colors.white,
+                                letterSpacing: -0.2,
+                              ),
+                            ),
                             const Spacer(),
-                            // Dynamic Page Indicator
-                            AnimatedBuilder(
-                              animation: _tabController,
-                              builder: (context, _) {
-                                final page = _tabController.index == 0
-                                    ? _currentUthmaniPage
-                                    : _tabController.index == 1
-                                        ? _currentIndoPakPage
-                                        : _currentTajweedPage;
-                                return Container(
-                                  margin: const EdgeInsets.only(right: 12),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: _kGold.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: _kGold.withValues(alpha: 0.2)),
-                                  ),
-                                  child: Text('Page $page / 604', style: GoogleFonts.outfit(color: _kGold, fontWeight: FontWeight.bold, fontSize: 12)),
-                                );
-                              },
-                            )
+                            IconButton(
+                              tooltip: 'Surah list',
+                              onPressed: _openSurahIndexSheet,
+                              icon: const Icon(Icons.menu_rounded, color: Colors.white70),
+                            ),
                           ],
                         ),
                       ),
@@ -171,7 +395,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with SingleTi
                         unselectedLabelColor: Colors.white38,
                         indicatorWeight: 3,
                         dividerColor: Colors.transparent,
-                        labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 14),
+                        labelStyle: GoogleFonts.manrope(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.2),
                         onTap: (_) => setState(() {}),
                         tabs: const [
                           Tab(text: 'Uthmani'),
@@ -197,12 +421,6 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with SingleTi
         controller: controller,
         reverse: true, 
         itemCount: 604,
-        onPageChanged: (index) {
-          setState(() {
-            if (scriptType == 'uthmani') _currentUthmaniPage = index + 1;
-            if (scriptType == 'indopak') _currentIndoPakPage = index + 1;
-          });
-        },
         itemBuilder: (context, index) {
           final pageNum = index + 1;
           final asyncPage = ref.watch(mushafPageProvider((pageNum, scriptType)));
@@ -241,11 +459,6 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with SingleTi
         controller: _tajweedController,
         reverse: true,
         itemCount: 604,
-        onPageChanged: (index) {
-          setState(() {
-            _currentTajweedPage = index + 1;
-          });
-        },
         itemBuilder: (context, index) {
           final pageNum = index + 1;
           final asyncPage = ref.watch(tajweedPageProvider(pageNum));
@@ -452,7 +665,16 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with SingleTi
           children: [
             const Icon(Icons.cloud_off_rounded, color: Colors.white24, size: 64),
             const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center, style: GoogleFonts.outfit(color: Colors.white54, fontSize: 16, height: 1.5)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.manrope(
+                color: Colors.white54,
+                fontSize: 16,
+                height: 1.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),

@@ -1,14 +1,14 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/surah_detail_screen.dart';
+import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 
-const _kGreen = Color(0xFF10B981);
-const _kGold = Color(0xFFEAB308);
-const _kBg = Color(0xFF05080F);
+const _kGreen = AppColorsV2.primary;
+const _kBg = AppColorsV2.bg;
 
 class BookmarksScreen extends ConsumerWidget {
   const BookmarksScreen({super.key});
@@ -49,13 +49,21 @@ class BookmarksScreen extends ConsumerWidget {
                         Padding(
                           padding: const EdgeInsets.only(right: 12),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
                             onPressed: () => Navigator.pop(context),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                           ),
                         ),
-                      Text('Saved', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                      Text(
+                        'Saved',
+                        style: GoogleFonts.manrope(
+                          color: AppColorsV2.onSurface,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -64,7 +72,15 @@ class BookmarksScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: _kGreen.withValues(alpha: 0.2)),
                         ),
-                        child: Text('${bookmarks.length} Items', style: GoogleFonts.outfit(color: _kGreen, fontWeight: FontWeight.bold, fontSize: 12)),
+                        child: Text(
+                          '${bookmarks.length} ITEMS',
+                          style: GoogleFonts.manrope(
+                            color: _kGreen,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -76,7 +92,7 @@ class BookmarksScreen extends ConsumerWidget {
                       ? _buildEmptyState()
                       : surahsAsync.when(
                           loading: () => const Center(child: CircularProgressIndicator(color: _kGreen)),
-                          error: (e, _) => Center(child: Text('Error loading data', style: GoogleFonts.outfit(color: Colors.white54))),
+                          error: (e, _) => Center(child: Text('Error loading data', style: GoogleFonts.manrope(color: Colors.white54))),
                           data: (surahs) {
                             // Sort bookmarks by newest first
                             final sortedBookmarks = bookmarks.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -129,21 +145,20 @@ class BookmarksScreen extends ConsumerWidget {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Bookmark removed', style: GoogleFonts.outfit()),
-            backgroundColor: const Color(0xFF121B2B),
+            content: Text('Bookmark removed', style: GoogleFonts.manrope(fontWeight: FontWeight.w700)),
+            backgroundColor: AppColorsV2.surfaceLow,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             duration: const Duration(seconds: 2),
           ),
         );
       },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFF121B2B),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        child: GlassPanel(
+          padding: EdgeInsets.zero,
+          borderRadius: BorderRadius.circular(18),
+          tint: AppColorsV2.surfaceLow,
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           onTap: () {
@@ -163,10 +178,19 @@ class BookmarksScreen extends ConsumerWidget {
             alignment: Alignment.center,
             child: const Icon(Icons.menu_book_rounded, color: _kGreen, size: 20),
           ),
-          title: Text(surah.name, style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+          title: Text(
+            surah.name,
+            style: GoogleFonts.manrope(
+              color: AppColorsV2.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.3,
+            ),
+          ),
           subtitle: Text('Saved on ${DateFormat('MMM d, yyyy').format(bookmark.createdAt)}', 
-            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+            style: GoogleFonts.manrope(color: AppColorsV2.onSurfaceVariant, fontSize: 12, fontWeight: FontWeight.w600)),
           trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 14),
+        ),
         ),
       ),
     );
@@ -186,9 +210,13 @@ class BookmarksScreen extends ConsumerWidget {
             child: const Icon(Icons.bookmark_border_rounded, color: Colors.white12, size: 64),
           ),
           const SizedBox(height: 24),
-          Text('No Saved Items', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text('No Saved Items', style: GoogleFonts.manrope(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
           const SizedBox(height: 8),
-          Text('Your bookmarked Surahs\nwill appear here.', textAlign: TextAlign.center, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 14, height: 1.5)),
+          Text(
+            'Your bookmarked Surahs\nwill appear here.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.manrope(color: AppColorsV2.onSurfaceVariant, fontSize: 14, height: 1.5, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );

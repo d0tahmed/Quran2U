@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/services/download_service.dart';
+import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 
-const _kGreen = Color(0xFF10B981);
-const _kGold = Color(0xFFEAB308);
-const _kBg = Color(0xFF05080F);
-const _kCard = Color(0xFF121B2B);
+const _kGreen = AppColorsV2.primary;
+const _kGold = AppColorsV2.tertiary;
+const _kBg = AppColorsV2.bg;
+const _kCard = AppColorsV2.surfaceLow;
 
 class DownloadsScreen extends ConsumerStatefulWidget {
   const DownloadsScreen({super.key});
@@ -26,17 +28,21 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
     return Scaffold(
       backgroundColor: _kBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _kBg.withValues(alpha: 0.80),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Downloads',
-            style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold)),
+        title: Text(
+          'Downloads',
+          style: GoogleFonts.manrope(
+            color: AppColorsV2.onSurface,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.2,
+          ),
+        ),
         centerTitle: false,
       ),
       body: SafeArea(
@@ -46,11 +52,15 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Text('Offline Surahs',
-                  style: GoogleFonts.outfit(
-                      color: Colors.white30,
-                      fontSize: 12,
-                      letterSpacing: 1.5)),
+              child: Text(
+                'OFFLINE SURAHs',
+                style: GoogleFonts.manrope(
+                  color: AppColorsV2.onSurfaceVariant,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2.2,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -59,7 +69,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                     child: CircularProgressIndicator(color: _kGreen)),
                 error: (e, _) => Center(
                     child: Text('Error: $e',
-                        style: GoogleFonts.outfit(color: Colors.white54))),
+                        style: GoogleFonts.manrope(color: Colors.white54))),
                 data: (downloaded) {
                   if (downloaded.isEmpty) {
                     return _buildEmpty();
@@ -120,14 +130,14 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
               color: Colors.white12, size: 64),
           const SizedBox(height: 16),
           Text('No downloads yet',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.manrope(
                   color: Colors.white38,
                   fontSize: 16,
-                  fontWeight: FontWeight.w500)),
+                  fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           Text('Open any Surah and tap the\ndownload button to save offline',
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.manrope(
                   color: Colors.white24, fontSize: 12, height: 1.6)),
         ],
       ),
@@ -141,21 +151,21 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('Delete Download',
-              style: GoogleFonts.outfit(color: Colors.white)),
+              style: GoogleFonts.manrope(color: Colors.white, fontWeight: FontWeight.w800)),
           content: Text(
               'This will remove the downloaded audio files from your device.',
-              style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13)),
+              style: GoogleFonts.manrope(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w600)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text('Cancel',
-                  style: GoogleFonts.outfit(color: Colors.white38)),
+                  style: GoogleFonts.manrope(color: Colors.white38, fontWeight: FontWeight.w700)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: Text('Delete',
-                  style: GoogleFonts.outfit(
-                      color: Colors.red, fontWeight: FontWeight.w600)),
+                  style: GoogleFonts.manrope(
+                      color: Colors.red, fontWeight: FontWeight.w800)),
             ),
           ],
         ),
@@ -204,14 +214,10 @@ class _DownloadedTileState extends State<_DownloadedTile> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+    return GlassPanel(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _kCard,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
+      borderRadius: BorderRadius.circular(20),
+      tint: _kCard,
       child: Row(
         children: [
           // Surah number badge
@@ -225,9 +231,9 @@ class _DownloadedTileState extends State<_DownloadedTile> {
             child: Center(
               child: Text(
                 '${widget.surahNumber}',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.manrope(
                     color: _kGreen,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w900,
                     fontSize: 13),
               ),
             ),
@@ -243,10 +249,10 @@ class _DownloadedTileState extends State<_DownloadedTile> {
                     Flexible(
                       child: Text(widget.surahName,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.manrope(
                               color: Colors.white,
                               fontSize: 14,
-                              fontWeight: FontWeight.w600)),
+                              fontWeight: FontWeight.w900)),
                     ),
                     const SizedBox(width: 8),
                     Flexible(
@@ -265,8 +271,8 @@ class _DownloadedTileState extends State<_DownloadedTile> {
                   widget.imamName.split(' ').length > 1
                       ? widget.imamName.split(' ').skip(1).join(' ')
                       : widget.imamName,
-                  style: GoogleFonts.outfit(
-                      color: Colors.white38, fontSize: 11),
+                  style: GoogleFonts.manrope(
+                      color: AppColorsV2.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 6),
                 Wrap(
@@ -287,8 +293,8 @@ class _DownloadedTileState extends State<_DownloadedTile> {
                       ),
                     const SizedBox(width: 4),
                     Text(_size,
-                        style: GoogleFonts.outfit(
-                            color: Colors.white24, fontSize: 10)),
+                        style: GoogleFonts.manrope(
+                            color: Colors.white24, fontSize: 10, fontWeight: FontWeight.w700)),
                   ],
                 ),
               ],
@@ -329,10 +335,10 @@ class _Badge extends StatelessWidget {
           Icon(icon, color: color, size: 10),
           const SizedBox(width: 3),
           Text(label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.manrope(
                   color: color,
                   fontSize: 9,
-                  fontWeight: FontWeight.w600)),
+                  fontWeight: FontWeight.w800)),
         ],
       ),
     );

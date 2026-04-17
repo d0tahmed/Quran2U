@@ -5,16 +5,30 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:quran_recitation/services/download_service.dart';
 
+// ── everyayah.com Arabic folder map ──────────────────────────────────────────
+// Each imam ID maps to their folder name on everyayah.com/data/.
+// Imams without a confirmed folder fall back to _arabicFallbackFolder (Alafasy).
+// When in tarjumah mode the Arabic audio still comes from everyayah; the Urdu
+// audio always comes from the single shared Shamshad Ali Khan folder.
+// ── everyayah.com Arabic folder map ──────────────────────────────────────────
+// Each imam ID maps to their folder name on everyayah.com/data/.
+// Imams without a confirmed folder fall back to _arabicFallbackFolder (Alafasy).
 const _everyayahFolders = <int, String>{
+  // Original
   1: 'Abdurrahmaan_As-Sudais_192kbps',
   2: 'Alafasy_128kbps',
   3: 'Yasser_Ad-Dussary_128kbps',
   4: 'MaherAlMuaiqly128kbps',
   5: 'Saood_ash-Shuraym_128kbps',
+  // Fixed Spelling
+  8: 'Ali_Jaber_64kbps',
+  // ── NEW FOLDERS ──
+  10: 'Nasser_Alqatami_128kbps', // Sheikh Nasser Al-Qatami
+  9: 'Muhammad_Ayyoub_128kbps',  // Sheikh Muhammad Ayyoub
 };
 const _arabicFallbackFolder = 'Alafasy_128kbps';
 const _everyayahBase = 'https://www.everyayah.com/data';
-const _urduFolder = 'translations/urdu_shamshad_ali_khan_46kbps';
+const _urduFolder    = 'translations/urdu_shamshad_ali_khan_46kbps';
 
 class InterleavedAudioService {
   final AudioPlayer _player = AudioPlayer();
@@ -31,18 +45,28 @@ class InterleavedAudioService {
 
   final Map<int, (int, bool)> _segmentMetadata = {};
 
-  Stream<PlayerState> get playerStateStream => _player.playerStateStream;
-  Stream<Duration?> get durationStream => _player.durationStream;
-  Stream<Duration> get positionStream => _player.positionStream;
-  Stream<int?> get currentIndexStream => _player.currentIndexStream;
+  Stream<PlayerState>  get playerStateStream  => _player.playerStateStream;
+  Stream<Duration?>    get durationStream     => _player.durationStream;
+  Stream<Duration>     get positionStream     => _player.positionStream;
+  Stream<int?>         get currentIndexStream => _player.currentIndexStream;
 
-  Stream<int?> get currentAyahStream => _player.currentIndexStream
-      .map((idx) => idx != null ? _segmentMetadata[idx]?.$1 : null);
+  Stream<int?> get currentAyahStream =>
+      _player.currentIndexStream.map((idx) =>
+          idx != null ? _segmentMetadata[idx]?.$1 : null);
 
   Stream<bool> get isUrduSegmentStream =>
-      _player.currentIndexStream.map((idx) => idx != null ? (_segmentMetadata[idx]?.$2 ?? false) : false);
+      _player.currentIndexStream.map((idx) =>
+          idx != null ? (_segmentMetadata[idx]?.$2 ?? false) : false);
 
   AudioPlayer get player => _player;
+
+  Future<void> setLoopMode(bool loop) async {
+    try {
+      await _player.setLoopMode(loop ? LoopMode.one : LoopMode.off);
+    } catch (e) {
+      debugPrint('InterleavedAudioService.setLoopMode error: $e');
+    }
+  }
 
   Future<void> buildAndPlay({
     required int surahNumber,
@@ -55,15 +79,15 @@ class InterleavedAudioService {
     }
 
     try {
-      _loadedSurah = surahNumber;
-      _loadedImamId = imamId;
-      _totalAyahs = ayahCount;
-      _arabicFolder = _everyayahFolders[imamId] ?? _arabicFallbackFolder;
+      _loadedSurah      = surahNumber;
+      _loadedImamId     = imamId;
+      _totalAyahs       = ayahCount;
+      _arabicFolder     = _everyayahFolders[imamId] ?? _arabicFallbackFolder;
       _lastAppendedAyah = 0;
       _segmentMetadata.clear();
 
-      // SENIOR FIX: Removed "useLazyPreparation: true". 
-      // Background isolate crashes natively if this is enabled!
+      // CRITICAL: Do NOT use useLazyPreparation: true here.
+      // Background isolate crashes natively if that flag is set.
       _playlist = ConcatenatingAudioSource(children: []);
       await _appendNextChunk(10);
 
@@ -77,20 +101,21 @@ class InterleavedAudioService {
         }
       });
 
-      _player.setAudioSource(_playlist!, preload: false).then((_) => play());
+      // Prepare immediately so play/pause UI stays in sync.
+      _player.setAudioSource(_playlist!).then((_) => play());
     } catch (e) {
       debugPrint('InterleavedAudioService.buildAndPlay error: $e');
-      _loadedSurah = null;
+      _loadedSurah  = null;
       _loadedImamId = null;
       rethrow;
     }
   }
-  
+
   Future<void> _appendNextChunk(int count) async {
     if (_playlist == null || _loadedSurah == null) return;
 
     final start = _lastAppendedAyah + 1;
-    final end = (start + count - 1).clamp(0, _totalAyahs);
+    final end   = (start + count - 1).clamp(0, _totalAyahs);
     if (start > end) return;
 
     final sources = <AudioSource>[];
@@ -100,14 +125,14 @@ class InterleavedAudioService {
       final s = _loadedSurah!.toString().padLeft(3, '0');
       final a = ayah.toString().padLeft(3, '0');
 
-      // ── Arabic ayah ──
+      // ── Arabic ayah ──────────────────────────────────────────────────────
       final localArabic = await _downloadService.getLocalArabicAyahPath(
           _loadedSurah!, ayah, _loadedImamId!);
-          
+
       final arabicMediaItem = MediaItem(
-          id: 'arabic_${_loadedSurah}_$ayah', 
-          title: 'Ayah $ayah (Arabic)', 
-          album: 'Surah $_loadedSurah'
+        id:    'arabic_${_loadedSurah}_$ayah',
+        title: 'Ayah $ayah (Arabic)',
+        album: 'Surah $_loadedSurah',
       );
 
       bool addedLocalArabic = false;
@@ -118,25 +143,24 @@ class InterleavedAudioService {
           addedLocalArabic = true;
         }
       }
-      
       if (!addedLocalArabic) {
         sources.add(AudioSource.uri(
           Uri.parse('$_everyayahBase/$_arabicFolder/$s$a.mp3'),
-          tag: arabicMediaItem
+          tag: arabicMediaItem,
         ));
       }
-      
+
       _segmentMetadata[currentSegmentIndex] = (ayah, false);
       currentSegmentIndex++;
 
-      // ── Urdu ayah ──
+      // ── Urdu ayah ────────────────────────────────────────────────────────
       final localUrdu = await _downloadService.getLocalUrduAyahPath(
           _loadedSurah!, ayah, _loadedImamId!);
-          
+
       final urduMediaItem = MediaItem(
-        id: 'urdu_${_loadedSurah}_$ayah', 
-        title: 'Ayah $ayah (Urdu)', 
-        album: 'Surah $_loadedSurah'
+        id:    'urdu_${_loadedSurah}_$ayah',
+        title: 'Ayah $ayah (Urdu)',
+        album: 'Surah $_loadedSurah',
       );
 
       bool addedLocalUrdu = false;
@@ -147,15 +171,14 @@ class InterleavedAudioService {
           addedLocalUrdu = true;
         }
       }
-      
       if (!addedLocalUrdu) {
-        // SENIOR FIX: The Urdu network stream fallback is back
+        // Network fallback — always available for all imams (Urdu is imam-agnostic)
         sources.add(AudioSource.uri(
           Uri.parse('$_everyayahBase/$_urduFolder/$s$a.mp3'),
-          tag: urduMediaItem
+          tag: urduMediaItem,
         ));
       }
-      
+
       _segmentMetadata[currentSegmentIndex] = (ayah, true);
       currentSegmentIndex++;
     }
@@ -165,27 +188,27 @@ class InterleavedAudioService {
   }
 
   Future<void> play() async {
-    try { await _player.play(); } 
+    try { await _player.play(); }
     catch (e) { debugPrint('InterleavedAudioService.play: $e'); }
   }
 
   Future<void> pause() async {
-    try { await _player.pause(); } 
+    try { await _player.pause(); }
     catch (e) { debugPrint('InterleavedAudioService.pause: $e'); }
   }
 
   Future<void> seek(Duration position) async {
-    try { await _player.seek(position); } 
+    try { await _player.seek(position); }
     catch (e) { debugPrint('InterleavedAudioService.seek: $e'); }
   }
 
   Future<void> setSpeed(double speed) async {
-    try { await _player.setSpeed(speed); } 
+    try { await _player.setSpeed(speed); }
     catch (e) { debugPrint('InterleavedAudioService.setSpeed: $e'); }
   }
 
   Future<void> dispose() async {
-    _loadedSurah = null;
+    _loadedSurah  = null;
     _loadedImamId = null;
     _indexSub?.cancel();
     await _player.dispose();

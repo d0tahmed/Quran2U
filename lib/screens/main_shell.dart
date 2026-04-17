@@ -7,8 +7,10 @@ import 'package:quran_recitation/screens/now_playing_screen.dart';
 import 'package:quran_recitation/screens/settings_screen.dart';
 import 'package:quran_recitation/screens/daily_inspiration_screen.dart'; 
 import 'package:quran_recitation/services/notification_service.dart';   
+import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 
-const _kBg = Color(0xFF05080F);
+const _kBg = AppColorsV2.bg;
 
 /// Global provider so any screen can switch tabs
 final shellIndexProvider = StateProvider<int>((ref) => 0);
@@ -54,7 +56,15 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    final index = ref.watch(shellIndexProvider);
+    final rawIndex = ref.watch(shellIndexProvider);
+    final index = rawIndex.clamp(0, _screens.length - 1);
+    if (rawIndex != index) {
+      // Defensive: if tab count changes (hot restart / restored state),
+      // ensure we always point at an existing screen.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(shellIndexProvider.notifier).state = index;
+      });
+    }
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -84,43 +94,46 @@ class _MainShellState extends ConsumerState<MainShell> {
           curve: ref.watch(navBarVisibleProvider) ? Curves.easeOutBack : Curves.easeInOut,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: ClipRRect(
+            child: GlassPanel(
+              // iOS-like floating bubble: more blur + subtle tint.
+              tint: AppColorsV2.surface,
               borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.02),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.06), width: 1),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))
-                    ],
-                  ),
-                  child: NavigationBar(
-                    selectedIndex: index,
-                    labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-                    onDestinationSelected: (i) =>
-                        ref.read(shellIndexProvider.notifier).state = i,
-                    // Perfectly balanced 3-item navigation
-                    destinations: const [
-                      NavigationDestination(
-                        icon: Icon(Icons.menu_book_outlined),
-                        selectedIcon: Icon(Icons.menu_book_rounded),
-                        label: 'Surahs',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.headphones_outlined),
-                        selectedIcon: Icon(Icons.headphones_rounded),
-                        label: 'Player',
-                      ),
-                      NavigationDestination(
-                        icon: Icon(Icons.settings_outlined),
-                        selectedIcon: Icon(Icons.settings_rounded),
-                        label: 'Settings',
-                      ),
-                    ],
-                  ),
+              padding: EdgeInsets.zero,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 26,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+              child: SizedBox(
+                // NavigationBar has an intrinsic height (~80). Constraining it
+                // smaller can cause RenderFlex overflow during layout.
+                height: 80,
+                child: NavigationBar(
+                  selectedIndex: index,
+                  labelBehavior:
+                      NavigationDestinationLabelBehavior.onlyShowSelected,
+                  onDestinationSelected: (i) =>
+                      ref.read(shellIndexProvider.notifier).state = i,
+                  destinations: const [
+                    NavigationDestination(
+                      icon: Icon(Icons.menu_book_outlined),
+                      selectedIcon: Icon(Icons.menu_book_rounded),
+                      label: 'Surahs',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.headphones_outlined),
+                      selectedIcon: Icon(Icons.headphones_rounded),
+                      label: 'Player',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.settings_outlined),
+                      selectedIcon: Icon(Icons.settings_rounded),
+                      label: 'Settings',
+                    ),
+                  ],
                 ),
               ),
             ),

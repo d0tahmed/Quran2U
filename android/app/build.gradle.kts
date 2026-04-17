@@ -15,6 +15,17 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+fun prop(name: String): String? =
+    keystoreProperties.getProperty(name)?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile = prop("storeFile")?.let { file(it) }
+val hasReleaseSigning =
+    releaseStoreFile != null &&
+        releaseStoreFile.exists() &&
+        prop("storePassword") != null &&
+        prop("keyPassword") != null &&
+        prop("keyAlias") != null
+
 android {
     namespace = "com.quran2u.app"
     compileSdk = flutter.compileSdkVersion
@@ -45,20 +56,25 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
-            val storeFileProp = keystoreProperties.getProperty("storeFile")
-            if (storeFileProp != null) {
-                storeFile = file(storeFileProp)
+            keyAlias = prop("keyAlias")
+            keyPassword = prop("keyPassword")
+            if (releaseStoreFile != null) {
+                storeFile = releaseStoreFile
             }
-            storePassword = keystoreProperties.getProperty("storePassword")
+            storePassword = prop("storePassword")
         }
     }
 
     buildTypes {
         getByName("release") {
-            // Link the signing config we created above
-            signingConfig = signingConfigs.getByName("release")
+            // If release keystore is not configured, fall back to debug signing
+            // to avoid blocking local release builds. Configure `android/key.properties`
+            // to use the real release keystore.
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = false
             isShrinkResources = false
         }

@@ -49,6 +49,53 @@ class QuranApiService {
     }
   }
 
+  /// Returns the Mushaf start page (1..604) for a given surah.
+  ///
+  /// Uses cached `/chapters` data when available; otherwise fetches it.
+  Future<int> fetchSurahStartPage(int surahNumber) async {
+    List<dynamic>? chapters;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString(_surahCacheKey);
+      if (cached != null) {
+        chapters = jsonDecode(cached) as List;
+      }
+    } catch (_) {}
+
+    chapters ??= (() {
+      // Fallback: live fetch
+      return null;
+    })();
+
+    if (chapters == null) {
+      final response = await _dio.get('/chapters');
+      if (response.statusCode != 200) {
+        throw Exception('Failed to fetch chapters');
+      }
+      chapters = response.data['chapters'] as List;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_surahCacheKey, jsonEncode(chapters));
+      } catch (_) {}
+    }
+
+    final chapter = chapters.cast<Map<String, dynamic>>().firstWhere(
+          (ch) => ch['id'] == surahNumber,
+          orElse: () => <String, dynamic>{},
+        );
+
+    final pages = chapter['pages'];
+    if (pages is List && pages.isNotEmpty) {
+      final start = pages.first;
+      if (start is int) return start;
+      if (start is String) return int.tryParse(start) ?? 1;
+    }
+
+    // Defensive default: first page
+    return 1;
+  }
+
   Surah _surahFromMap(Map<String, dynamic> ch) {
     final id = ch['id'] as int;
     final apiName = ch['name_simple'] as String;

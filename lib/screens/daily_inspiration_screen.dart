@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 
-const _kGreen = Color(0xFF10B981);
-const _kGold  = Color(0xFFEAB308);
-const _kBg    = Color(0xFF05080F);
-const _kCard  = Color(0xFF121B2B);
+const _kGreen = AppColorsV2.primary;
+const _kGold = AppColorsV2.tertiary;
+const _kBg = AppColorsV2.bg;
+const _kCard = AppColorsV2.surfaceLow;
 
 class DailyInspirationScreen extends StatelessWidget {
   const DailyInspirationScreen({super.key});
@@ -35,6 +37,7 @@ class DailyInspirationScreen extends StatelessWidget {
           ),
           SafeArea(
             child: CustomScrollView(
+              physics: const NeverScrollableScrollPhysics(),
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
@@ -45,22 +48,23 @@ class DailyInspirationScreen extends StatelessWidget {
                         Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
                               onPressed: () => Navigator.pop(context),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                             ),
                             const SizedBox(width: 12),
                             Text('Daily Inspiration',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.manrope(
                                     color: Colors.white,
                                     fontSize: 24,
-                                    fontWeight: FontWeight.bold)),
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.6)),
                           ],
                         ),
                         Text('A daily dose of Quran & Sunnah',
-                            style: GoogleFonts.outfit(
-                                color: Colors.white38, fontSize: 13)),
+                            style: GoogleFonts.manrope(
+                                color: AppColorsV2.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 24),
 
                         // ── Ayah of the Day ──────────────────────────────
@@ -68,32 +72,25 @@ class DailyInspirationScreen extends StatelessWidget {
                           const Icon(Icons.menu_book_rounded, color: _kGold, size: 20),
                           const SizedBox(width: 8),
                           Text('Ayah of the Day',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.manrope(
                                   color: _kGold,
                                   fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.5)),
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 2.0)),
                         ]),
                         const SizedBox(height: 12),
-                        Container(
+                        GlassPanel(
                           padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: _kCard,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color: _kGold.withValues(alpha: 0.3), width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: _kGold.withValues(alpha: 0.05),
-                                  blurRadius: 20,
-                                  spreadRadius: 2)
-                            ],
-                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          tint: _kCard,
+                          border: Border.all(color: _kGold.withValues(alpha: 0.18), width: 1.5),
                           child: Column(children: [
                             Text(
                               todayData.arabicAyah,
                               textAlign: TextAlign.center,
                               textDirection: TextDirection.rtl,
+                              maxLines: 4,
+                              overflow: TextOverflow.fade,
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 24,
@@ -107,7 +104,9 @@ class DailyInspirationScreen extends StatelessWidget {
                             Text(
                               '"${todayData.translationAyah}"',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.outfit(
+                              maxLines: 5,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.manrope(
                                   color: Colors.white70,
                                   fontSize: 15,
                                   height: 1.6,
@@ -115,10 +114,10 @@ class DailyInspirationScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             Text(todayData.referenceAyah,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.manrope(
                                     color: _kGold,
                                     fontSize: 12,
-                                    fontWeight: FontWeight.bold)),
+                                    fontWeight: FontWeight.w900)),
                           ]),
                         ),
 
@@ -130,45 +129,39 @@ class DailyInspirationScreen extends StatelessWidget {
                               color: _kGreen, size: 18),
                           const SizedBox(width: 8),
                           Text('Hadith of the Day',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.manrope(
                                   color: _kGreen,
                                   fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.5)),
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 2.0)),
                         ]),
                         const SizedBox(height: 12),
-                        Container(
+                        GlassPanel(
                           padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: _kCard,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                                color: _kGreen.withValues(alpha: 0.3), width: 1.5),
-                            boxShadow: [
-                              BoxShadow(
-                                  color: _kGreen.withValues(alpha: 0.05),
-                                  blurRadius: 20,
-                                  spreadRadius: 2)
-                            ],
-                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          tint: _kCard,
+                          border: Border.all(color: _kGreen.withValues(alpha: 0.18), width: 1.5),
                           child: Column(children: [
                             Text(
                               '"${todayData.hadithText}"',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.outfit(
+                              maxLines: 7,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.manrope(
                                   color: Colors.white70,
                                   fontSize: 15,
-                                  height: 1.6),
+                                  height: 1.6,
+                                  fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 16),
                             Text(todayData.referenceHadith,
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.manrope(
                                     color: _kGreen,
                                     fontSize: 12,
-                                    fontWeight: FontWeight.bold)),
+                                    fontWeight: FontWeight.w900)),
                           ]),
                         ),
-                        const SizedBox(height: 120),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
@@ -444,5 +437,45 @@ const _dailyData = [
     "Surah Al-An'am 6:162",
     "The most beloved speech to Allah is when the servant says: Glory be to You, O Allah, and I praise You, and blessed is Your Name, and exalted is Your Majesty, and there is no god but You.",
     "Sahih Muslim 601",
+  ),
+  // 32
+  _DailyContent(
+    "فَابْتَغُوا عِنْدَ اللَّهِ الرِّزْقَ وَاعْبُدُوهُ وَاشْكُرُوا لَهُ",
+    "So seek provision from Allah, and worship Him and be grateful to Him.",
+    "Surah Al-'Ankabut 29:17",
+    "The most beloved of places to Allah are the mosques, and the most hated of places to Allah are the markets.",
+    "Sahih Muslim 671",
+  ),
+  // 33
+  _DailyContent(
+    "إِنَّمَا یُوَفَّى ٱلصَّـٰبِرُونَ أَجۡرَهُم بِغَیۡرِ حِسَابٍ",
+    "Indeed, the patient will be given their reward without account.",
+    "Surah Az-Zumar 39:10",
+    "No fatigue, nor disease, nor sorrow, nor sadness, nor hurt, nor distress befalls a Muslim, even if it were the prick he receives from a thorn, but that Allah expiates some of his sins for that.",
+    "Sahih al-Bukhari 5641",
+  ),
+  // 34
+  _DailyContent(
+    "لَا یُكَلِّفُ ٱللَّهُ نَفۡسًا إِلَّا وُسۡعَهَا",
+    "Allah does not burden a soul beyond that it can bear.",
+    "Surah Al-Baqarah 2:286",
+    "Allah says: 'I am as My servant thinks I am. I am with him when he makes mention of Me.'",
+    "Sahih al-Bukhari 7405",
+  ),
+  // 35
+  _DailyContent(
+    "وَٱسۡتَعِینُوا۟ بِٱلصَّبۡرِ وَٱلصَّلَوٰةِ",
+    "And seek help through patience and prayer.",
+    "Surah Al-Baqarah 2:45",
+    "The first matter that the slave will be brought to account for on the Day of Judgment is the prayer.",
+    "Sunan Ibn Majah 1425",
+  ),
+  // 36
+  _DailyContent(
+    "وَٱللَّهُ یَعۡلَمُ وَأَنتُمۡ لَا تَعۡلَمُونَ",
+    "And Allah knows, while you know not.",
+    "Surah Al-Baqarah 2:216",
+    "Verily, Allah does not look to your bodies nor to your faces, but He looks to your hearts.",
+    "Sahih Muslim 2564",
   ),
 ];

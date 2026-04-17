@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:adhan/adhan.dart';
 import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 
-const _kGreen = Color(0xFF10B981);
-const _kBg = Color(0xFF05080F);
-const _kCard = Color(0xFF121B2B);
+const _kGreen = AppColorsV2.primary;
+const _kBg = AppColorsV2.bg;
+const _kCard = AppColorsV2.surfaceLow;
 
 class PrayerTimesScreen extends ConsumerWidget {
   const PrayerTimesScreen({super.key});
@@ -21,18 +23,26 @@ class PrayerTimesScreen extends ConsumerWidget {
       backgroundColor: _kBg,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Prayer Times', style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 18)),
-        backgroundColor: Colors.transparent,
+        title: Text(
+          'Prayer Times',
+          style: GoogleFonts.manrope(
+            color: AppColorsV2.onSurface,
+            fontWeight: FontWeight.w900,
+            fontSize: 18,
+            letterSpacing: -0.2,
+          ),
+        ),
+        backgroundColor: _kBg.withValues(alpha: 0.80),
         elevation: 0,
         centerTitle: false,
       ),
       body: SafeArea(
         child: prayerAsync.when(
           loading: () => const Center(child: CircularProgressIndicator(color: _kGreen)),
-          error: (e, _) => Center(child: Text('Error loading times', style: GoogleFonts.outfit(color: Colors.white54))),
+          error: (e, _) => Center(child: Text('Error loading times', style: GoogleFonts.manrope(color: Colors.white54))),
           data: (prayerTimes) {
             final nextPrayer = prayerTimes.nextPrayer();
             final highlightPrayer = nextPrayer == Prayer.none ? Prayer.isha : nextPrayer;
@@ -42,13 +52,13 @@ class PrayerTimesScreen extends ConsumerWidget {
                 const SizedBox(height: 20),
                 Text(
                   DateFormat('dd MMMM yyyy').format(DateTime.now()),
-                  style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.manrope(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8),
                 ),
                 const SizedBox(height: 4),
                 locationAsync.when(
                   data: (coords) => Text(
                     '${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}',
-                    style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13, letterSpacing: 1),
+                    style: GoogleFonts.manrope(color: AppColorsV2.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.6),
                   ),
                   loading: () => const SizedBox(),
                   error: (_, __) => const SizedBox(),
@@ -88,27 +98,26 @@ class _PrayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        color: isHighlighted ? _kGreen.withValues(alpha: 0.15) : _kCard,
-        borderRadius: BorderRadius.circular(16),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GlassPanel(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        borderRadius: BorderRadius.circular(20),
+        tint: _kCard,
         border: Border.all(
-          color: isHighlighted ? _kGreen.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.05),
+          color: isHighlighted ? _kGreen.withValues(alpha: 0.22) : Colors.white.withValues(alpha: 0.06),
           width: isHighlighted ? 1.5 : 1.0,
         ),
-      ),
       child: Row(
         children: [
           Expanded(
             flex: 2,
             child: Text(
               name,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.manrope(
                 color: isHighlighted ? _kGreen : Colors.white,
                 fontSize: 16,
-                fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.w700,
               ),
             ),
           ),
@@ -122,14 +131,15 @@ class _PrayerRow extends StatelessWidget {
             child: Text(
               DateFormat.jm().format(time),
               textAlign: TextAlign.right,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.manrope(
                 color: isHighlighted ? Colors.white : Colors.white70,
                 fontSize: 18,
-                fontWeight: isHighlighted ? FontWeight.w700 : FontWeight.w600,
+                fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.w800,
               ),
             ),
           ),
         ],
+      ),
       ),
     );
   }

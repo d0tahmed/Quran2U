@@ -2,7 +2,7 @@ name: quran_recitation
 description: Open-source Quran recitation app with multiple Imams, offline support, and bookmarking.
 publish_to: 'none'
 
-version: 1.2.1+4
+version: 2.0.0+2007
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -61,6 +61,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/images/read_quran_bg.png
 
 # GMS
 dependency_overrides:

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,10 +13,11 @@ import 'package:quran_recitation/screens/daily_inspiration_screen.dart';
 import 'package:quran_recitation/screens/bookmarks_screen.dart';        
 import 'package:quran_recitation/screens/read_quran_screen.dart'; // NEW IMPORT
 import 'package:quran_recitation/screens/main_shell.dart';
+import 'package:quran_recitation/ui_v2/app_colors.dart';
 
-const _kGreen = Color(0xFF10B981);
-const _kGold = Color(0xFFEAB308);
-const _kBlue = Color(0xFF3B82F6); // Added a nice blue for the Read button
+const _kGreen = AppColorsV2.primary;
+const _kGold = AppColorsV2.tertiary;
+const _kBlue = AppColorsV2.secondary;
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -29,49 +29,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   final _ctrl = TextEditingController();
   String _query = '';
-  late AnimationController _headerAnim;
 
   @override
   void initState() {
     super.initState();
-    _headerAnim = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800));
-    _headerAnim.forward();
   }
 
   @override
   void dispose() {
     _ctrl.dispose();
-    _headerAnim.dispose();
     super.dispose();
   }
 
   static String _short(String name) => name.split(' ').last;
-
-  // Helper method to keep dashboard buttons clean
-  Widget _buildActionBtn(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.2)),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(height: 6),
-              Text(title, style: GoogleFonts.outfit(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,21 +50,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final imams = ref.watch(imamsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent, 
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          Positioned(
-            top: -150, left: -50, right: -50,
-            child: Container(
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [_kGreen.withValues(alpha: 0.15), Colors.transparent],
-                ),
-              ),
-            ),
-          ),
           SafeArea(
             bottom: false,
             child: NotificationListener<UserScrollNotification>(
@@ -109,34 +67,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               child: CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 72,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                        child: Center(
+                          child: Text(
+                            'Quran2U',
+                            style: GoogleFonts.manrope(
+                              color: _kGreen,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 3,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                          child: Center(
-                            child: Text('Quran2U',
-                                style: GoogleFonts.outfit(fontSize: 22, color: _kGold, letterSpacing: 3.0, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
+                        const SizedBox(height: 8),
 
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Center(
-                            child: Text('بِسۡمِ ٱللَّهِ ٱلرَّحۡمَـٰنِ ٱلرَّحِيمِ',
-                                textDirection: TextDirection.rtl,
-                                style: TextStyle(fontSize: 15, color: _kGold.withValues(alpha: 0.65), fontFamily: GoogleFonts.amiri().fontFamily, height: 2)),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _NextPrayerCard(),
                         ),
 
-                        const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
-                        const SizedBox(height: 14),
-
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: _NamazAndQiblaCard(),
-                        ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
 
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -145,82 +105,93 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             style: const TextStyle(color: Colors.white, fontSize: 14),
                             onChanged: (v) => setState(() => _query = v),
                             decoration: InputDecoration(
-                              hintText: 'Search surah by name or number...',
+                              hintText: 'Search surah by name or n…',
                               prefixIcon: const Icon(Icons.search_rounded, size: 20),
                               suffixIcon: _query.isNotEmpty
                                   ? IconButton(
                                       icon: const Icon(Icons.close_rounded, size: 18, color: Colors.white38),
-                                      onPressed: () { _ctrl.clear(); setState(() => _query = ''); })
+                                      onPressed: () {
+                                        _ctrl.clear();
+                                        setState(() => _query = '');
+                                      },
+                                    )
                                   : null,
                             ),
                           ),
                         ),
+
                         const SizedBox(height: 16),
 
                         Padding(
-                          padding: const EdgeInsets.only(left: 20, bottom: 8),
-                          child: Text('RECITER',
-                              style: GoogleFonts.outfit(fontSize: 10, color: Colors.white30, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: _BentoActionsRow(
+                            onRead: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ReadQuranScreen()),
+                            ),
+                            onDaily: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const DailyInspirationScreen()),
+                            ),
+                            onSaved: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const BookmarksScreen()),
+                            ),
+                          ),
                         ),
+
+                        const SizedBox(height: 22),
+
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Reciters',
+                                style: GoogleFonts.manrope(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
                         SizedBox(
-                          height: 36,
+                          height: 40,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: imams.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            separatorBuilder: (_, __) => const SizedBox(width: 10),
                             itemBuilder: (_, i) {
                               final imam = imams[i];
                               final sel = selectedImam?.id == imam.id;
-                              return AnimatedScale(
-                                scale: sel ? 1.06 : 1.0,
-                                duration: const Duration(milliseconds: 180),
-                                child: GestureDetector(
-                                  onTap: () => ref.read(selectedImamProvider.notifier).state = imam,
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(18),
-                                    child: BackdropFilter(
-                                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                                      child: AnimatedContainer(
-                                        duration: const Duration(milliseconds: 180),
-                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: sel ? _kGreen : Colors.white.withValues(alpha: 0.05),
-                                          borderRadius: BorderRadius.circular(18),
-                                          border: Border.all(color: sel ? _kGreen : Colors.white.withValues(alpha: 0.08)),
-                                          boxShadow: sel ? [BoxShadow(color: _kGreen.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 1)] : [],
-                                        ),
-                                        child: Text(_short(imam.name),
-                                            style: GoogleFonts.outfit(fontSize: 12, fontWeight: sel ? FontWeight.w600 : FontWeight.w400, color: sel ? Colors.white : Colors.white54)),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                              return _ReciterPill(
+                                text: _short(imam.name),
+                                selected: sel,
+                                onTap: () => ref.read(selectedImamProvider.notifier).state = imam,
                               );
                             },
                           ),
                         ),
-                        const SizedBox(height: 16),
 
-                        // SENIOR FIX: The beautifully spaced 3-button layout
+                        const SizedBox(height: 20),
+
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            children: [
-                              _buildActionBtn(context, 'Read Quran', Icons.auto_stories_rounded, _kBlue, 
-                                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReadQuranScreen()))),
-                              const SizedBox(width: 12),
-                              _buildActionBtn(context, 'Daily', Icons.wb_sunny_rounded, _kGold, 
-                                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DailyInspirationScreen()))),
-                              const SizedBox(width: 12),
-                              _buildActionBtn(context, 'Saved', Icons.bookmark_rounded, _kGreen, 
-                                () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BookmarksScreen()))),
-                            ],
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            'Surahs',
+                            style: GoogleFonts.manrope(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
-                        
-                        const SizedBox(height: 12),
-                        const Divider(color: Colors.white10, height: 16, indent: 20, endIndent: 20),
+                        const SizedBox(height: 10),
                       ],
                     ),
                   ),
@@ -262,15 +233,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     return SliverPadding(
-      padding: const EdgeInsets.only(bottom: 140),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 140),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            if (index.isOdd) return const Divider(height: 1, thickness: 1, color: Color(0x0CFFFFFF), indent: 72);
-            final i = index ~/ 2;
-            return _AnimatedRow(index: i, child: _SurahRow(surah: list[i]));
+            final surah = list[index];
+            return _AnimatedRow(
+              index: index,
+              child: _SurahCardRow(surah: surah),
+            );
           },
-          childCount: list.length * 2 - 1,
+          childCount: list.length,
         ),
       ),
     );
@@ -292,112 +265,499 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       );
 }
 
-class _NamazAndQiblaCard extends ConsumerWidget {
-  const _NamazAndQiblaCard();
-
+class _NextPrayerCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final prayerAsync = ref.watch(prayerTimesProvider);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      // FIX: Increased vertical padding slightly to accommodate potential wrapping
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       decoration: BoxDecoration(
-        color: const Color(0xFF121B2B),
+        color: AppColorsV2.surfaceHigh,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.28),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          )
+        ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: prayerAsync.when(
               data: (prayerTimes) {
                 final nextPrayer = prayerTimes.nextPrayer();
                 final time = prayerTimes.timeForPrayer(nextPrayer);
-                final name = nextPrayer == Prayer.none ? 'Isha' : nextPrayer.name.toUpperCase();
+                final name =
+                    nextPrayer == Prayer.none ? 'ISHA' : nextPrayer.name.toUpperCase();
                 final timeStr = time != null ? DateFormat.jm().format(time) : '--:--';
-
+                
                 return InkWell(
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrayerTimesScreen())),
-                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const PrayerTimesScreen()),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
+                      Text(
+                        'NEXT PRAYER',
+                        style: GoogleFonts.manrope(
+                          color: AppColorsV2.onSurfaceVariant,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      // FIX: Replaced the Row with a Wrap so longer times don't get cut off
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 12,
+                        runSpacing: 4,
                         children: [
-                          Text('NEXT PRAYER', style: GoogleFonts.outfit(color: _kGreen, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.open_in_new_rounded, color: Colors.white24, size: 10),
+                          Text(
+                            name,
+                            style: GoogleFonts.manrope(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: _kGreen,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Text(
+                            timeStr,
+                            style: GoogleFonts.manrope(
+                              color: Colors.white70,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text('$name • $timeStr', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 );
               },
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0),
-                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: _kGreen, strokeWidth: 2)),
+              loading: () => const Center(
+                child: SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: _kGreen,
+                  ),
+                ),
               ),
-              error: (_, __) => Text('Prayer times offline', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 12)),
+              error: (_, __) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('NEXT PRAYER',
+                      style: GoogleFonts.manrope(
+                          color: AppColorsV2.onSurfaceVariant,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0)),
+                  const SizedBox(height: 4),
+                  Text('Location required',
+                      style: GoogleFonts.manrope(
+                          color: AppColorsV2.danger,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700)),
+                ],
+              ),
             ),
           ),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QiblaScreen())),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _kGold.withValues(alpha: 0.15),
-              foregroundColor: _kGold,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          const SizedBox(width: 12),
+          // Qibla Button
+          InkWell(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const QiblaScreen()),
             ),
-            icon: const Icon(Icons.explore_rounded, size: 18),
-            label: Text('Qibla', style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 13)),
-          )
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: _kGreen.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _kGreen.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.explore_rounded, color: _kGreen, size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Qibla',
+                    style: GoogleFonts.manrope(
+                      color: _kGreen,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
+class _BentoActionsRow extends StatelessWidget {
+  final VoidCallback onRead;
+  final VoidCallback onDaily;
+  final VoidCallback onSaved;
+  const _BentoActionsRow({required this.onRead, required this.onDaily, required this.onSaved});
 
-class _SurahRow extends ConsumerWidget {
+  static const String _readQuranBgAsset = 'assets/images/read_quran_bg.png';
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        AspectRatio(
+          aspectRatio: 16 / 6.5,
+          child: InkWell(
+            onTap: onRead,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: AppColorsV2.surfaceHigh,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      _readQuranBgAsset,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.centerRight,
+                      filterQuality: FilterQuality.low,
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomLeft,
+                          end: Alignment.topRight,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.72),
+                            Colors.black.withValues(alpha: 0.38),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.55, 1.0],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Read Quran',
+                                  style: GoogleFonts.manrope(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Continue reading',
+                                  style: GoogleFonts.manrope(
+                                    color: _kGreen,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: _kGreen.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: _kGreen.withValues(alpha: 0.18)),
+                            ),
+                            child: const Icon(Icons.auto_stories_rounded, color: _kGreen),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: _MiniBentoTile(
+                  title: 'Daily',
+                  subtitle: 'Ayah of the day',
+                  icon: Icons.star_rounded,
+                  tint: _kGold,
+                  onTap: onDaily,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: _MiniBentoTile(
+                  title: 'Saved',
+                  subtitle: 'Bookmarks',
+                  icon: Icons.bookmark_rounded,
+                  tint: _kBlue,
+                  onTap: onSaved,
+                ),
+              ),
+            ),
+          ],
+        )
+      ],
+    );
+  }
+}
+
+class _MiniBentoTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color tint;
+  final VoidCallback onTap;
+  const _MiniBentoTile({required this.title, required this.subtitle, required this.icon, required this.tint, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColorsV2.surfaceLow,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: tint.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: tint),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.manrope(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.manrope(
+                    color: AppColorsV2.onSurfaceVariant,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReciterPill extends StatelessWidget {
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ReciterPill({required this.text, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: selected ? 1.02 : 1.0,
+      duration: const Duration(milliseconds: 180),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? _kGreen : AppColorsV2.surfaceHigh,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: selected ? _kGreen : Colors.white.withValues(alpha: 0.08)),
+          ),
+          child: Text(
+            text,
+            style: GoogleFonts.manrope(
+              color: selected ? const Color(0xFF002113) : AppColorsV2.onSurfaceVariant,
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SurahCardRow extends ConsumerWidget {
   final Surah surah;
-  const _SurahRow({required this.surah});
+  const _SurahCardRow({required this.surah});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isBookmarked = ref.watch(bookmarksProvider).any((b) => b.surahNumber == surah.number && b.ayahNumber == null);
 
-    return InkWell(
-      onTap: () => Navigator.of(context).push(PageRouteBuilder(pageBuilder: (_, __, ___) => SurahDetailScreen(surah: surah), transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child))),
-      splashColor: Colors.white.withValues(alpha: 0.03), highlightColor: Colors.white.withValues(alpha: 0.015),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-        child: Row(
-          children: [
-            SizedBox(width: 40, child: Text(surah.number.toString().padLeft(3, '0'), style: GoogleFonts.outfit(fontSize: 13, color: _kGreen, fontWeight: FontWeight.w700, letterSpacing: 0.5))),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(surah.name, style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
-                  const SizedBox(height: 2),
-                  Text('${surah.ayahCount} verses  ·  ${surah.revelationType}', style: GoogleFonts.outfit(fontSize: 11, color: Colors.white38)),
-                ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => SurahDetailScreen(surah: surah),
+            transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
+          ),
+        ),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColorsV2.surfaceLow,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColorsV2.surfaceHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  surah.number.toString().padLeft(3, '0'),
+                  style: GoogleFonts.manrope(
+                    color: _kGreen,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
-            ),
-            Text(surah.nameArabic, textDirection: TextDirection.rtl, style: TextStyle(fontSize: 18, color: _kGold, fontFamily: GoogleFonts.amiri().fontFamily)),
-            const SizedBox(width: 10),
-            GestureDetector(
-              onTap: () {
-                final bks = ref.read(bookmarksProvider);
-                if (isBookmarked) { ref.read(bookmarksProvider.notifier).updateBookmarks(bks.where((b) => !(b.surahNumber == surah.number && b.ayahNumber == null)).toList());
-                } else { ref.read(bookmarksProvider.notifier).updateBookmarks([...bks, Bookmark(id: DateTime.now().millisecondsSinceEpoch.toString(), surahNumber: surah.number, title: surah.name, createdAt: DateTime.now())]); }
-              },
-              child: Icon(isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded, color: isBookmarked ? _kGreen : Colors.white24, size: 18),
-            ),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      surah.name,
+                      style: GoogleFonts.manrope(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${surah.nameTranslation} • ${surah.ayahCount} Verses',
+                      style: GoogleFonts.manrope(
+                        color: AppColorsV2.onSurfaceVariant,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                surah.nameArabic,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontSize: 22,
+                  color: _kGreen.withValues(alpha: 0.90),
+                  fontFamily: GoogleFonts.amiri().fontFamily,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton(
+                onPressed: () {
+                  final bks = ref.read(bookmarksProvider);
+                  if (isBookmarked) {
+                    ref.read(bookmarksProvider.notifier).updateBookmarks(
+                      bks.where((b) => !(b.surahNumber == surah.number && b.ayahNumber == null)).toList(),
+                    );
+                  } else {
+                    ref.read(bookmarksProvider.notifier).updateBookmarks([
+                      ...bks,
+                      Bookmark(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        surahNumber: surah.number,
+                        title: surah.name,
+                        createdAt: DateTime.now(),
+                      ),
+                    ]);
+                  }
+                },
+                icon: Icon(
+                  isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                  color: isBookmarked ? _kGreen : Colors.white24,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -446,7 +806,7 @@ class _ShimmerListState extends State<_ShimmerList> with SingleTickerProviderSta
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) {
-        final shimmer = Color.lerp(const Color(0xFF161E2E), const Color(0xFF1E2D44), _anim.value)!;
+        final shimmer = Color.lerp(AppColorsV2.surfaceLow, AppColorsV2.surfaceHigh, _anim.value)!;
         return SliverPadding(
           padding: const EdgeInsets.only(top: 8, bottom: 140),
           sliver: SliverList(
@@ -454,13 +814,17 @@ class _ShimmerListState extends State<_ShimmerList> with SingleTickerProviderSta
               (_, i) => Opacity(
                 opacity: (1.0 - i * 0.06).clamp(0.2, 1.0),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   child: Row(children: [
-                    Container(width: 40, height: 14, decoration: BoxDecoration(color: shimmer, borderRadius: BorderRadius.circular(4))),
-                    const SizedBox(width: 16),
-                    Container(width: 120, height: 14, decoration: BoxDecoration(color: shimmer, borderRadius: BorderRadius.circular(4))),
-                    const Spacer(),
-                    Container(width: 50, height: 18, decoration: BoxDecoration(color: shimmer, borderRadius: BorderRadius.circular(4))),
+                    Container(width: 42, height: 42, decoration: BoxDecoration(color: shimmer, borderRadius: BorderRadius.circular(12))),
+                    const SizedBox(width: 14),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Container(width: 140, height: 12, decoration: BoxDecoration(color: shimmer, borderRadius: BorderRadius.circular(6))),
+                      const SizedBox(height: 8),
+                      Container(width: 190, height: 10, decoration: BoxDecoration(color: shimmer.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(6))),
+                    ])),
+                    const SizedBox(width: 14),
+                    Container(width: 64, height: 18, decoration: BoxDecoration(color: shimmer, borderRadius: BorderRadius.circular(6))),
                   ]),
                 ),
               ),

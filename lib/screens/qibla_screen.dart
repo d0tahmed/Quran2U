@@ -7,9 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:adhan/adhan.dart';
 import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/ui_v2/app_colors.dart';
 
-const _kGreen = Color(0xFF10B981);
-const _kBg = Color(0xFF05080F);
+const _kGreen = AppColorsV2.primary;
+const _kBg = AppColorsV2.bg;
 
 class QiblaScreen extends ConsumerStatefulWidget {
   const QiblaScreen({super.key});
@@ -97,7 +98,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
                       child: Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                            icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
                             onPressed: () => Navigator.pop(context),
                           ),
                           const Spacer(),
@@ -106,10 +107,10 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
                     ),
                     
                     Text('Qibla Compass',
-                        style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                        style: GoogleFonts.manrope(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8)),
                     const SizedBox(height: 4),
                     Text('${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}',
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13, letterSpacing: 1)),
+                        style: GoogleFonts.manrope(color: AppColorsV2.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.6)),
                     
                     const Spacer(),
 
@@ -166,7 +167,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
                                 duration: const Duration(milliseconds: 200),
                                 child: Text(
                                   'Facing Qibla',
-                                  style: GoogleFonts.outfit(color: _kGreen, fontWeight: FontWeight.bold, fontSize: 18),
+                                  style: GoogleFonts.manrope(color: _kGreen, fontWeight: FontWeight.w900, fontSize: 18),
                                 ),
                               ),
                             ],
@@ -186,7 +187,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
                       ),
                       child: Text(
                         'Align the white needle upward',
-                        style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13),
+                        style: GoogleFonts.manrope(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w600),
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -207,7 +208,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
         children: [
           const Icon(Icons.location_off_rounded, color: Colors.white24, size: 50),
           const SizedBox(height: 16),
-          Text('Location unavailable', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 16)),
+          Text('Location unavailable', style: GoogleFonts.manrope(color: Colors.white54, fontSize: 16, fontWeight: FontWeight.w700)),
         ],
       ),
     );

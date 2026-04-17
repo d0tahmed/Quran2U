@@ -5,11 +5,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/downloads_screen.dart';
+import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 
-const _kGreen = Color(0xFF10B981);
-const _kGold  = Color(0xFFEAB308);
-const _kBg    = Color(0xFF05080F);
-const _kCard  = Color(0xFF121B2B);
+const _kGreen = AppColorsV2.primary;
+const _kGold = AppColorsV2.tertiary;
+const _kBg = AppColorsV2.bg;
+const _kCard = AppColorsV2.surfaceLow;
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -20,13 +22,11 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   double _speed = 1.0;
   bool _translationExpanded = false;
-  bool _tarjumahExpanded = false;
 
-  // SENIOR FIX: The function that safely opens the native email app
   Future<void> _reportBug() async {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
-      path: 'd0tahmedgithub@gmail.com', // LOCKED IN: Your official dev email!
+      path: 'd0tahmedgithub@gmail.com', 
       queryParameters: {
         'subject': 'Bug Report: Quran2U App',
         'body': 'Describe the bug here...\n\n',
@@ -41,7 +41,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not open email app. Email us at d0tahmedgithub@gmail.com', style: GoogleFonts.outfit()),
+            content: Text(
+              'Could not open email app. Email us at d0tahmedgithub@gmail.com',
+              style: GoogleFonts.manrope(fontWeight: FontWeight.w700),
+            ),
             backgroundColor: Colors.red.shade800,
           ),
         );
@@ -54,6 +57,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final selectedImam       = ref.watch(selectedImamProvider);
     final selectedTranslation = ref.watch(selectedTranslationProvider);
     final tarjumahMode       = ref.watch(tarjumahModeProvider);
+    final isTarjumahSupported = ref.watch(isTarjumahSupportedProvider); 
     final bulkState          = ref.watch(bulkDownloadProvider);
 
     return Scaffold(
@@ -61,78 +65,275 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: SafeArea(
         bottom: false,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 140),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 140),
           children: [
-            // ── Header ──────────────────────────────────────────────────────
-            Text('Settings',
-                style: GoogleFonts.outfit(
-                    color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 2),
-            Text('Quran2U',
-                style: GoogleFonts.outfit(
-                    color: Colors.white24, fontSize: 11, letterSpacing: 2.0)),
-            const SizedBox(height: 28),
-
-            // ── Support / Bug Report ─────────────────────────────────────────
-            _SectionLabel('Support'),
-            const SizedBox(height: 10),
-            _GlassCard(
-              child: InkWell(
-                onTap: _reportBug,
-                borderRadius: BorderRadius.circular(14),
-                child: Row(children: [
-                  _IconBox(icon: Icons.bug_report_rounded, color: Colors.redAccent),
-                  const SizedBox(width: 14),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Report a Bug',
-                        style: GoogleFonts.outfit(
-                            color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                    Text('Help us improve the app',
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
-                  ])),
-                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 13),
-                ]),
+            Center(
+              child: Text(
+                'Quran2U',
+                style: GoogleFonts.manrope(
+                  color: _kGreen,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.4,
+                ),
               ),
             ),
-            const SizedBox(height: 24),
 
-            // ── Playback Speed ───────────────────────────────────────────────
-            _SectionLabel('Playback Speed'),
-            const SizedBox(height: 10),
-            _GlassCard(
-              child: Column(children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 18),
+
+            Text(
+              'Settings',
+              style: GoogleFonts.manrope(
+                color: AppColorsV2.onSurface,
+                fontSize: 34,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -1.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Personalize your spiritual experience',
+              style: GoogleFonts.manrope(
+                color: AppColorsV2.onSurfaceVariant,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            if (selectedImam != null)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColorsV2.surfaceLow,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                ),
+                child: Row(
                   children: [
-                    Text('0.5×', style: GoogleFonts.outfit(color: Colors.white24, fontSize: 12)),
-                    Text('${_speed.toStringAsFixed(1)}×',
-                        style: GoogleFonts.outfit(
-                            color: _kGreen, fontSize: 22, fontWeight: FontWeight.bold)),
-                    Text('2.0×', style: GoogleFonts.outfit(color: Colors.white24, fontSize: 12)),
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: _kGreen.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: _kGreen.withValues(alpha: 0.18), width: 2),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        selectedImam.name.split(' ').last.characters.first.toUpperCase(),
+                        style: GoogleFonts.manrope(
+                          color: _kGreen,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _kGreen.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              'CURRENT RECITER',
+                              style: GoogleFonts.manrope(
+                                color: _kGreen,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2.0,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            selectedImam.name,
+                            style: GoogleFonts.manrope(
+                              color: AppColorsV2.onSurface,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.4,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            selectedImam.country,
+                            style: GoogleFonts.manrope(
+                              color: AppColorsV2.onSurfaceVariant,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: _kGreen,
-                    inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
-                    thumbColor: Colors.white,
-                    overlayColor: _kGreen.withValues(alpha: 0.15),
-                    trackHeight: 3,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+              ),
+
+            const SizedBox(height: 22),
+
+            const _SectionHeader(icon: Icons.equalizer_rounded, text: 'Audio & Playback'),
+            const SizedBox(height: 10),
+
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AppColorsV2.surfaceLow,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Playback Speed',
+                        style: GoogleFonts.manrope(
+                          color: AppColorsV2.onSurface,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _kGreen.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          '${_speed.toStringAsFixed(2)}x',
+                          style: GoogleFonts.manrope(
+                            color: _kGreen,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Slider(
-                    value: _speed, min: 0.5, max: 2.0, divisions: 15,
+                  const SizedBox(height: 12),
+                  Slider(
+                    value: _speed,
+                    min: 0.5,
+                    max: 2.0,
+                    divisions: 15,
                     onChanged: (v) => setState(() => _speed = v),
                     onChangeEnd: (v) => ref.read(audioPlayerServiceProvider).setPlaybackRate(v),
                   ),
-                ),
-              ]),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: const [
+                      _TinyLabel('0.5X'),
+                      _TinyLabel('1.0X'),
+                      _TinyLabel('1.5X'),
+                      _TinyLabel('2.0X'),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
 
-            // ── Written Translation ──────────────────────────────────────────
-            _SectionLabel('Written Translation'),
+            const SizedBox(height: 12),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColorsV2.surfaceLow,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: isTarjumahSupported 
+                          ? _kGold.withValues(alpha: 0.12)
+                          : Colors.grey.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(Icons.record_voice_over_rounded, 
+                                color: isTarjumahSupported ? _kGold : Colors.grey),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Audio Tarjumah',
+                          style: GoogleFonts.manrope(
+                            color: isTarjumahSupported ? AppColorsV2.onSurface : Colors.grey,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isTarjumahSupported 
+                              ? 'Voice Translation after Ayah'
+                              : 'Not available for Sheikh Bandar Al-Balilah',
+                          style: GoogleFonts.manrope(
+                            color: isTarjumahSupported 
+                                ? AppColorsV2.onSurfaceVariant 
+                                : Colors.redAccent.withValues(alpha: 0.8),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      if (!isTarjumahSupported) {
+                         ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Tarjumah is currently unavailable for Sheikh Bandar Al-Balilah.',
+                              style: GoogleFonts.manrope(),
+                            ),
+                            backgroundColor: Colors.red.shade800,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                    child: AbsorbPointer(
+                      absorbing: !isTarjumahSupported,
+                      child: Switch(
+                        value: isTarjumahSupported ? tarjumahMode : false,
+                        onChanged: isTarjumahSupported 
+                            ? (val) {
+                                ref.read(tarjumahModeProvider.notifier).state = val;
+                                ref.read(audioPlayerServiceProvider).player.stop();
+                                ref.read(interleavedAudioServiceProvider).player.stop();
+                              }
+                            : null,
+                        activeColor: _kGreen,
+                        activeTrackColor: _kGreen.withValues(alpha: 0.25),
+                        inactiveThumbColor: Colors.white38,
+                        inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 22),
+
+            const _SectionHeader(icon: Icons.translate_rounded, text: 'Translations'),
             const SizedBox(height: 10),
             _ExpandableCard(
               expanded: _translationExpanded,
@@ -171,167 +372,175 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
 
-            // ── Audio Tarjumah ───────────────────────────────────────────────
-            _SectionLabel('Audio Tarjumah'),
+            const SizedBox(height: 22),
+
+            const _SectionHeader(icon: Icons.library_books_rounded, text: 'Library'),
             const SizedBox(height: 10),
-            _GlassCard(
-              accentColor: tarjumahMode ? _kGold : null,
-              child: Row(
-                children: [
-                  _IconBox(icon: Icons.record_voice_over_rounded, color: _kGold),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Urdu Audio Tarjumah',
-                          style: GoogleFonts.outfit(
-                              color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                      Text(
-                        tarjumahMode
-                            ? 'ON — Shamshad Ali Khan'
-                            : 'Off — Standard recitation',
-                        style: GoogleFonts.outfit(
-                            color: tarjumahMode ? _kGold : Colors.white38, fontSize: 11),
+            Row(
+              children: [
+                Expanded(
+                  child: _TileButton(
+                    icon: Icons.download_for_offline_rounded,
+                    iconColor: _kGold,
+                    title: 'Manage Downloads',
+                    subtitle: 'Offline Surahs',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DownloadsScreen())),
+                    background: AppColorsV2.surfaceLow,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _TileButton(
+                    icon: Icons.cloud_download_rounded,
+                    iconColor: _kGreen,
+                    title: 'Offline Mode',
+                    subtitle: 'Download Entire Quran',
+                    onTap: () => _QuranDownloadTile(bulkState: bulkState).show(context, ref),
+                    background: _kGreen.withValues(alpha: 0.10),
+                    borderColor: _kGreen.withValues(alpha: 0.22),
+                  ),
+                ),
+              ],
+            ),
+
+            if (bulkState.isDownloading) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _kGreen.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _kGreen.withValues(alpha: 0.22)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const SizedBox(
+                          width: 14, height: 14,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: _kGreen),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Surah ${bulkState.currentSurah} of 114  ·  '
+                            '${(bulkState.overallProgress * 100).toStringAsFixed(0)}%',
+                            style: GoogleFonts.manrope(
+                                color: _kGreen,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              ref.read(bulkDownloadProvider.notifier).cancel(),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(56, 28),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text('Cancel',
+                              style: GoogleFonts.manrope(fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(bulkState.status,
+                        style: GoogleFonts.manrope(
+                            color: AppColorsV2.onSurfaceVariant, fontSize: 10),
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: bulkState.overallProgress,
+                        minHeight: 4,
+                        backgroundColor: Colors.white.withValues(alpha: 0.08),
+                        valueColor: const AlwaysStoppedAnimation(_kGreen),
                       ),
-                    ]),
-                  ),
-                  Switch(
-                    value: tarjumahMode,
-                    onChanged: (val) {
-                      ref.read(tarjumahModeProvider.notifier).state = val;
-                      ref.read(audioPlayerServiceProvider).player.stop();
-                      ref.read(interleavedAudioServiceProvider).player.stop();
-                    },
-                    activeColor: _kGold,
-                    activeTrackColor: _kGold.withValues(alpha: 0.25),
-                    inactiveThumbColor: Colors.white38,
-                    inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
-                  ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 12),
+            _TileButton(
+              icon: Icons.palette_rounded,
+              iconColor: _kGold,
+              title: 'Tajweed Guide',
+              subtitle: 'Color-coded pronunciation rules',
+              onTap: () => _showTajweedGuide(context),
+              background: AppColorsV2.surfaceLow,
+            ),
+
+            const SizedBox(height: 22),
+
+            const _SectionHeader(icon: Icons.bug_report_rounded, text: 'Support'),
+            const SizedBox(height: 10),
+            _TileButton(
+              icon: Icons.bug_report_rounded,
+              iconColor: AppColorsV2.danger,
+              title: 'Report a Bug',
+              subtitle: 'Help us improve the app',
+              onTap: _reportBug,
+              background: AppColorsV2.surfaceLow,
+            ),
+
+            const SizedBox(height: 22),
+            const _SectionHeader(icon: Icons.info_outline_rounded, text: 'About'),
+            const SizedBox(height: 10),
+            GlassPanel(
+              padding: const EdgeInsets.all(16),
+              borderRadius: BorderRadius.circular(24),
+              tint: AppColorsV2.surfaceLow,
+              child: Column(
+                children: const [
+                  _InfoRow(icon: Icons.info_outline_rounded, label: 'App', value: 'Quran2U'),
+                  Divider(color: Colors.white10, height: 16),
+                  _InfoRow(icon: Icons.tag_rounded, label: 'Version', value: '1.0.0'),
+                  Divider(color: Colors.white10, height: 16),
+                  _InfoRow(icon: Icons.library_music_outlined, label: 'Audio', value: 'mp3quran.net'),
+                  Divider(color: Colors.white10, height: 16),
+                  _InfoRow(icon: Icons.api_outlined, label: 'Data', value: 'api.quran.com'),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-
-            // ── Library ──────────────────────────────────────────────────────
-            _SectionLabel('Library'),
-            const SizedBox(height: 10),
-
-            // Downloads
-            _GlassCard(
-              child: InkWell(
-                onTap: () => Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const DownloadsScreen())),
-                borderRadius: BorderRadius.circular(14),
-                child: Row(children: [
-                  _IconBox(icon: Icons.download_for_offline_rounded, color: _kGreen),
-                  const SizedBox(width: 14),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Downloads',
-                        style: GoogleFonts.outfit(
-                            color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                    Text('Manage your offline Surahs',
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
-                  ])),
-                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 13),
-                ]),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // Download Entire Quran
-            _QuranDownloadTile(bulkState: bulkState),
-            const SizedBox(height: 10),
-
-            // Tajweed Guide
-            _GlassCard(
-              child: InkWell(
-                onTap: () => _showTajweedGuide(context),
-                borderRadius: BorderRadius.circular(14),
-                child: Row(children: [
-                  _IconBox(icon: Icons.palette_rounded, color: _kGold),
-                  const SizedBox(width: 14),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Tajweed Guide',
-                        style: GoogleFonts.outfit(
-                            color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                    Text('Color-coded pronunciation rules',
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
-                  ])),
-                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 13),
-                ]),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // ── Current Reciter ──────────────────────────────────────────────
-            _SectionLabel('Current Reciter'),
-            const SizedBox(height: 10),
-            if (selectedImam != null)
-              _GlassCard(
-                accentColor: _kGreen.withValues(alpha: 0.3),
-                child: Row(children: [
-                  CircleAvatar(
-                    backgroundColor: _kGreen.withValues(alpha: 0.15),
-                    child: Text(
-                      selectedImam.name.split(' ').last[0],
-                      style: const TextStyle(color: _kGreen, fontWeight: FontWeight.bold),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Made with ❤️ by d0tahmed',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.manrope(
+                      color: Colors.white.withValues(alpha: 0.72),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(selectedImam.name,
-                        style: GoogleFonts.outfit(
-                            color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                    Text(selectedImam.country,
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
-                  ])),
-                  const Icon(Icons.check_circle_rounded, color: _kGreen, size: 20),
-                ]),
-              ),
-            const SizedBox(height: 24),
-
-            // ── About ────────────────────────────────────────────────────────
-            _SectionLabel('About'),
-            const SizedBox(height: 10),
-            _GlassCard(
-              child: Column(children: [
-                _InfoRow(icon: Icons.info_outline_rounded, label: 'App', value: 'Quran2U'),
-                const Divider(color: Colors.white10, height: 16),
-                _InfoRow(icon: Icons.tag_rounded, label: 'Version', value: '1.0.0'),
-                const Divider(color: Colors.white10, height: 16),
-                _InfoRow(icon: Icons.library_music_outlined, label: 'Audio', value: 'mp3quran.net'),
-                const Divider(color: Colors.white10, height: 16),
-                _InfoRow(icon: Icons.api_outlined, label: 'Data', value: 'api.quran.com'),
-              ]),
-            ),
-            const SizedBox(height: 52),
-
-            // ── Footer ───────────────────────────────────────────────────────
-            Center(
-              child: Column(children: [
-                RichText(
-                  text: TextSpan(
-                    style: GoogleFonts.outfit(fontSize: 13, color: Colors.white54),
-                    children: const [
-                      TextSpan(text: 'Made with '),
-                      TextSpan(text: '❤️'),
-                      TextSpan(text: ' by '),
-                      TextSpan(text: '@d0tahmed',
-                          style: TextStyle(color: _kGreen, fontWeight: FontWeight.w700)),
-                    ],
+                  const SizedBox(height: 6),
+                  Text(
+                    'A gift for my mom and my late grandmother,\nmay ALLAH reward both',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.manrope(
+                      color: Colors.white.withValues(alpha: 0.48),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      fontStyle: FontStyle.italic,
+                      height: 1.35,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'A gift for my Mother and my late Grandmother.\nMay Allah reward both.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
-                      fontSize: 11, color: Colors.white24,
-                      height: 1.65, fontStyle: FontStyle.italic),
-                ),
-              ]),
+                ],
+              ),
             ),
+            const SizedBox(height: 22),
           ],
         ),
       ),
@@ -350,83 +559,142 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-// ── Tajweed Guide Sheet ────────────────────────────────────────────────────────
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _SectionHeader({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Icon(icon, color: _kGreen, size: 16),
+          const SizedBox(width: 8),
+          Text(
+            text.toUpperCase(),
+            style: GoogleFonts.manrope(
+              color: AppColorsV2.onSurfaceVariant,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2.0,
+            ),
+          ),
+        ],
+      );
+}
+
+class _TinyLabel extends StatelessWidget {
+  final String text;
+  const _TinyLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        style: GoogleFonts.manrope(
+          color: AppColorsV2.onSurfaceVariant.withValues(alpha: 0.55),
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.6,
+        ),
+      );
+}
+
+class _TileButton extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Color background;
+  final Color? borderColor;
+
+  const _TileButton({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    required this.background,
+    this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(28),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: borderColor ?? Colors.white.withValues(alpha: 0.06)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(icon, color: iconColor),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: GoogleFonts.manrope(
+                  color: AppColorsV2.onSurface,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: GoogleFonts.manrope(
+                  color: AppColorsV2.onSurfaceVariant,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+}
+
+extension on _QuranDownloadTile {
+  void show(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0E1421),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _DownloadWizardSheet(ref: ref),
+    );
+  }
+}
+
 class _TajweedGuideSheet extends StatelessWidget {
   const _TajweedGuideSheet();
 
   static const _rules = <_TajweedRule>[
-    _TajweedRule(
-      name: 'Ghunnah', nameArabic: 'غُنَّة',
-      color: Color(0xFFFF7E1E),
-      description: 'Nasal sound held for 2 counts',
-      example: 'مِنَ', exampleHighlight: 'نَ',
-    ),
-    _TajweedRule(
-      name: 'Ikhfa', nameArabic: 'إِخْفَاء',
-      color: Color(0xFFD500B2),
-      description: 'Hidden pronunciation of noon sakinah/tanween',
-      example: 'مِنْ بَعْدِ', exampleHighlight: 'نْ',
-    ),
-    _TajweedRule(
-      name: 'Ikhfa Shafawi', nameArabic: 'إِخْفَاء شَفَوِي',
-      color: Color(0xFFD500B2),
-      description: 'Hidden meem sakinah before baa',
-      example: 'تَرْمِيهِمْ بِحِجَارَةٍ', exampleHighlight: 'مْ بِ',
-    ),
-    _TajweedRule(
-      name: 'Idgham', nameArabic: 'إِدْغَام',
-      color: Color(0xFF169200),
-      description: 'Merging noon sakinah into the next letter',
-      example: 'مِنْ وَلِيٍّ', exampleHighlight: 'نْ وَ',
-    ),
-    _TajweedRule(
-      name: 'Iqlab', nameArabic: 'إِقْلَاب',
-      color: Color(0xFF26BFFD),
-      description: 'Noon sakinah converts to meem before baa',
-      example: 'مِنۢ بَعْدِ', exampleHighlight: 'نۢ',
-    ),
-    _TajweedRule(
-      name: 'Qalqalah', nameArabic: 'قَلْقَلَة',
-      color: Color(0xFFDD0000),
-      description: 'Echoing bounce on letters ق ط ب ج د',
-      example: 'يَخْلُقْ', exampleHighlight: 'قْ',
-    ),
-    _TajweedRule(
-      name: 'Madd (Normal)', nameArabic: 'مَدّ طَبِيعِي',
-      color: Color(0xFF537FFF),
-      description: 'Natural elongation — 2 counts',
-      example: 'قَالَ', exampleHighlight: 'ـَا',
-    ),
-    _TajweedRule(
-      name: 'Madd (Permissible)', nameArabic: 'مَدّ جَائِز',
-      color: Color(0xFF4050FF),
-      description: 'Elongation 2-4-6 counts at end of verse',
-      example: 'الرَّحِيمِ', exampleHighlight: 'ِي',
-    ),
-    _TajweedRule(
-      name: 'Madd (Obligatory)', nameArabic: 'مَدّ لَازِم',
-      color: Color(0xFF2144C1),
-      description: 'Obligatory elongation — 6 counts',
-      example: 'الضَّآلِّين', exampleHighlight: 'ٓا',
-    ),
-    _TajweedRule(
-      name: 'Madd (Necessary)', nameArabic: 'مَدّ وَاجِب',
-      color: Color(0xFF000EBC),
-      description: 'Required elongation — 4-5 counts',
-      example: 'جَآءَ', exampleHighlight: 'ٓا',
-    ),
-    _TajweedRule(
-      name: 'Laam Shamsiyah', nameArabic: 'لَام شَمْسِيَّة',
-      color: Color(0xFFAAAAAA),
-      description: 'Silent laam that assimilates into sun letters',
-      example: 'الشَّمْسِ', exampleHighlight: 'ل',
-    ),
-    _TajweedRule(
-      name: 'Hamzat ul-Wasl', nameArabic: 'هَمْزَة الْوَصْل',
-      color: Color(0xFFAAAAAA),
-      description: 'Connecting hamza — silent when continuing',
-      example: 'ٱلْحَمْدُ', exampleHighlight: 'ٱ',
-    ),
+    _TajweedRule(name: 'Ghunnah', nameArabic: 'غُنَّة', color: Color(0xFFFF7E1E), description: 'Nasal sound held for 2 counts', example: 'مِنَ', exampleHighlight: 'نَ'),
+    _TajweedRule(name: 'Ikhfa', nameArabic: 'إِخْفَاء', color: Color(0xFFD500B2), description: 'Hidden pronunciation of noon sakinah/tanween', example: 'مِنْ بَعْدِ', exampleHighlight: 'نْ'),
+    _TajweedRule(name: 'Ikhfa Shafawi', nameArabic: 'إِخْفَاء شَفَوِي', color: Color(0xFFD500B2), description: 'Hidden meem sakinah before baa', example: 'تَرْمِيهِمْ بِحِجَارَةٍ', exampleHighlight: 'مْ بِ'),
+    _TajweedRule(name: 'Idgham', nameArabic: 'إِدْغَام', color: Color(0xFF169200), description: 'Merging noon sakinah into the next letter', example: 'مِنْ وَلِيٍّ', exampleHighlight: 'نْ وَ'),
+    _TajweedRule(name: 'Iqlab', nameArabic: 'إِقْلَاب', color: Color(0xFF26BFFD), description: 'Noon sakinah converts to meem before baa', example: 'مِنۢ بَعْدِ', exampleHighlight: 'نۢ'),
+    _TajweedRule(name: 'Qalqalah', nameArabic: 'قَلْقَلَة', color: Color(0xFFDD0000), description: 'Echoing bounce on letters ق ط ب ج د', example: 'يَخْلُقْ', exampleHighlight: 'قْ'),
+    _TajweedRule(name: 'Madd (Normal)', nameArabic: 'مَدّ طَبِيعِي', color: Color(0xFF537FFF), description: 'Natural elongation — 2 counts', example: 'قَالَ', exampleHighlight: 'ـَا'),
+    _TajweedRule(name: 'Madd (Permissible)', nameArabic: 'مَدّ جَائِز', color: Color(0xFF4050FF), description: 'Elongation 2-4-6 counts at end of verse', example: 'الرَّحِيمِ', exampleHighlight: 'ِي'),
+    _TajweedRule(name: 'Madd (Obligatory)', nameArabic: 'مَدّ لَازِم', color: Color(0xFF2144C1), description: 'Obligatory elongation — 6 counts', example: 'الضَّآلِّين', exampleHighlight: 'ٓا'),
+    _TajweedRule(name: 'Madd (Necessary)', nameArabic: 'مَدّ وَاجِب', color: Color(0xFF000EBC), description: 'Required elongation — 4-5 counts', example: 'جَآءَ', exampleHighlight: 'ٓا'),
+    _TajweedRule(name: 'Laam Shamsiyah', nameArabic: 'لَام شَمْسِيَّة', color: Color(0xFFAAAAAA), description: 'Silent laam that assimilates into sun letters', example: 'الشَّمْسِ', exampleHighlight: 'ل'),
+    _TajweedRule(name: 'Hamzat ul-Wasl', nameArabic: 'هَمْزَة الْوَصْل', color: Color(0xFFAAAAAA), description: 'Connecting hamza — silent when continuing', example: 'ٱلْحَمْدُ', exampleHighlight: 'ٱ'),
   ];
 
   @override
@@ -452,7 +720,6 @@ class _TajweedGuideSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(children: [
@@ -476,7 +743,6 @@ class _TajweedGuideSheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Divider(color: Colors.white10, height: 1),
-            // Rules list
             Expanded(
               child: ListView.separated(
                 controller: scrollCtrl,
@@ -494,7 +760,6 @@ class _TajweedGuideSheet extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        // Color dot
                         Container(
                           width: 14, height: 14,
                           decoration: BoxDecoration(
@@ -506,7 +771,6 @@ class _TajweedGuideSheet extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Info
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -529,7 +793,6 @@ class _TajweedGuideSheet extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Arabic example
                         Container(
                           constraints: const BoxConstraints(maxWidth: 90),
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -581,7 +844,6 @@ class _TajweedRule {
   });
 }
 
-// ── Download Entire Quran tile ─────────────────────────────────────────────────
 class _QuranDownloadTile extends ConsumerWidget {
   final BulkDownloadState bulkState;
   const _QuranDownloadTile({required this.bulkState});
@@ -593,7 +855,7 @@ class _QuranDownloadTile extends ConsumerWidget {
         accentColor: _kGreen.withValues(alpha: 0.3),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            _IconBox(icon: Icons.download_rounded, color: _kGreen),
+            const _IconBox(icon: Icons.download_rounded, color: _kGreen),
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Downloading Quran…',
@@ -750,7 +1012,7 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
                     _GlassCard(
                       accentColor: _withTarjumah ? _kGold.withValues(alpha: 0.3) : null,
                       child: Row(children: [
-                        _IconBox(icon: Icons.translate_rounded, color: _kGold),
+                        const _IconBox(icon: Icons.translate_rounded, color: _kGold),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -1055,17 +1317,4 @@ class _InfoRow extends StatelessWidget {
             style: GoogleFonts.outfit(
                 color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
       ]);
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) => Text(text,
-      style: GoogleFonts.outfit(
-          color: Colors.white38,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1.5));
 }
