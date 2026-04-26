@@ -1,139 +1,98 @@
-import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:quran_recitation/screens/home_screen.dart';
-import 'package:quran_recitation/screens/now_playing_screen.dart';
-import 'package:quran_recitation/screens/settings_screen.dart';
-import 'package:quran_recitation/screens/daily_inspiration_screen.dart'; 
-import 'package:quran_recitation/services/notification_service.dart';   
+import 'package:just_audio_background/just_audio_background.dart';
+import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/screens/login_screen.dart';
+import 'package:quran_recitation/screens/main_shell.dart';
+import 'package:quran_recitation/services/notification_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
-import 'package:quran_recitation/ui_v2/widgets/calm_light_background.dart';
+import 'package:quran_recitation/ui_v2/app_theme.dart';
 
-const _kBg = AppColorsV2.bg;
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-final shellIndexProvider = StateProvider<int>((ref) => 0);
-final navBarVisibleProvider = StateProvider<bool>((ref) => true);
+  // FIX 1: JustAudioBackground MUST be initialized before runApp.
+  // Without this call the background audio isolate crashes silently —
+  // the MediaItem tag in AudioPlayerService has no service to register with.
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.quran2u.channel.audio',
+    androidNotificationChannelName: 'Quran Recitation',
+    androidNotificationOngoing: true,
+    androidShowNotificationBadge: true,
+  );
 
-class MainShell extends ConsumerStatefulWidget {
-  const MainShell({super.key});
+  // Initialize daily notification engine
+  await NotificationService.init();
+  await NotificationService.scheduleDaily6AM();
 
-  @override
-  ConsumerState<MainShell> createState() => _MainShellState();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFF0C0F1A),
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
+
+  runApp(const ProviderScope(child: QuranRecitationApp()));
 }
 
-class _MainShellState extends ConsumerState<MainShell> {
-  static const _screens = [
-    HomeScreen(),
-    NowPlayingScreen(),
-    SettingsScreen(),
-  ];
+// 1. The Provider that checks the hard drive for tokens or guest status
+final authInitProvider = FutureProvider<bool>((ref) async {
+  final authService = ref.read(quranAuthServiceProvider);
+  
+  // Check if they are logged in via Quran.com
+  final isLoggedIn = await authService.isLoggedIn;
+  if (isLoggedIn) return true;
+  
+  // Check if they previously clicked "Continue without login"
+  final isGuest = await authService.isGuest;
+  if (isGuest) return true;
+  
+  // If neither, return false (show login screen)
+  return false; 
+});
 
-  StreamSubscription<String?>? _notifSub;
+// 2. The Gatekeeper Widget that decides which screen to show
+class AuthGate extends ConsumerWidget {
+  const AuthGate({super.key});
 
   @override
-  void initState() {
-    super.initState();
-    _notifSub = NotificationService.onNotifications.stream.listen((payload) {
-      if (payload == 'daily_tab' && mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const DailyInspirationScreen())
-        );
-      }
-    });
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authInitProvider);
 
-  @override
-  void dispose() {
-    _notifSub?.cancel();
-    super.dispose();
+    return authState.when(
+      data: (isAuthorized) {
+        // If they have tokens or are a guest, show the main app
+        if (isAuthorized) {
+          return const MainShell();
+        }
+        // Otherwise, force them to log in!
+        return const LoginScreen();
+      },
+      loading: () => const Scaffold(
+        backgroundColor: AppColorsV2.bg,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColorsV2.primary),
+        ),
+      ),
+      error: (err, stack) => const LoginScreen(),
+    );
   }
+}
+
+class QuranRecitationApp extends StatelessWidget {
+  const QuranRecitationApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final rawIndex = ref.watch(shellIndexProvider);
-    final index = rawIndex.clamp(0, _screens.length - 1);
-    
-    if (rawIndex != index) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(shellIndexProvider.notifier).state = index;
-      });
-    }
-
-   return Scaffold(
-      backgroundColor: Colors.transparent, 
-      extendBody: true, 
-      body: CalmLightBackground(
-        child: Stack(
-          children: List.generate(_screens.length, (i) {
-            return AnimatedOpacity(
-              opacity: i == index ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              child: AnimatedScale(
-                scale: i == index ? 1.0 : 0.97,
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeInOut,
-                child: IgnorePointer(
-                  ignoring: i != index,
-                  child: _screens[i],
-                ),
-              ),
-            );
-          }),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: AnimatedSlide(
-          offset: ref.watch(navBarVisibleProvider) ? Offset.zero : const Offset(0, 1.5),
-          duration: Duration(milliseconds: ref.watch(navBarVisibleProvider) ? 400 : 300),
-          curve: ref.watch(navBarVisibleProvider) ? Curves.easeOutBack : Curves.easeInOut,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColorsV2.surface.withValues(alpha: 0.5), 
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1),
-                  ),
-                  child: SizedBox(
-                    height: 80,
-                    child: NavigationBar(
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      indicatorColor: AppColorsV2.primary.withValues(alpha: 0.25),
-                      selectedIndex: index,
-                      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-                      onDestinationSelected: (i) => ref.read(shellIndexProvider.notifier).state = i,
-                      destinations: const [
-                        NavigationDestination(
-                          icon: Icon(Icons.menu_book_outlined, color: Colors.white70),
-                          selectedIcon: Icon(Icons.menu_book_rounded, color: AppColorsV2.primary),
-                          label: 'Surahs',
-                        ),
-                        NavigationDestination(
-                          icon: Icon(Icons.headphones_outlined, color: Colors.white70),
-                          selectedIcon: Icon(Icons.headphones_rounded, color: AppColorsV2.primary),
-                          label: 'Player',
-                        ),
-                        NavigationDestination(
-                          icon: Icon(Icons.settings_outlined, color: Colors.white70),
-                          selectedIcon: Icon(Icons.settings_rounded, color: AppColorsV2.primary),
-                          label: 'Settings',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    return MaterialApp(
+      title: 'Quran2U',
+      debugShowCheckedModeBanner: false,
+      theme: AppThemeV2.dark(),
+      // 👇 The app now boots to the Gatekeeper instead of the MainShell! 👇
+      home: const AuthGate(),
     );
   }
 }

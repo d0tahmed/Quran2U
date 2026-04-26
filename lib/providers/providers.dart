@@ -480,5 +480,3 @@ final userProfileProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
   return ref.read(quranAuthServiceProvider).getUserProfile();
 });
 
-// Add this at the end of your providers.dart
-final audioTarjumahLangProvider = StateProvider<TranslationMode>((ref) => TranslationMode.urdu);
