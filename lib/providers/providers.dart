@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/services/quran_api_service.dart';
 import 'package:quran_recitation/services/audio_player_service.dart';
@@ -10,6 +11,7 @@ import 'package:quran_recitation/services/mushaf_api_service.dart';
 import 'package:adhan/adhan.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:quran_recitation/services/quran_auth_service.dart';
 
 // ── Core services ─────────────────────────────────────────────────────────────
 final quranApiServiceProvider = Provider((ref) => QuranApiService());
@@ -31,10 +33,12 @@ final downloadServiceProvider = Provider((ref) => DownloadService());
 // ── Playback mode ─────────────────────────────────────────────────────────────
 final tarjumahModeProvider = StateProvider<bool>((ref) => false);
 
-// Checks if Tarjumah is allowed. Returns false ONLY for Baleelah (6) and Badr Al-Turki (7).
+final translationModeProvider =
+    StateProvider<TranslationMode>((ref) => TranslationMode.urdu);
+
 final isTarjumahSupportedProvider = Provider<bool>((ref) {
   final imam = ref.watch(selectedImamProvider);
-  return imam?.id != 6 && imam?.id != 7; 
+  return imam?.id != 6 && imam?.id != 7;
 });
 
 final loopProvider = StateProvider<bool>((ref) => false);
@@ -68,23 +72,20 @@ final surahAyahsProvider =
   return data['ayahs'] ?? [];
 });
 
-// Updated Imams list with the exact server URL spelling for Ayyoub
 final imamsProvider = Provider<List<Imam>>((ref) {
   return const [
-    Imam(id: 1, name: 'Sheikh Abdul Rahman As-Sudais', identifier: 'https://server11.mp3quran.net/sds', country: 'Saudi Arabia'),
-    Imam(id: 3, name: 'Sheikh Yasser Ad-Dusari', identifier: 'https://server11.mp3quran.net/yasser', country: 'Saudi Arabia'),
-    Imam(id: 4, name: 'Sheikh Mahir Al-Muaqily', identifier: 'https://server12.mp3quran.net/maher', country: 'Saudi Arabia'),
-    Imam(id: 5, name: 'Sheikh Saud As-Shuraim', identifier: 'https://server7.mp3quran.net/shur', country: 'Saudi Arabia'),
-    Imam(id: 8, name: 'Sheikh Ali Jabir', identifier: 'https://server11.mp3quran.net/a_jbr', country: 'Saudi Arabia'),
-    Imam(id: 2, name: 'Sheikh Mishary Rashid Alafasy', identifier: 'https://server8.mp3quran.net/afs', country: 'Kuwait'),
-    Imam(id: 6, name: 'Sheikh Bandar Al-Balilah', identifier: 'https://server6.mp3quran.net/balilah', country: 'Saudi Arabia'),
-    
-    // ── NEW RECITERS ──
-    Imam(id: 10, name: 'Sheikh Nasser Al-Qatami', identifier: 'https://server6.mp3quran.net/qtm', country: 'Saudi Arabia'),
-    // FIX: Changed /ayu to /ayyub
-    Imam(id: 9, name: 'Sheikh Muhammad Ayyoub', identifier: 'https://server8.mp3quran.net/ayyub', country: 'Saudi Arabia'),
-    // Badr Al-Turki (No Tarjumah support)
-    Imam(id: 7, name: 'Sheikh Badr Al-Turki', identifier: 'https://server10.mp3quran.net/bader/Rewayat-Hafs-A-n-Assem', country: 'Saudi Arabia'),
+    Imam(id: 1,  name: 'Sheikh Abdul Rahman As-Sudais',   identifier: 'https://server11.mp3quran.net/sds',    country: 'Saudi Arabia'),
+    Imam(id: 3,  name: 'Sheikh Yasser Ad-Dusari',         identifier: 'https://server11.mp3quran.net/yasser', country: 'Saudi Arabia'),
+    Imam(id: 4,  name: 'Sheikh Mahir Al-Muaqily',         identifier: 'https://server12.mp3quran.net/maher',  country: 'Saudi Arabia'),
+    Imam(id: 5,  name: 'Sheikh Saud As-Shuraim',          identifier: 'https://server7.mp3quran.net/shur',    country: 'Saudi Arabia'),
+    Imam(id: 8,  name: 'Sheikh Ali Jabir',                identifier: 'https://server11.mp3quran.net/a_jbr',  country: 'Saudi Arabia'),
+    Imam(id: 2,  name: 'Sheikh Mishary Rashid Alafasy',   identifier: 'https://server8.mp3quran.net/afs',     country: 'Kuwait'),
+    Imam(id: 6,  name: 'Sheikh Bandar Al-Balilah',        identifier: 'https://server6.mp3quran.net/balilah', country: 'Saudi Arabia'),
+    Imam(id: 10, name: 'Sheikh Nasser Al-Qatami',         identifier: 'https://server6.mp3quran.net/qtm',     country: 'Saudi Arabia'),
+    Imam(id: 9,  name: 'Sheikh Muhammad Ayyoub',          identifier: 'https://server8.mp3quran.net/ayyub',   country: 'Saudi Arabia'),
+    Imam(id: 7,  name: 'Sheikh Badr Al-Turki',
+        identifier: 'https://server10.mp3quran.net/bader/Rewayat-Hafs-A-n-Assem',
+        country: 'Saudi Arabia'),
   ];
 });
 
@@ -96,12 +97,13 @@ final selectedImamProvider = StateProvider<Imam?>((ref) {
 // ── Audio URL builder ─────────────────────────────────────────────────────────
 final audioUrlProvider = Provider.family<String, (int, int)>((ref, params) {
   final (surahNumber, imamId) = params;
-  final imams = ref.watch(imamsProvider);
+  final imams       = ref.watch(imamsProvider);
   final selectedImam = imams.firstWhere(
     (imam) => imam.id == imamId,
     orElse: () => imams.isNotEmpty
         ? imams[0]
-        : const Imam(id: 1, name: 'Default', identifier: 'https://server11.mp3quran.net/sds', country: ''),
+        : const Imam(id: 1, name: 'Default',
+            identifier: 'https://server11.mp3quran.net/sds', country: ''),
   );
   final paddedSurah = surahNumber.toString().padLeft(3, '0');
   return '${selectedImam.identifier}/$paddedSurah.mp3';
@@ -146,7 +148,7 @@ final durationProvider = StreamProvider<Duration?>((ref) async* {
   }
 });
 
-// ── Bookmarks ────────────────────────────────────────────────────────────────
+// ── Bookmarks (local) ─────────────────────────────────────────────────────────
 class BookmarksNotifier extends StateNotifier<List<Bookmark>> {
   static const _key = 'bookmarks_v1';
 
@@ -155,10 +157,12 @@ class BookmarksNotifier extends StateNotifier<List<Bookmark>> {
   Future<void> _load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_key);
+      final raw   = prefs.getString(_key);
       if (raw != null) {
         final list = jsonDecode(raw) as List;
-        state = list.map((e) => Bookmark.fromJson(e as Map<String, dynamic>)).toList();
+        state = list
+            .map((e) => Bookmark.fromJson(e as Map<String, dynamic>))
+            .toList();
       }
     } catch (_) {}
   }
@@ -166,7 +170,8 @@ class BookmarksNotifier extends StateNotifier<List<Bookmark>> {
   Future<void> _save() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_key, jsonEncode(state.map((b) => b.toJson()).toList()));
+      await prefs.setString(
+          _key, jsonEncode(state.map((b) => b.toJson()).toList()));
     } catch (_) {}
   }
 
@@ -176,35 +181,177 @@ class BookmarksNotifier extends StateNotifier<List<Bookmark>> {
   }
 }
 
-final bookmarksProvider = StateNotifierProvider<BookmarksNotifier, List<Bookmark>>((ref) => BookmarksNotifier());
+final bookmarksProvider =
+    StateNotifierProvider<BookmarksNotifier, List<Bookmark>>(
+        (ref) => BookmarksNotifier());
+
+// ── Bookmark cloud sync ───────────────────────────────────────────────────────
+// Sync status enum
+enum SyncStatus { idle, syncing, success, error }
+
+class SyncState {
+  final SyncStatus status;
+  final String?    message;
+  final int        syncedCount;
+
+  const SyncState({
+    this.status      = SyncStatus.idle,
+    this.message,
+    this.syncedCount = 0,
+  });
+
+  SyncState copyWith({SyncStatus? status, String? message, int? syncedCount}) {
+    return SyncState(
+      status:      status      ?? this.status,
+      message:     message     ?? this.message,
+      syncedCount: syncedCount ?? this.syncedCount,
+    );
+  }
+}
+
+class BookmarkSyncNotifier extends StateNotifier<SyncState> {
+  final Ref _ref;
+  BookmarkSyncNotifier(this._ref) : super(const SyncState());
+
+  /// Push all local bookmarks to Quran.com cloud.
+  /// Also pulls cloud bookmarks and merges (local wins on conflict).
+  Future<void> syncToCloud() async {
+    final authService = _ref.read(quranAuthServiceProvider);
+    final loggedIn    = await authService.isLoggedIn;
+
+    if (!loggedIn) {
+      state = const SyncState(
+        status:  SyncStatus.error,
+        message: 'Sign in to Quran.com to sync bookmarks.',
+      );
+      return;
+    }
+
+    state = const SyncState(status: SyncStatus.syncing, message: 'Syncing…');
+
+    try {
+      final localBookmarks = _ref.read(bookmarksProvider);
+
+      // ── Step 1: Push local bookmarks to cloud ─────────────────────────
+      int pushed = 0;
+      for (final bk in localBookmarks) {
+        // Only sync ayah-level bookmarks (surahNumber + ayahNumber)
+        // Surah-level bookmarks (ayahNumber == null) are stored locally only.
+        if (bk.ayahNumber != null) {
+          final ok = await authService.syncBookmark(
+            surahId:    bk.surahNumber,
+            ayahNumber: bk.ayahNumber!,
+          );
+          if (ok) pushed++;
+        }
+      }
+
+      // ── Step 2: Pull cloud bookmarks and merge into local ─────────────
+      final cloudBookmarks = await authService.getBookmarks();
+      final localIds = localBookmarks
+          .map((b) => '${b.surahNumber}-${b.ayahNumber}')
+          .toSet();
+
+      final newFromCloud = <Bookmark>[];
+      for (final cb in cloudBookmarks) {
+        // Cloud bookmark shape (based on prelive API):
+        // { "key": surahId, "verseNumber": ayahNum, "type": "ayah", ... }
+        final surahId   = (cb['key']         as num?)?.toInt();
+        final ayahNum   = (cb['verseNumber'] as num?)?.toInt();
+        final cloudId   = cb['id']?.toString() ?? '';
+
+        if (surahId == null || ayahNum == null) continue;
+        final mergeKey = '$surahId-$ayahNum';
+        if (localIds.contains(mergeKey)) continue;
+
+        newFromCloud.add(Bookmark(
+          id:          cloudId.isNotEmpty ? cloudId : '$surahId-$ayahNum-cloud',
+          surahNumber: surahId,
+          ayahNumber:  ayahNum,
+          title:       'Surah $surahId – Ayah $ayahNum',
+          createdAt:   DateTime.now(),
+        ));
+      }
+
+      if (newFromCloud.isNotEmpty) {
+        final merged = [...localBookmarks, ...newFromCloud];
+        _ref.read(bookmarksProvider.notifier).updateBookmarks(merged);
+      }
+
+      final total = pushed + newFromCloud.length;
+      state = SyncState(
+        status:      SyncStatus.success,
+        message:     total > 0
+            ? 'Synced $total bookmark${total == 1 ? '' : 's'}'
+            : 'Already up to date',
+        syncedCount: total,
+      );
+    } catch (e) {
+      state = SyncState(
+        status:  SyncStatus.error,
+        message: 'Sync failed. Check your connection.',
+      );
+    }
+  }
+
+  void reset() => state = const SyncState();
+}
+
+final bookmarkSyncProvider =
+    StateNotifierProvider<BookmarkSyncNotifier, SyncState>(
+        (ref) => BookmarkSyncNotifier(ref));
+
+// ── Cloud bookmarks (read-only pull) ─────────────────────────────────────────
+final cloudBookmarksProvider = FutureProvider<List>((ref) async {
+  return ref.read(quranAuthServiceProvider).getBookmarks();
+});
+
+// ── Collections ───────────────────────────────────────────────────────────────
+final cloudCollectionsProvider = FutureProvider<List>((ref) async {
+  return ref.read(quranAuthServiceProvider).getCollections();
+});
+
+// ── Streak ────────────────────────────────────────────────────────────────────
+final streakProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+  final loggedIn = await ref.read(quranAuthServiceProvider).isLoggedIn;
+  if (!loggedIn) return null;
+  return ref.read(quranAuthServiceProvider).getStreak();
+});
 
 // ── Downloads ─────────────────────────────────────────────────────────────────
-final downloadedSurahsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final downloadedSurahsProvider =
+    FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return ref.watch(downloadServiceProvider).getDownloadedSurahs();
 });
 
 class BulkDownloadState {
-  final bool isDownloading;
+  final bool   isDownloading;
   final double progress;
   final double overallProgress;
-  final int currentSurah;
+  final int    currentSurah;
   final String status;
-  final int? _imamId;
-  final bool _withTarjumah;
+  final int?   _imamId;
+  final bool   _withTarjumah;
 
   const BulkDownloadState({
-    this.isDownloading = false,
-    this.progress = 0.0,
+    this.isDownloading   = false,
+    this.progress        = 0.0,
     this.overallProgress = 0.0,
-    this.currentSurah = 0,
-    this.status = '',
-    int? imamId,
-    bool withTarjumah = false,
-  })  : _imamId = imamId, _withTarjumah = withTarjumah;
+    this.currentSurah    = 0,
+    this.status          = '',
+    int?  imamId,
+    bool  withTarjumah   = false,
+  })  : _imamId      = imamId,
+        _withTarjumah = withTarjumah;
 
   BulkDownloadState copyWith({
-    bool? isDownloading, double? progress, double? overallProgress,
-    int? currentSurah, String? status, int? imamId, bool? withTarjumah,
+    bool?   isDownloading,
+    double? progress,
+    double? overallProgress,
+    int?    currentSurah,
+    String? status,
+    int?    imamId,
+    bool?   withTarjumah,
   }) {
     return BulkDownloadState(
       isDownloading:   isDownloading   ?? this.isDownloading,
@@ -222,14 +369,31 @@ class BulkDownloadNotifier extends StateNotifier<BulkDownloadState> {
   final Ref _ref;
   BulkDownloadNotifier(this._ref) : super(const BulkDownloadState());
 
-  Future<void> start({required int imamId, required String imamIdentifier, required bool withTarjumah}) async {
+  Future<void> start({
+    required int    imamId,
+    required String imamIdentifier,
+    required bool   withTarjumah,
+  }) async {
     if (state.isDownloading) return;
-    state = BulkDownloadState(isDownloading: true, status: 'Starting download…', currentSurah: 1, imamId: imamId, withTarjumah: withTarjumah);
+    state = BulkDownloadState(
+      isDownloading: true,
+      status:        'Starting download…',
+      currentSurah:  1,
+      imamId:        imamId,
+      withTarjumah:  withTarjumah,
+    );
     await _ref.read(downloadServiceProvider).downloadEntireQuran(
-      imamId: imamId, imamIdentifier: imamIdentifier, withTarjumah: withTarjumah,
+      imamId:         imamId,
+      imamIdentifier: imamIdentifier,
+      withTarjumah:   withTarjumah,
       onProgress: (surah, totalSurahs, surahProgress, status) {
         if (!mounted) return;
-        state = state.copyWith(currentSurah: surah, overallProgress: (surah - 1 + surahProgress) / 114, progress: surahProgress, status: status);
+        state = state.copyWith(
+          currentSurah:    surah,
+          overallProgress: (surah - 1 + surahProgress) / 114,
+          progress:        surahProgress,
+          status:          status,
+        );
       },
       onError: (e) {
         if (!mounted) return;
@@ -244,7 +408,7 @@ class BulkDownloadNotifier extends StateNotifier<BulkDownloadState> {
   }
 
   void cancel() {
-    final imamId = state._imamId;
+    final imamId      = state._imamId;
     final withTarjumah = state._withTarjumah;
     if (imamId != null) {
       _ref.read(downloadServiceProvider).cancelBulkDownload(imamId, withTarjumah);
@@ -253,11 +417,13 @@ class BulkDownloadNotifier extends StateNotifier<BulkDownloadState> {
   }
 }
 
-final bulkDownloadProvider = StateNotifierProvider<BulkDownloadNotifier, BulkDownloadState>((ref) => BulkDownloadNotifier(ref));
+final bulkDownloadProvider =
+    StateNotifierProvider<BulkDownloadNotifier, BulkDownloadState>(
+        (ref) => BulkDownloadNotifier(ref));
 
-// ── Namaz & Qibla ─────────────────────────────────────────────
+// ── Namaz & Qibla ─────────────────────────────────────────────────────────────
 final locationProvider = FutureProvider<Coordinates>((ref) async {
-  final fallback = Coordinates(24.8607, 67.0011); 
+  final fallback = Coordinates(24.8607, 67.0011);
   try {
     if (!await Geolocator.isLocationServiceEnabled()) return fallback;
     LocationPermission perm = await Geolocator.checkPermission();
@@ -266,7 +432,8 @@ final locationProvider = FutureProvider<Coordinates>((ref) async {
       if (perm == LocationPermission.denied) return fallback;
     }
     if (perm == LocationPermission.deniedForever) return fallback;
-    final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
+    final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
     return Coordinates(pos.latitude, pos.longitude);
   } catch (_) {
     return fallback;
@@ -275,18 +442,43 @@ final locationProvider = FutureProvider<Coordinates>((ref) async {
 
 final prayerTimesProvider = FutureProvider<PrayerTimes>((ref) async {
   final coords = await ref.watch(locationProvider.future);
-  final params = CalculationMethod.karachi.getParameters()..madhab = Madhab.hanafi;
+  final params  = CalculationMethod.karachi.getParameters()
+    ..madhab = Madhab.hanafi;
   return PrayerTimes.today(coords, params);
 });
 
-// ── Mushaf ─────────────────────────────────────────────────────
+// ── Mushaf ─────────────────────────────────────────────────────────────────────
 final mushafApiServiceProvider = Provider((ref) => MushafApiService());
 
-final mushafPageProvider = FutureProvider.family<String, (int, String)>((ref, params) async {
+final mushafPageProvider =
+    FutureProvider.family<String, (int, String)>((ref, params) async {
   final (page, script) = params;
   return ref.watch(mushafApiServiceProvider).getPageText(page, script);
 });
 
-final tajweedPageProvider = FutureProvider.family<List<Map<String, String>>, int>((ref, page) async {
+final tajweedPageProvider =
+    FutureProvider.family<List<Map<String, String>>, int>((ref, page) async {
   return ref.watch(mushafApiServiceProvider).getPageTajweedData(page);
 });
+
+// ── Auth & OAuth2 gatekeeper ──────────────────────────────────────────────────
+final quranAuthServiceProvider = Provider((ref) => QuranAuthService());
+
+final isLoggedInProvider = FutureProvider<bool>((ref) async {
+  return ref.read(quranAuthServiceProvider).isLoggedIn;
+});
+
+// Gatekeeper: checks secure storage on boot to decide which screen to show.
+// Reads 'x-auth-token' key to stay compatible with Gemini's authStateProvider.
+final authStateProvider = FutureProvider<bool>((ref) async {
+  const secureStorage = FlutterSecureStorage();
+  final token = await secureStorage.read(key: 'x-auth-token');
+  return token != null && token.isNotEmpty;
+});
+
+final userProfileProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+  return ref.read(quranAuthServiceProvider).getUserProfile();
+});
+
+// Add this at the end of your providers.dart
+final audioTarjumahLangProvider = StateProvider<TranslationMode>((ref) => TranslationMode.urdu);

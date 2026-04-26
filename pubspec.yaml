@@ -2,7 +2,7 @@ name: quran_recitation
 description: Open-source Quran recitation app with multiple Imams, offline support, and bookmarking.
 publish_to: 'none'
 
-version: 2.0.0+2100
+version: 2.0.0+9991
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -49,6 +49,9 @@ dependencies:
   geolocator: ^11.0.1
   flutter_compass: ^0.8.0
   url_launcher: ^6.3.2
+  flutter_appauth: ^12.0.0
+  flutter_secure_storage: ^10.0.0
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

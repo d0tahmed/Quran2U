@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Added for permanent save
 import 'package:url_launcher/url_launcher.dart'; 
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/downloads_screen.dart';
+import 'package:quran_recitation/services/interleaved_audio_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 
@@ -22,6 +24,25 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   double _speed = 1.0;
   bool _translationExpanded = false;
+  
+  TranslationMode _audioLang = TranslationMode.urdu;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAudioPref();
+  }
+
+  // Load the saved setting as soon as the screen opens
+  Future<void> _loadAudioPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('audio_tarjumah_lang') ?? 'urdu';
+    if (mounted) {
+      setState(() {
+        _audioLang = saved == 'english' ? TranslationMode.english : TranslationMode.urdu;
+      });
+    }
+  }
 
   Future<void> _reportBug() async {
     final Uri emailLaunchUri = Uri(
@@ -244,88 +265,200 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             const SizedBox(height: 12),
 
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
                 color: AppColorsV2.surfaceLow,
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                border: Border.all(
+                  color: tarjumahMode 
+                      ? _kGold.withValues(alpha: 0.4)
+                      : Colors.white.withValues(alpha: 0.06),
+                ),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: isTarjumahSupported 
-                          ? _kGold.withValues(alpha: 0.12)
-                          : Colors.grey.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(Icons.record_voice_over_rounded, 
-                                color: isTarjumahSupported ? _kGold : Colors.grey),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
                       children: [
-                        Text(
-                          'Audio Tarjumah',
-                          style: GoogleFonts.manrope(
-                            color: isTarjumahSupported ? AppColorsV2.onSurface : Colors.grey,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: isTarjumahSupported
+                                ? _kGold.withValues(alpha: 0.12)
+                                : Colors.grey.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(Icons.record_voice_over_rounded,
+                              color: isTarjumahSupported ? _kGold : Colors.grey),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Audio Tarjumah',
+                                style: GoogleFonts.manrope(
+                                  color: isTarjumahSupported ? AppColorsV2.onSurface : Colors.grey,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isTarjumahSupported
+                                    ? 'Voice Translation after Ayah'
+                                    : 'Not available for Sheikh Bandar',
+                                style: GoogleFonts.manrope(
+                                  color: isTarjumahSupported
+                                      ? AppColorsV2.onSurfaceVariant
+                                      : Colors.redAccent.withValues(alpha: 0.8),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isTarjumahSupported 
-                              ? 'Voice Translation after Ayah'
-                              : 'Not available for Sheikh Bandar Al-Balilah',
-                          style: GoogleFonts.manrope(
-                            color: isTarjumahSupported 
-                                ? AppColorsV2.onSurfaceVariant 
-                                : Colors.redAccent.withValues(alpha: 0.8),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        Switch(
+                          value: isTarjumahSupported ? tarjumahMode : false,
+                          onChanged: isTarjumahSupported
+                              ? (val) {
+                                  ref.read(tarjumahModeProvider.notifier).state = val;
+                                  ref.read(audioPlayerServiceProvider).player.stop();
+                                  ref.read(interleavedAudioServiceProvider).player.stop();
+                                }
+                              : null,
+                          activeColor: _kGreen,
+                          activeTrackColor: _kGreen.withValues(alpha: 0.25),
+                          inactiveThumbColor: Colors.white38,
+                          inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
                         ),
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      if (!isTarjumahSupported) {
-                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Tarjumah is currently unavailable for Sheikh Bandar Al-Balilah.',
-                              style: GoogleFonts.manrope(),
-                            ),
-                            backgroundColor: Colors.red.shade800,
-                            duration: const Duration(seconds: 2),
+
+                  // The Expanding Language Section (Auto-opens when switch is ON)
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox.shrink(),
+                    secondChild: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Divider(color: Colors.white10, height: 1),
+                          const SizedBox(height: 14),
+                          Text('Audio Language',
+                              style: GoogleFonts.manrope(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () async {
+                                    setState(() => _audioLang = TranslationMode.urdu);
+                                    // Save permanently
+                                    final prefs = await SharedPreferences.getInstance();
+                                    await prefs.setString('audio_tarjumah_lang', 'urdu');
+                                    
+                                    ref.read(interleavedAudioServiceProvider).activeMode = TranslationMode.urdu;
+                                    ref.read(interleavedAudioServiceProvider).player.stop();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: _audioLang == TranslationMode.urdu
+                                          ? AppColorsV2.surfaceHigh
+                                          : AppColorsV2.surface,
+                                      borderRadius: const BorderRadius.horizontal(
+                                          left: Radius.circular(12)),
+                                      border: Border.all(
+                                          color: _audioLang == TranslationMode.urdu
+                                              ? _kGold.withValues(alpha: 0.5)
+                                              : Colors.white10),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        if (_audioLang == TranslationMode.urdu)
+                                          const Icon(Icons.check, color: _kGold, size: 16),
+                                        if (_audioLang == TranslationMode.urdu)
+                                          const SizedBox(width: 6),
+                                        Text('Urdu',
+                                            style: GoogleFonts.manrope(
+                                                color: _audioLang == TranslationMode.urdu
+                                                    ? _kGold
+                                                    : Colors.white54,
+                                                fontWeight: _audioLang == TranslationMode.urdu
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () async {
+                                    setState(() => _audioLang = TranslationMode.english);
+                                    // Save permanently
+                                    final prefs = await SharedPreferences.getInstance();
+                                    await prefs.setString('audio_tarjumah_lang', 'english');
+
+                                    ref.read(interleavedAudioServiceProvider).activeMode = TranslationMode.english;
+                                    ref.read(interleavedAudioServiceProvider).player.stop();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: _audioLang == TranslationMode.english
+                                          ? AppColorsV2.surfaceHigh
+                                          : AppColorsV2.surface,
+                                      borderRadius: const BorderRadius.horizontal(
+                                          right: Radius.circular(12)),
+                                      border: Border.all(
+                                          color: _audioLang == TranslationMode.english
+                                              ? _kGold.withValues(alpha: 0.5)
+                                              : Colors.white10),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        if (_audioLang == TranslationMode.english)
+                                          const Icon(Icons.check, color: _kGold, size: 16),
+                                        if (_audioLang == TranslationMode.english)
+                                          const SizedBox(width: 6),
+                                        Text('English',
+                                            style: GoogleFonts.manrope(
+                                                color: _audioLang == TranslationMode.english
+                                                    ? _kGold
+                                                    : Colors.white54,
+                                                fontWeight: _audioLang == TranslationMode.english
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        );
-                      }
-                    },
-                    child: AbsorbPointer(
-                      absorbing: !isTarjumahSupported,
-                      child: Switch(
-                        value: isTarjumahSupported ? tarjumahMode : false,
-                        onChanged: isTarjumahSupported 
-                            ? (val) {
-                                ref.read(tarjumahModeProvider.notifier).state = val;
-                                ref.read(audioPlayerServiceProvider).player.stop();
-                                ref.read(interleavedAudioServiceProvider).player.stop();
-                              }
-                            : null,
-                        activeColor: _kGreen,
-                        activeTrackColor: _kGreen.withValues(alpha: 0.25),
-                        inactiveThumbColor: Colors.white38,
-                        inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
+                        ],
                       ),
                     ),
+                    crossFadeState: tarjumahMode
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 220),
                   ),
                 ],
               ),
@@ -502,7 +635,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 children: const [
                   _InfoRow(icon: Icons.info_outline_rounded, label: 'App', value: 'Quran2U'),
                   Divider(color: Colors.white10, height: 16),
-                  _InfoRow(icon: Icons.tag_rounded, label: 'Version', value: '1.0.0'),
+                  _InfoRow(icon: Icons.tag_rounded, label: 'Version', value: '2.0.0'),
                   Divider(color: Colors.white10, height: 16),
                   _InfoRow(icon: Icons.library_music_outlined, label: 'Audio', value: 'mp3quran.net'),
                   Divider(color: Colors.white10, height: 16),

@@ -3,32 +3,26 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Added for permanent save
 import 'package:quran_recitation/services/download_service.dart';
 
-// ── everyayah.com Arabic folder map ──────────────────────────────────────────
-// Each imam ID maps to their folder name on everyayah.com/data/.
-// Imams without a confirmed folder fall back to _arabicFallbackFolder (Alafasy).
-// When in tarjumah mode the Arabic audio still comes from everyayah; the Urdu
-// audio always comes from the single shared Shamshad Ali Khan folder.
-// ── everyayah.com Arabic folder map ──────────────────────────────────────────
-// Each imam ID maps to their folder name on everyayah.com/data/.
-// Imams without a confirmed folder fall back to _arabicFallbackFolder (Alafasy).
 const _everyayahFolders = <int, String>{
-  // Original
   1: 'Abdurrahmaan_As-Sudais_192kbps',
   2: 'Alafasy_128kbps',
   3: 'Yasser_Ad-Dussary_128kbps',
   4: 'MaherAlMuaiqly128kbps',
   5: 'Saood_ash-Shuraym_128kbps',
-  // Fixed Spelling
   8: 'Ali_Jaber_64kbps',
-  // ── NEW FOLDERS ──
-  10: 'Nasser_Alqatami_128kbps', // Sheikh Nasser Al-Qatami
-  9: 'Muhammad_Ayyoub_128kbps',  // Sheikh Muhammad Ayyoub
+  10: 'Nasser_Alqatami_128kbps',
+  9: 'Muhammad_Ayyoub_128kbps',
 };
+
 const _arabicFallbackFolder = 'Alafasy_128kbps';
 const _everyayahBase = 'https://www.everyayah.com/data';
 const _urduFolder    = 'translations/urdu_shamshad_ali_khan_46kbps';
+const _englishFolder = 'English/Sahih_Intnl_Ibrahim_Walk_192kbps';
+
+enum TranslationMode { none, urdu, english }
 
 class InterleavedAudioService {
   final AudioPlayer _player = AudioPlayer();
@@ -36,12 +30,15 @@ class InterleavedAudioService {
 
   int? _loadedSurah;
   int? _loadedImamId;
+  TranslationMode _loadedMode = TranslationMode.none;
 
   ConcatenatingAudioSource? _playlist;
   int _lastAppendedAyah = 0;
   int _totalAyahs = 0;
   String _arabicFolder = '';
   StreamSubscription<int?>? _indexSub;
+
+  TranslationMode activeMode = TranslationMode.urdu;
 
   final Map<int, (int, bool)> _segmentMetadata = {};
 
@@ -72,8 +69,16 @@ class InterleavedAudioService {
     required int surahNumber,
     required int ayahCount,
     required int imamId,
+    TranslationMode mode = TranslationMode.urdu, 
   }) async {
-    if (_loadedSurah == surahNumber && _loadedImamId == imamId) {
+    // 👇 BULLETPROOF FIX: Force read from the phone's hard drive so it NEVER resets 👇
+    final prefs = await SharedPreferences.getInstance();
+    final savedLang = prefs.getString('audio_tarjumah_lang') ?? 'urdu';
+    activeMode = savedLang == 'english' ? TranslationMode.english : TranslationMode.urdu;
+
+    if (_loadedSurah == surahNumber &&
+        _loadedImamId == imamId &&
+        _loadedMode == activeMode) { 
       if (!_player.playing) play();
       return;
     }
@@ -81,13 +86,12 @@ class InterleavedAudioService {
     try {
       _loadedSurah      = surahNumber;
       _loadedImamId     = imamId;
+      _loadedMode       = activeMode; 
       _totalAyahs       = ayahCount;
       _arabicFolder     = _everyayahFolders[imamId] ?? _arabicFallbackFolder;
       _lastAppendedAyah = 0;
       _segmentMetadata.clear();
 
-      // CRITICAL: Do NOT use useLazyPreparation: true here.
-      // Background isolate crashes natively if that flag is set.
       _playlist = ConcatenatingAudioSource(children: []);
       await _appendNextChunk(10);
 
@@ -101,7 +105,6 @@ class InterleavedAudioService {
         }
       });
 
-      // Prepare immediately so play/pause UI stays in sync.
       _player.setAudioSource(_playlist!).then((_) => play());
     } catch (e) {
       debugPrint('InterleavedAudioService.buildAndPlay error: $e');
@@ -121,11 +124,14 @@ class InterleavedAudioService {
     final sources = <AudioSource>[];
     int currentSegmentIndex = _playlist!.length;
 
+    final translationFolder = activeMode == TranslationMode.english
+        ? _englishFolder
+        : _urduFolder;
+
     for (int ayah = start; ayah <= end; ayah++) {
       final s = _loadedSurah!.toString().padLeft(3, '0');
       final a = ayah.toString().padLeft(3, '0');
 
-      // ── Arabic ayah ──────────────────────────────────────────────────────
       final localArabic = await _downloadService.getLocalArabicAyahPath(
           _loadedSurah!, ayah, _loadedImamId!);
 
@@ -153,29 +159,31 @@ class InterleavedAudioService {
       _segmentMetadata[currentSegmentIndex] = (ayah, false);
       currentSegmentIndex++;
 
-      // ── Urdu ayah ────────────────────────────────────────────────────────
-      final localUrdu = await _downloadService.getLocalUrduAyahPath(
-          _loadedSurah!, ayah, _loadedImamId!);
+      final langLabel = activeMode == TranslationMode.english ? 'English' : 'Urdu';
 
-      final urduMediaItem = MediaItem(
-        id:    'urdu_${_loadedSurah}_$ayah',
-        title: 'Ayah $ayah (Urdu)',
+      final translationMediaItem = MediaItem(
+        id:    '${activeMode.name}_${_loadedSurah}_$ayah',
+        title: 'Ayah $ayah ($langLabel)',
         album: 'Surah $_loadedSurah',
       );
 
-      bool addedLocalUrdu = false;
-      if (localUrdu != null) {
-        final f = File(localUrdu);
-        if (f.existsSync() && f.lengthSync() > 1000) {
-          sources.add(AudioSource.file(localUrdu, tag: urduMediaItem));
-          addedLocalUrdu = true;
+      bool addedLocalTranslation = false;
+      if (activeMode == TranslationMode.urdu) {
+        final localUrdu = await _downloadService.getLocalUrduAyahPath(
+            _loadedSurah!, ayah, _loadedImamId!);
+        if (localUrdu != null) {
+          final f = File(localUrdu);
+          if (f.existsSync() && f.lengthSync() > 1000) {
+            sources.add(AudioSource.file(localUrdu, tag: translationMediaItem));
+            addedLocalTranslation = true;
+          }
         }
       }
-      if (!addedLocalUrdu) {
-        // Network fallback — always available for all imams (Urdu is imam-agnostic)
+
+      if (!addedLocalTranslation) {
         sources.add(AudioSource.uri(
-          Uri.parse('$_everyayahBase/$_urduFolder/$s$a.mp3'),
-          tag: urduMediaItem,
+          Uri.parse('$_everyayahBase/$translationFolder/$s$a.mp3'),
+          tag: translationMediaItem,
         ));
       }
 
@@ -187,25 +195,10 @@ class InterleavedAudioService {
     _lastAppendedAyah = end;
   }
 
-  Future<void> play() async {
-    try { await _player.play(); }
-    catch (e) { debugPrint('InterleavedAudioService.play: $e'); }
-  }
-
-  Future<void> pause() async {
-    try { await _player.pause(); }
-    catch (e) { debugPrint('InterleavedAudioService.pause: $e'); }
-  }
-
-  Future<void> seek(Duration position) async {
-    try { await _player.seek(position); }
-    catch (e) { debugPrint('InterleavedAudioService.seek: $e'); }
-  }
-
-  Future<void> setSpeed(double speed) async {
-    try { await _player.setSpeed(speed); }
-    catch (e) { debugPrint('InterleavedAudioService.setSpeed: $e'); }
-  }
+  Future<void> play()  async { try { await _player.play();  } catch (e) { debugPrint('play: $e'); } }
+  Future<void> pause() async { try { await _player.pause(); } catch (e) { debugPrint('pause: $e'); } }
+  Future<void> seek(Duration position) async { try { await _player.seek(position); } catch (e) { debugPrint('seek: $e'); } }
+  Future<void> setSpeed(double speed)  async { try { await _player.setSpeed(speed); } catch (e) { debugPrint('setSpeed: $e'); } }
 
   Future<void> dispose() async {
     _loadedSurah  = null;
