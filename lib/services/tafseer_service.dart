@@ -13,7 +13,7 @@ class TafseerEntry {
     required this.text,
   });
 }
-
+// Service to fetch and cache tafseer (exegesis) for Quranic verses from the Quran.com API. 
 class TafseerService {
   static const String _baseUrl = 'https://api.quran.com/api/v4';
 
