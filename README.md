@@ -179,16 +179,7 @@ To build the APKs for production with the correct signing keys, use the split-ab
 
 ```bash
 flutter build apk --release --split-per-abi
-```
-
-You will find the generated APKs in `build/app/outputs/flutter-apk/`.
-- **`app-arm64-v8a-release.apk`**: This is the modern 64-bit version. **(Upload this to GitHub Releases!)** Almost all Android phones from 2016 onwards use this.
-- `app-armeabi-v7a-release.apk`: For older 32-bit devices.
-- `app-x86_64-release.apk`: For Android Emulators and Chromebooks.
-
-> 💡 **Note on GitHub Releases:** It is highly recommended to upload *all three* generated APKs to your GitHub release. If you only want to upload one, `arm64-v8a` covers 95%+ of modern devices.
-
----
+`
 
 ## 📁 Project Structure
 
