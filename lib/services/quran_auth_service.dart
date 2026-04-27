@@ -1,285 +1,260 @@
 import 'dart:convert';
+
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
-// ── Quran Foundation OAuth2 config ─────────────────────────────────────────
-// Environment: PRE-LIVE (switch to production values after QF approves)
-//
-// Pre-live:  authBase = https://prelive-oauth2.quran.foundation
-//            apiBase  = https://apis-prelive.quran.foundation
-// Production: authBase = https://oauth2.quran.foundation
-//             apiBase  = https://apis.quran.foundation
-//
-// IMPORTANT: This is a confidential client (has client_secret).
-// For production, keep client_secret on a backend server and do the
-// token exchange there. For the hackathon prelive review this direct
-// approach is acceptable since QF is aware it is a mobile app.
-// ──────────────────────────────────────────────────────────────────────────
 class QuranAuthService {
-  // ── Credentials (filled in after QF provisions the client) ─────────────
-  static const _clientId     = '32263b86-47da-435c-8271-9b49a7c301ea';
-  static const _clientSecret = 'XmIF~wUce7W.BLa1poVHl2GuA~'; // confidential
-  static const _redirectUri  = 'quran2u://oauth2redirect';
+  final FlutterAppAuth _appAuth = const FlutterAppAuth();
+  
+  // 👇 FIX: Force Android to use the modern, stable encryption standard
+  final FlutterSecureStorage _storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+      resetOnError: true,
+    ),
+  );
 
-  // ── Endpoints ───────────────────────────────────────────────────────────
-  static const _authEndpoint  = 'https://prelive-oauth2.quran.foundation/oauth2/auth';
-  static const _tokenEndpoint = 'https://prelive-oauth2.quran.foundation/oauth2/token';
-  static const _apiBase       = 'https://apis-prelive.quran.foundation';
+  bool _storageReady = false;
 
-  // ── Scopes (from https://api-docs.quran.foundation/docs/user_related_apis_versioned/scopes)
-  // FIX: 'bookmarks'/'collections' do NOT exist as scopes.
-  // Correct names: bookmark, collection, user, streak, reading_session, etc.
-  static const _scopes = [
+  // ⚠️ Ensure these match EXACTLY what you registered on the Quran Foundation dashboard!
+  static const String _clientId = '32263b86-47da-435c-8271-9b49a7c301ea';
+  static const String _clientSecret = 'XmIF~wUce7W.BLa1poVHl2GuA~';
+  static const String _redirectUrl = 'quran2u://oauth2redirect'; // Must match build.gradle!
+  
+  // Endpoints from api-docs.quran.foundation (prelive)
+  static const String _authEndpoint = 'https://prelive-oauth2.quran.foundation/oauth2/auth';
+  static const String _tokenEndpoint = 'https://prelive-oauth2.quran.foundation/oauth2/token';
+  static const String _apiBaseUrl = 'https://apis-prelive.quran.foundation';
+
+  static const List<String> _scopes = [
     'openid',
     'offline_access',
-    'user',       // profile info
-    'bookmark',   // bookmarked verses   ← was wrong: 'bookmarks'
-    'collection', // saved collections   ← was wrong: 'collections'
-    'streak',     // reading streaks
+    'user',
+    'collection',
+    'bookmark',
+    'profile',
   ];
 
-  // ── Storage keys ────────────────────────────────────────────────────────
-  static const _kAccessToken  = 'access_token';
-  static const _kXAuthToken   = 'x-auth-token'; // kept for authStateProvider compat
-  static const _kRefreshToken = 'refresh_token';
-  static const _kIsGuest      = 'is_guest';
+  /// Ensure secure storage is functional; wipe if cipher is corrupted.
+  Future<void> _ensureStorage() async {
+    if (_storageReady) return;
+    try {
+      await _storage.read(key: 'x-auth-token');
+      _storageReady = true;
+    } catch (e) {
+      print('[QuranAuth] Secure storage corrupted, resetting: $e');
+      try { await _storage.deleteAll(); } catch (_) {}
+      _storageReady = true;
+    }
+  }
 
-  final FlutterAppAuth           _appAuth  = const FlutterAppAuth();
-  final FlutterSecureStorage     _storage  = const FlutterSecureStorage();
 
-  // ── Login ────────────────────────────────────────────────────────────────
   Future<bool> login() async {
     try {
+      await _ensureStorage();
+
+      print('[QuranAuth] Starting authorizeAndExchangeCode...');
+
       final AuthorizationTokenResponse? result =
           await _appAuth.authorizeAndExchangeCode(
         AuthorizationTokenRequest(
           _clientId,
-          _redirectUri,
+          _redirectUrl,
           clientSecret: _clientSecret,
           scopes: _scopes,
+          promptValues: ['login'], // Force showing the login screen to choose an account
           serviceConfiguration: const AuthorizationServiceConfiguration(
             authorizationEndpoint: _authEndpoint,
-            tokenEndpoint:         _tokenEndpoint,
+            tokenEndpoint: _tokenEndpoint,
           ),
         ),
       );
 
+      print('[QuranAuth] Result: ${result?.accessToken != null ? "SUCCESS" : "null"}');
+
       if (result != null && result.accessToken != null) {
-        await _storage.write(key: _kAccessToken,  value: result.accessToken);
-        await _storage.write(key: _kXAuthToken,   value: result.accessToken);
+        await _storage.write(key: 'x-auth-token', value: result.accessToken!);
         if (result.refreshToken != null) {
-          await _storage.write(key: _kRefreshToken, value: result.refreshToken);
+          await _storage.write(key: 'x-refresh-token', value: result.refreshToken!);
         }
-        // Clear guest flag on successful login
-        await _storage.delete(key: _kIsGuest);
+        if (result.idToken != null) {
+          await _storage.write(key: 'id-token', value: result.idToken!);
+        }
+        await _storage.delete(key: 'is_guest');
+        print('[QuranAuth] Login successful!');
         return true;
       }
       return false;
-   } catch (e) {
-      // 👇 Using standard print() instead of debugPrint
-      print('================ OAUTH ERROR ================');
-      print(e.toString());
-      print('=============================================');
-      return false;
+    } catch (e) {
+      print('[QuranAuth] ERROR: ${e.toString()}');
+      throw Exception('OAuth Error: ${e.toString()}');
     }
   }
 
-  // ── Getters ──────────────────────────────────────────────────────────────
-  Future<String?> getAccessToken()  => _storage.read(key: _kAccessToken);
-  Future<String?> getRefreshToken() => _storage.read(key: _kRefreshToken);
-
-  Future<bool> get isLoggedIn async {
-    final token = await getAccessToken();
-    return token != null;
+  Future<void> continueAsGuest() async {
+    await _ensureStorage();
+    await _storage.write(key: 'is_guest', value: 'true');
   }
 
-  // ── Guest mode ───────────────────────────────────────────────────────────
-  Future<void> continueAsGuest() async {
-    await _storage.write(key: _kIsGuest, value: 'true');
+  Future<bool> get isLoggedIn async {
+    await _ensureStorage();
+    final token = await _storage.read(key: 'x-auth-token');
+    return token != null && token.isNotEmpty;
   }
 
   Future<bool> get isGuest async {
-    final value = await _storage.read(key: _kIsGuest);
-    return value == 'true';
+    await _ensureStorage();
+    final guest = await _storage.read(key: 'is_guest');
+    return guest == 'true';
   }
 
-  // ── Logout ───────────────────────────────────────────────────────────────
-  Future<void> logout() async => _storage.deleteAll();
+  Future<void> logout() async {
+    await _ensureStorage();
+    await _storage.delete(key: 'x-auth-token');
+    await _storage.delete(key: 'x-refresh-token');
+    await _storage.delete(key: 'id-token');
+  }
 
-  // ── Token refresh (confidential client → HTTP Basic Auth) ────────────────
-  // Per docs: confidential clients MUST use client authentication for refresh.
-  // Basic Auth header = base64(clientId:clientSecret)
-  Future<bool> _refreshAccessToken() async {
-    final refreshToken = await getRefreshToken();
-    if (refreshToken == null) return false;
-
+  Future<bool> refreshToken() async {
     try {
-      final credentials = base64Encode(
-        utf8.encode('$_clientId:$_clientSecret'),
-      );
+      final refreshToken = await _storage.read(key: 'x-refresh-token');
+      if (refreshToken == null) return false;
 
-      final response = await http.post(
-        Uri.parse(_tokenEndpoint),
-        headers: {
-          'Content-Type':  'application/x-www-form-urlencoded',
-          'Authorization': 'Basic $credentials',
-        },
-        body: {
-          'grant_type':    'refresh_token',
-          'refresh_token': refreshToken,
-        },
-      );
+      final result = await _appAuth.token(TokenRequest(
+        _clientId,
+        _redirectUrl,
+        clientSecret: _clientSecret,
+        refreshToken: refreshToken,
+        scopes: _scopes,
+        serviceConfiguration: const AuthorizationServiceConfiguration(
+          authorizationEndpoint: _authEndpoint,
+          tokenEndpoint: _tokenEndpoint,
+        ),
+      ));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        await _storage.write(key: _kAccessToken,  value: data['access_token']);
-        await _storage.write(key: _kXAuthToken,   value: data['access_token']);
-        if (data['refresh_token'] != null) {
-          await _storage.write(key: _kRefreshToken, value: data['refresh_token']);
+      if (result != null && result.accessToken != null) {
+        await _storage.write(key: 'x-auth-token', value: result.accessToken!);
+        if (result.refreshToken != null) {
+          await _storage.write(key: 'x-refresh-token', value: result.refreshToken!);
         }
         return true;
       }
-    } catch (_) {}
-    return false;
+      return false;
+    } catch (e) {
+      print('[QuranAuth] Failed to refresh token: $e');
+      return false;
+    }
   }
 
-  // ── Authenticated request with ONE 401 retry ─────────────────────────────
-  // Per docs: "if 401: refresh once → retry once → if still fails, surface error"
-  // No infinite loops.
-  Future<http.Response> _apiRequest(
-    String endpoint, {
-    String method                   = 'GET',
-    Map<String, dynamic>? body,
-    bool isRetry                   = false,
-  }) async {
-    final token = await getAccessToken();
+  // --- Cloud Sync Helpers ---
 
-    Map<String, String> headers(String? t) => {
-          'x-auth-token': t ?? '',
-          'x-client-id':  _clientId,
-          'Content-Type': 'application/json',
-          'Accept':       'application/json',
-        };
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _storage.read(key: 'x-auth-token');
+    return {
+      'x-auth-token': token ?? '',
+      'x-client-id': _clientId,
+      'Content-Type': 'application/json',
+    };
+  }
 
-    final uri = Uri.parse('$_apiBase$endpoint');
+  Future<bool> syncBookmark({required int surahId, required int ayahNumber}) async {
+    var headers = await _getHeaders();
+    var response = await http.post(
+      Uri.parse('$_apiBaseUrl/auth/v1/bookmarks'),
+      headers: headers,
+      body: jsonEncode({
+        'key': surahId,
+        'verseNumber': ayahNumber,
+        'type': 'ayah',
+        'mushafId': 1,
+      }),
+    );
 
-    http.Response response;
-    if (method == 'POST') {
-      response = await http.post(
-        uri,
-        headers: headers(token),
-        body:    body != null ? jsonEncode(body) : null,
-      );
-    } else if (method == 'DELETE') {
-      response = await http.delete(uri, headers: headers(token));
-    } else {
-      response = await http.get(uri, headers: headers(token));
-    }
-
-    // One-shot 401 retry after token refresh
-    if (response.statusCode == 401 && !isRetry) {
-      final refreshed = await _refreshAccessToken();
+    if (response.statusCode == 401) {
+      final refreshed = await refreshToken();
       if (refreshed) {
-        return _apiRequest(endpoint, method: method, body: body, isRetry: true);
+        headers = await _getHeaders();
+        response = await http.post(
+          Uri.parse('$_apiBaseUrl/auth/v1/bookmarks'),
+          headers: headers,
+          body: jsonEncode({
+            'key': surahId,
+            'verseNumber': ayahNumber,
+            'type': 'ayah',
+            'mushafId': 1,
+          }),
+        );
+      }
+    }
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
+
+  Future<List<dynamic>> getBookmarks() async {
+    var headers = await _getHeaders();
+    var response = await http.get(
+      Uri.parse('$_apiBaseUrl/auth/v1/bookmarks?mushafId=1&first=20'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 401) {
+      final refreshed = await refreshToken();
+      if (refreshed) {
+        headers = await _getHeaders();
+        response = await http.get(
+          Uri.parse('$_apiBaseUrl/auth/v1/bookmarks?mushafId=1&first=20'),
+          headers: headers,
+        );
       }
     }
 
-    return response;
-  }
-
-  // ════════════════════════════════════════════════════════════════════════
-  // User API endpoints
-  // All paths: {apiBase}/auth/v1/...
-  // Headers: x-auth-token + x-client-id (injected by _apiRequest)
-  // ════════════════════════════════════════════════════════════════════════
-
-  // ── Profile ──────────────────────────────────────────────────────────────
-  Future<Map<String, dynamic>?> getUserProfile() async {
-    final res = await _apiRequest('/auth/v1/profile');
-    return res.statusCode == 200
-        ? jsonDecode(res.body) as Map<String, dynamic>
-        : null;
-  }
-
-  // ── Bookmarks ─────────────────────────────────────────────────────────────
-  /// Fetch all cloud bookmarks for the logged-in user.
-  Future<List<dynamic>> getBookmarks() async {
-    final res = await _apiRequest('/auth/v1/bookmarks');
-    if (res.statusCode != 200) return [];
-    final decoded = jsonDecode(res.body);
-    // Response shape: { "data": [...] } or directly a list
-    if (decoded is Map && decoded['data'] != null) {
-      return decoded['data'] as List;
+    print('================ CLOUD BOOKMARKS JSON ================');
+    print('Status: ${response.statusCode}');
+    print(response.body);
+    print('======================================================');
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['data'] ?? [];
     }
-    if (decoded is List) return decoded;
     return [];
   }
 
-  /// Push a single ayah bookmark to Quran.com.
-  /// Payload confirmed by Gemini's testing against the prelive API.
-  Future<bool> syncBookmark({
-    required int surahId,
-    required int ayahNumber,
-  }) async {
-    final res = await _apiRequest(
-      '/auth/v1/bookmarks',
-      method: 'POST',
-      body: {
-        'key':         surahId,
-        'type':        'ayah',
-        'verseNumber': ayahNumber,
-        'mushaf':      1,
-      },
-    );
-    return res.statusCode == 200 || res.statusCode == 201;
-  }
-
-  /// Delete a bookmark by its cloud ID.
-  Future<bool> deleteBookmark(String bookmarkId) async {
-    final res = await _apiRequest(
-      '/auth/v1/bookmarks/$bookmarkId',
-      method: 'DELETE',
-    );
-    return res.statusCode == 200 || res.statusCode == 204;
-  }
-
-  // ── Collections ───────────────────────────────────────────────────────────
-  /// Fetch all collections for the logged-in user.
   Future<List<dynamic>> getCollections() async {
-    final res = await _apiRequest('/auth/v1/collections');
-    if (res.statusCode != 200) return [];
-    final decoded = jsonDecode(res.body);
-    if (decoded is Map && decoded['data'] != null) {
-      return decoded['data'] as List;
+    final headers = await _getHeaders();
+    final response = await http.get(
+      Uri.parse('$_apiBaseUrl/auth/v1/collections'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['collections'] ?? [];
     }
-    if (decoded is List) return decoded;
     return [];
   }
 
-  /// Create a new collection.
-  Future<Map<String, dynamic>?> createCollection({
-    required String name,
-    String? description,
-  }) async {
-    final res = await _apiRequest(
-      '/auth/v1/collections',
-      method: 'POST',
-      body: {
-        'name': name,
-        if (description != null) 'description': description,
-      },
-    );
-    return (res.statusCode == 200 || res.statusCode == 201)
-        ? jsonDecode(res.body) as Map<String, dynamic>
-        : null;
+  Future<Map<String, dynamic>?> getStreak() async {
+    return null; // Add logic if you implement streaks later
   }
 
-  // ── Streaks ───────────────────────────────────────────────────────────────
-  Future<Map<String, dynamic>?> getStreak() async {
-    final res = await _apiRequest('/auth/v1/streak');
-    return res.statusCode == 200
-        ? jsonDecode(res.body) as Map<String, dynamic>
-        : null;
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    final idToken = await _storage.read(key: 'id-token');
+    if (idToken == null) return null;
+    
+    // Decode JWT payload (base64url-encoded middle segment)
+    try {
+      final parts = idToken.split('.');
+      if (parts.length != 3) return null;
+      
+      String payload = parts[1];
+      // Pad base64url to valid base64
+      switch (payload.length % 4) {
+        case 2: payload += '=='; break;
+        case 3: payload += '='; break;
+      }
+      final decoded = utf8.decode(base64Url.decode(payload));
+      return jsonDecode(decoded) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
   }
 }

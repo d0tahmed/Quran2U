@@ -29,7 +29,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (success) {
         ref.invalidate(isLoggedInProvider);
         ref.invalidate(userProfileProvider);
-        Navigator.pop(context);
+        
+        // Automatically sync bookmarks upon successful login
+        ref.read(bookmarkSyncProvider.notifier).syncToCloud();
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainShell()),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -48,7 +54,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       print('================ OAUTH ERROR ================');
       print(e.toString());
       print('=============================================');
-      setState(() => _error = 'Error: Check debug console');
+      if (mounted) {
+        setState(() => _error = e.toString());
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -90,7 +98,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
 
-                // 👇 FIX: Removed Center widget and added bottom padding so the button isn't cut off
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(28, 10, 28, 40),
@@ -129,9 +136,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 10),
                         
-                        // 👇 FIX: Updated accurate subtitle
+                        // 👇 STRICTLY BOOKMARKS ONLY 👇
                         Text(
-                          'Sign in to securely back up your saved Ayahs, Surahs, and collections to the cloud.',
+                          'Sign in to securely back up your saved Ayahs and Surahs to the cloud.',
                           style: GoogleFonts.manrope(
                             color: AppColorsV2.onSurfaceVariant,
                             fontSize: 14,
@@ -142,14 +149,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 40),
 
-                        // 👇 FIX: Updated accurate feature list
-                        const _FeatureRow(icon: Icons.bookmark_rounded, label: 'Sync saved bookmarks'),
+                        // 👇 STRICTLY BOOKMARKS ONLY 👇
+                        const _FeatureRow(icon: Icons.bookmark_rounded, label: 'Sync saved Ayahs & Surahs'),
                         const SizedBox(height: 12),
-                        const _FeatureRow(icon: Icons.collections_bookmark_rounded, label: 'Cloud backup for collections'),
+                        const _FeatureRow(icon: Icons.devices_rounded, label: 'Access across your devices'),
                         const SizedBox(height: 12),
-                        const _FeatureRow(icon: Icons.devices_rounded, label: 'Cross-device access'),
-                        const SizedBox(height: 12),
-                        const _FeatureRow(icon: Icons.security_rounded, label: 'Secure cloud storage'),
+                        const _FeatureRow(icon: Icons.security_rounded, label: 'Secure cloud backup'),
 
                         const SizedBox(height: 44),
 
@@ -267,12 +272,14 @@ class _FeatureRow extends StatelessWidget {
           child: Icon(icon, color: AppColorsV2.primary, size: 18),
         ),
         const SizedBox(width: 14),
-        Text(
-          label,
-          style: GoogleFonts.manrope(
-            color: AppColorsV2.onSurfaceVariant,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.manrope(
+              color: AppColorsV2.onSurfaceVariant,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],

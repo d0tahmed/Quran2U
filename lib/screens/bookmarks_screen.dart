@@ -413,7 +413,7 @@ class _BookmarkTile extends ConsumerWidget {
         );
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content:          Text('Bookmark removed',
-              style: GoogleFonts.manrope(fontWeight: FontWeight.w700)),
+              style: GoogleFonts.manrope(fontWeight: FontWeight.w700, color: Colors.white)),
           backgroundColor:  AppColorsV2.surfaceLow,
           behavior:         SnackBarBehavior.floating,
           shape:            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -472,12 +472,15 @@ class _BookmarkTile extends ConsumerWidget {
               ),
             ),
             subtitle: Row(children: [
-              Text(
-                'Saved on ${DateFormat('MMM d, yyyy').format(bookmark.createdAt)}',
-                style: GoogleFonts.manrope(
-                  color:      AppColorsV2.onSurfaceVariant,
-                  fontSize:   12,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  'Saved on ${DateFormat('MMM d, yyyy').format(bookmark.createdAt)}',
+                  style: GoogleFonts.manrope(
+                    color:      AppColorsV2.onSurfaceVariant,
+                    fontSize:   12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (bookmark.ayahNumber != null) ...[

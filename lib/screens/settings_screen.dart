@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/downloads_screen.dart';
+import 'package:quran_recitation/screens/login_screen.dart';
 import 'package:quran_recitation/services/interleaved_audio_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
@@ -121,6 +122,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 18),
+
+            const _QuranAccountSection(),
+            const SizedBox(height: 22),
 
             if (selectedImam != null)
               Container(
@@ -1450,4 +1454,161 @@ class _InfoRow extends StatelessWidget {
             style: GoogleFonts.outfit(
                 color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
       ]);
+}
+class _QuranAccountSection extends ConsumerWidget {
+  const _QuranAccountSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLoggedIn = ref.watch(isLoggedInProvider).valueOrNull ?? false;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColorsV2.surfaceLow,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: _kGreen.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.cloud_sync_rounded, color: _kGreen),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Quran.com Cloud Sync',
+                      style: GoogleFonts.manrope(
+                        color: AppColorsV2.onSurface,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isLoggedIn ? 'Signed in to Quran.com' : 'Signed out',
+                      style: GoogleFonts.manrope(
+                        color: isLoggedIn ? _kGreen : AppColorsV2.onSurfaceVariant,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (isLoggedIn) ...[
+            Text(
+              'Your bookmarks (saved Surahs & Ayahs) are safely backed up to the cloud.',
+              style: GoogleFonts.manrope(
+                color: AppColorsV2.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Syncing bookmarks...', style: GoogleFonts.manrope(fontWeight: FontWeight.w600)),
+                          backgroundColor: _kCard,
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                      ref.read(bookmarkSyncProvider.notifier).syncToCloud().then((_) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Sync Complete', style: GoogleFonts.manrope(fontWeight: FontWeight.w600, color: _kGreen)),
+                            backgroundColor: _kCard,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _kGreen.withValues(alpha: 0.1),
+                      foregroundColor: _kGreen,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.sync_rounded, size: 18),
+                    label: Text('Sync Now', style: GoogleFonts.manrope(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () async {
+                      await ref.read(quranAuthServiceProvider).logout();
+                      ref.invalidate(isLoggedInProvider);
+                      ref.invalidate(userProfileProvider);
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColorsV2.danger,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.logout_rounded, size: 18),
+                    label: Text('Sign Out', style: GoogleFonts.manrope(fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            Text(
+              'Sign in to securely back up your saved Ayahs and Surahs to the cloud and access them across devices.',
+              style: GoogleFonts.manrope(
+                color: AppColorsV2.onSurfaceVariant,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kGreen,
+                  foregroundColor: const Color(0xFF00311F),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                icon: const Icon(Icons.login_rounded, size: 18),
+                label: Text(
+                  'Sign in & Sync Data',
+                  style: GoogleFonts.manrope(fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
