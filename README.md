@@ -175,8 +175,6 @@ The app uses the **Quran Foundation prelive (staging)** environment.
 
 ## 📦 Building for Production / Release
 
-To build the APKs for production with the correct signing keys, use the split-abi command. This generates separate APKs for different processor architectures, keeping the app size significantly smaller:
-
 ```bash
 flutter build apk --release --split-per-abi (Updated README.md)
 
