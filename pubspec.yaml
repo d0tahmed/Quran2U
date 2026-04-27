@@ -2,7 +2,7 @@ name: quran_recitation
 description: Open-source Quran recitation app with multiple Imams, offline support, and bookmarking.
 publish_to: 'none'
 
-version: 2.0.0+9991
+version: 2.1.1+20000
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
