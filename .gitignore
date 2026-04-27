@@ -1,4 +1,4 @@
-# Miscellaneous
+# ─── Miscellaneous ────────────────────────────────────────────────────────────
 *.class
 *.log
 *.pyc
@@ -12,18 +12,18 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# ─── IntelliJ / Android Studio ────────────────────────────────────────────────
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# VS Code related
-# (Uncomment the line below if you want to ignore ALL VS Code settings)
+# ─── VS Code ──────────────────────────────────────────────────────────────────
+# Uncomment the line below to ignore ALL VS Code settings:
 #.vscode/
 .VSCodeCounter/
 
-# Flutter/Dart/Pub related
+# ─── Flutter / Dart / Pub ─────────────────────────────────────────────────────
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -35,24 +35,65 @@ migrate_working_dir/
 /build/
 /coverage/
 
-# Web related
+# ─── Dart code generation (Freezed, json_serializable, etc.) ─────────────────
+# Uncomment if you want to ignore generated files (NOT recommended for this project):
+# *.g.dart
+# *.freezed.dart
+
+# ─── Web ──────────────────────────────────────────────────────────────────────
 lib/generated_plugin_registrant.dart
 
-# Symbolication related
+# ─── Symbolication ────────────────────────────────────────────────────────────
 app.*.symbols
 
-# Obfuscation related
+# ─── Obfuscation ──────────────────────────────────────────────────────────────
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# ─── Android build artifacts ──────────────────────────────────────────────────
 /android/app/debug
 /android/app/profile
 /android/app/release
 
-# 🔴 CRITICAL SECURITY IGNORES & ENV VARIABLES 🔴
+# ─── 🔴 SECRETS & CREDENTIALS — NEVER COMMIT THESE 🔴 ───────────────────────
+# Environment variables
 .env
+.env.*
+!.env.example
+
+# Android signing keys
 **/*.jks
 **/*.keystore
 **/key.properties
+
+# Firebase
 google-services.json
 GoogleService-Info.plist
+
+# OAuth2 / API secrets
+# (client_id and client_secret in quran_auth_service.dart are prelive/staging only)
+# If you move to production, extract them to a secrets file and add it here:
+secrets.dart
+lib/secrets.dart
+**/secrets.dart
+
+# ─── macOS ────────────────────────────────────────────────────────────────────
+*.xcuserstate
+xcuserdata/
+
+# ─── iOS / Xcode ──────────────────────────────────────────────────────────────
+**/Pods/
+ios/Podfile.lock
+
+# ─── Fastlane ────────────────────────────────────────────────────────────────
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+fastlane/.env
+fastlane/.env.*
+
+# ─── Downloaded Quran audio (local device cache — not source code) ────────────
+# These are generated at runtime by DownloadService and should not be committed.
+**/downloads/recitation/
+**/downloads/arabic/
+**/downloads/urdu/
