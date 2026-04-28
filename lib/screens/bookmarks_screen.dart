@@ -24,7 +24,11 @@ class BookmarksScreen extends ConsumerWidget {
 
     final isLoggedIn = loggedInAsync.asData?.value ?? false;
 
-    return Scaffold(
+    // Wrap in a local ScaffoldMessenger so snackbars (e.g. "Bookmark removed")
+    // are scoped ONLY to this screen and are automatically dismissed when the
+    // user navigates away — they will never leak to other pages.
+    return ScaffoldMessenger(
+      child: Scaffold(
       backgroundColor: _kBg,
       body: Stack(
         children: [
@@ -165,7 +169,7 @@ class BookmarksScreen extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildEmptyState() {
@@ -411,6 +415,8 @@ class _BookmarkTile extends ConsumerWidget {
         ref.read(bookmarksProvider.notifier).updateBookmarks(
           currentBks.where((b) => b.id != bookmark.id).toList(),
         );
+        // Clear any queued snackbars first so rapid deletions don't pile up
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content:          Text('Bookmark removed',
               style: GoogleFonts.manrope(fontWeight: FontWeight.w700, color: Colors.white)),

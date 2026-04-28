@@ -75,6 +75,9 @@ GoogleService-Info.plist
 secrets.dart
 lib/secrets.dart
 **/secrets.dart
+secret.dart
+lib/secret.dart
+**/secret.dart
 
 # ─── macOS ────────────────────────────────────────────────────────────────────
 *.xcuserstate

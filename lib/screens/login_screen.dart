@@ -29,24 +29,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (success) {
         ref.invalidate(isLoggedInProvider);
         ref.invalidate(userProfileProvider);
-        
+
+        // Always land on the Home (Surahs) tab regardless of where the user
+        // was before opening the login screen.
+        ref.read(shellIndexProvider.notifier).state = 0;
+
         // Automatically sync bookmarks upon successful login
         ref.read(bookmarkSyncProvider.notifier).syncToCloud();
 
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MainShell()),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✓ Signed in to Quran.com',
-              style: GoogleFonts.manrope(fontWeight: FontWeight.w700),
-            ),
-            backgroundColor: const Color(0xFF065F46),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
+        // Navigate FIRST (don't await — context is dead after pushReplacement).
+        // Pass showWelcome:true so MainShell shows the dialog via initState
+        // post-frame callback on its own live context.
+        if (context.mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const MainShell(showWelcome: true)),
+          );
+        }
+
       } else {
         setState(() => _error = 'Login was cancelled or failed. Please try again.');
       }
@@ -86,24 +85,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           SafeArea(
             child: Column(
               children: [
-                // Back button
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8, top: 8),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ),
-                ),
-
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(28, 10, 28, 40),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: MediaQuery.of(context).size.height -
+                            MediaQuery.of(context).padding.top -
+                            MediaQuery.of(context).padding.bottom,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
 
                         // Logo area
                         Container(
@@ -217,8 +210,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onPressed: () async {
                             await ref.read(quranAuthServiceProvider).continueAsGuest();
                             if (!mounted) return;
+                            // Show the welcome dialog only on the very first
+                            // time the user taps 'Continue without login'.
+                            // After that, the flag 'has_seen_welcome' is set
+                            // in SharedPreferences and the dialog is skipped.
                             Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(builder: (_) => const MainShell()),
+                              MaterialPageRoute(
+                                builder: (_) => const MainShell(showWelcome: true, isGuestWelcome: true),
+                              ),
                             );
                           },
                           child: Text(
@@ -242,6 +241,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ],
                     ),
+                  ),
                   ),
                 ),
               ],

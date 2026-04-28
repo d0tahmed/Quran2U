@@ -9,14 +9,16 @@ import 'package:quran_recitation/screens/daily_inspiration_screen.dart';
 import 'package:quran_recitation/services/notification_service.dart';   
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/widgets/calm_light_background.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-const _kBg = AppColorsV2.bg;
 
 final shellIndexProvider = StateProvider<int>((ref) => 0);
 final navBarVisibleProvider = StateProvider<bool>((ref) => true);
 
 class MainShell extends ConsumerStatefulWidget {
-  const MainShell({super.key});
+  final bool showWelcome;
+  final bool isGuestWelcome; // true = guest path; uses prefs to show only once
+  const MainShell({super.key, this.showWelcome = false, this.isGuestWelcome = false});
 
   @override
   ConsumerState<MainShell> createState() => _MainShellState();
@@ -41,6 +43,21 @@ class _MainShellState extends ConsumerState<MainShell> {
         );
       }
     });
+
+    // Show the welcome dialog after the first frame has rendered.
+    if (widget.showWelcome) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        // For guest path: only show once using a SharedPreferences flag
+        if (widget.isGuestWelcome) {
+          final prefs = await SharedPreferences.getInstance();
+          final seen = prefs.getBool('has_seen_welcome') ?? false;
+          if (seen || !mounted) return;
+          await prefs.setBool('has_seen_welcome', true);
+        }
+        if (mounted) _showWelcomeDialog(context, isGuest: widget.isGuestWelcome);
+      });
+    }
   }
 
   @override
@@ -48,6 +65,144 @@ class _MainShellState extends ConsumerState<MainShell> {
     _notifSub?.cancel();
     super.dispose();
   }
+
+  void _showWelcomeDialog(BuildContext context, {bool isGuest = false}) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+          decoration: BoxDecoration(
+            color: AppColorsV2.surface.withValues(alpha: 0.95),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: AppColorsV2.primary.withValues(alpha: 0.25),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColorsV2.primary.withValues(alpha: 0.12),
+                blurRadius: 40,
+                spreadRadius: 4,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '@d0tahmed',
+                style: TextStyle(
+                  color: AppColorsV2.primary.withValues(alpha: 0.7),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                width: 64, height: 64,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColorsV2.primary.withValues(alpha: 0.1),
+                  border: Border.all(
+                    color: AppColorsV2.primary.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(Icons.menu_book_rounded,
+                    color: AppColorsV2.primary, size: 30),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Welcome to Quran2U',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'May Allah \u069b bless your journey with this app and strengthen your Imaan through His guidance and the words of the Holy Quran.\n\nMay every recitation bring you closer to Him. \u0622\u0645\u064a\u0646',
+                style: TextStyle(
+                  color: AppColorsV2.onSurfaceVariant,
+                  fontSize: 13.5,
+                  height: 1.7,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              // ── Guest tip ──────────────────────────────────────────────
+              if (isGuest) ...[
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColorsV2.tertiary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColorsV2.tertiary.withValues(alpha: 0.22)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.cloud_upload_rounded,
+                          color: AppColorsV2.tertiary, size: 18),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          '💡 Tip: Connect your Quran.com account from Settings to sync bookmarks across devices and unlock the full experience!',
+                          style: TextStyle(
+                            color: AppColorsV2.onSurfaceVariant,
+                            fontSize: 12,
+                            height: 1.55,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColorsV2.primary,
+                    foregroundColor: const Color(0xFF00311F),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Begin Reading \u2736',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.2,
+                      color: Color(0xFF00311F),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {

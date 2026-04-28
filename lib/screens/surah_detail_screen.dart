@@ -499,7 +499,8 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
     try {
       await Future<void>.sync(widget.onPlayPauseTap);
     } finally {
-      if (!mounted) return;
+      // Using Future.delayed instead of early return to avoid
+      // 'return in finally' warning (dart:control_flow_in_finally)
       Future<void>.delayed(const Duration(milliseconds: 180), () {
         if (mounted) setState(() => _tapLocked = false);
       });

@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:quran_recitation/secret.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -17,15 +17,15 @@ class QuranAuthService {
 
   bool _storageReady = false;
 
-  // ⚠️ Ensure these match EXACTLY what you registered on the Quran Foundation dashboard!
-  static const String _clientId = '32263b86-47da-435c-8271-9b49a7c301ea';
-  static const String _clientSecret = 'XmIF~wUce7W.BLa1poVHl2GuA~';
+  // Pulling from the git-ignored secrets.dart file
+  static const String _clientId = Secrets.clientId;
+  static const String _clientSecret = Secrets.clientSecret;
   static const String _redirectUrl = 'quran2u://oauth2redirect'; // Must match build.gradle!
   
-  // Endpoints from api-docs.quran.foundation (prelive)
-  static const String _authEndpoint = 'https://prelive-oauth2.quran.foundation/oauth2/auth';
-  static const String _tokenEndpoint = 'https://prelive-oauth2.quran.foundation/oauth2/token';
-  static const String _apiBaseUrl = 'https://apis-prelive.quran.foundation';
+  // Production Endpoints
+  static const String _authEndpoint = 'https://oauth2.quran.foundation/oauth2/auth';
+  static const String _tokenEndpoint = 'https://oauth2.quran.foundation/oauth2/token';
+  static const String _apiBaseUrl = 'https://apis.quran.foundation';
 
   static const List<String> _scopes = [
     'openid',
