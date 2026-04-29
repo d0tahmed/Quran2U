@@ -42,16 +42,30 @@ Future<void> main() async {
 final authInitProvider = FutureProvider<bool>((ref) async {
   final authService = ref.read(quranAuthServiceProvider);
   
-  // Check if they are logged in via Quran.com
-  final isLoggedIn = await authService.isLoggedIn;
-  if (isLoggedIn) return true;
-  
-  // Check if they previously clicked "Continue without login"
-  final isGuest = await authService.isGuest;
-  if (isGuest) return true;
-  
-  // If neither, return false (show login screen)
-  return false; 
+  try {
+    // Wrap the storage checks in a 2-second timeout.
+    // If Android Auto Backup restores the EncryptedSharedPreferences XML file
+    // but the Keystore key is missing (because of an uninstall/reinstall),
+    // FlutterSecureStorage can deadlock/hang infinitely.
+    // This timeout ensures we always fall back to the LoginScreen.
+    return await Future.any([
+      () async {
+        final isLoggedIn = await authService.isLoggedIn;
+        if (isLoggedIn) return true;
+        
+        final isGuest = await authService.isGuest;
+        if (isGuest) return true;
+        
+        return false;
+      }(),
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        print('[AuthGate] Storage timeout! Keystore is likely corrupted. Forcing login.');
+        return false;
+      }),
+    ]);
+  } catch (e) {
+    return false;
+  }
 });
 
 // 2. The Gatekeeper Widget that decides which screen to show

@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,18 +10,15 @@ import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/surah_detail_screen.dart';
 import 'package:quran_recitation/screens/qibla_screen.dart';
 import 'package:quran_recitation/screens/prayer_times_screen.dart';
+
 import 'package:quran_recitation/screens/daily_inspiration_screen.dart';
 import 'package:quran_recitation/screens/bookmarks_screen.dart';
-import 'package:quran_recitation/screens/read_quran_screen.dart';
-import 'package:quran_recitation/screens/tafseer_screen.dart';
 import 'package:quran_recitation/screens/main_shell.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 
 const _kGreen = AppColorsV2.primary;
 const _kGold  = AppColorsV2.tertiary;
 const _kBlue  = AppColorsV2.secondary;
-
-const _kAmber = Color(0xFFD4A843);
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -42,22 +39,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   static String _short(String name) => name.split(' ').last;
 
-  void _showTafseerSurahPicker(BuildContext context, List<Surah> surahs) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _TafseerSurahPickerSheet(surahs: surahs),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final surahsAsync  = ref.watch(surahsProvider);
     final selectedImam = ref.watch(selectedImamProvider);
     final imams        = ref.watch(imamsProvider);
-
-    final surahList = surahsAsync.asData?.value ?? <Surah>[];
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -133,31 +120,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           ),
                         ),
 
-                        const SizedBox(height: 16),
-
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _BentoActionsRow(
-                            onRead: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const ReadQuranScreen()),
-                            ),
-                            onDaily: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const DailyInspirationScreen()),
-                            ),
-                            onSaved: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const BookmarksScreen()),
-                            ),
-                            onTafseer: () {
-                              if (surahList.isEmpty) return;
-                              _showTafseerSurahPicker(context, surahList);
-                            },
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: _MiniBentoTile(
+                                    title:    'Daily',
+                                    subtitle: 'Ayah of the day',
+                                    icon:     Icons.star_rounded,
+                                    tint:     _kGold,
+                                    onTap:    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const DailyInspirationScreen()),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: _MiniBentoTile(
+                                    title:    'Saved',
+                                    subtitle: 'Bookmarks',
+                                    icon:     Icons.bookmark_rounded,
+                                    tint:     _kBlue,
+                                    onTap:    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const BookmarksScreen()),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
 
-                        const SizedBox(height: 22),
+                        const SizedBox(height: 16),
 
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
@@ -281,451 +283,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       );
 }
 
-class _TafseerSurahPickerSheet extends StatefulWidget {
-  final List<Surah> surahs;
-  const _TafseerSurahPickerSheet({required this.surahs});
 
-  @override
-  State<_TafseerSurahPickerSheet> createState() => _TafseerSurahPickerSheetState();
-}
 
-class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
-  final _ctrl  = TextEditingController();
-  String _query = '';
 
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    final filtered = widget.surahs.where((s) {
-      final q = _query.toLowerCase();
-      return q.isEmpty ||
-          s.name.toLowerCase().contains(q) ||
-          s.nameArabic.contains(_query) ||
-          s.nameTranslation.toLowerCase().contains(q) ||
-          s.number.toString() == _query;
-    }).toList();
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.88,
-      minChildSize:     0.5,
-      maxChildSize:     0.96,
-      expand:           false,
-      builder: (ctx, scrollCtrl) => Container(
-        decoration: const BoxDecoration(
-          color:         Color(0xFF0E1421),
-          borderRadius:  BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color:         Colors.white12,
-                  borderRadius:  BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(children: [
-                Container(
-                  padding:    const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color:         _kAmber.withValues(alpha: 0.12),
-                    borderRadius:  BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.menu_book_rounded, color: _kAmber, size: 22),
-                ),
-                const SizedBox(width: 14),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Tafseer',
-                      style: GoogleFonts.manrope(
-                          color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                  Text('Choose a Surah to explore',
-                      style: GoogleFonts.manrope(color: Colors.white38, fontSize: 12)),
-                ]),
-              ]),
-            ),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller:  _ctrl,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                onChanged:   (v) => setState(() => _query = v),
-                decoration:  InputDecoration(
-                  hintText:   'Search surah…',
-                  prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                  suffixIcon: _query.isNotEmpty
-                      ? IconButton(
-                          icon:      const Icon(Icons.close_rounded, size: 16, color: Colors.white38),
-                          onPressed: () { _ctrl.clear(); setState(() => _query = ''); },
-                        )
-                      : null,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Divider(color: Colors.white10, height: 1),
-            Expanded(
-              child: ListView.builder(
-                controller:  scrollCtrl,
-                padding:     const EdgeInsets.fromLTRB(16, 8, 16, 40),
-                itemCount:   filtered.length,
-                itemBuilder: (_, i) {
-                  final s = filtered[i];
-                  return InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => TafseerScreen(surah: s)),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      margin:  const EdgeInsets.only(bottom: 6),
-                      decoration: BoxDecoration(
-                        color:         AppColorsV2.surfaceLow,
-                        borderRadius:  BorderRadius.circular(12),
-                        border:        Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                      ),
-                      child: Row(children: [
-                        Container(
-                          width: 36, height: 36,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color:         _kAmber.withValues(alpha: 0.10),
-                            borderRadius:  BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            s.number.toString().padLeft(3, '0'),
-                            style: GoogleFonts.manrope(
-                              color:       _kAmber,
-                              fontSize:    10,
-                              fontWeight:  FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(s.name,
-                                style: GoogleFonts.manrope(
-                                    color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
-                            Text('${s.nameTranslation} • ${s.ayahCount} verses',
-                                style: GoogleFonts.manrope(
-                                    color: Colors.white38, fontSize: 11)),
-                          ],
-                        )),
-                        Text(s.nameArabic,
-                            textDirection: TextDirection.rtl,
-                            style: TextStyle(
-                              fontSize:   18,
-                              color:      _kAmber.withValues(alpha: 0.85),
-                              fontFamily: GoogleFonts.amiri().fontFamily,
-                              fontWeight: FontWeight.w700,
-                            )),
-                      ]),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _IslamicPatternPainter extends CustomPainter {
-  const _IslamicPatternPainter();
-
-  void _drawStar(Canvas canvas, Paint paint, Offset center, double r, int points) {
-    final path = Path();
-    final inner = r * 0.42;
-    for (int i = 0; i < points * 2; i++) {
-      final angle  = (i * math.pi / points) - math.pi / 2;
-      final radius = i.isEven ? r : inner;
-      final x      = center.dx + radius * math.cos(angle);
-      final y      = center.dy + radius * math.sin(angle);
-      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bgPaint = Paint()
-      ..shader = LinearGradient(
-        begin:  Alignment.centerLeft,
-        end:    Alignment.centerRight,
-        colors: [
-          const Color(0xFF1A2A1A),
-          const Color(0xFF2C1F0A),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        const Radius.circular(16),
-      ),
-      bgPaint,
-    );
-
-    final patternPaint = Paint()
-      ..color  = const Color(0xFFD4A843).withValues(alpha: 0.09)
-      ..style  = PaintingStyle.fill;
-
-    final strokePaint = Paint()
-      ..color       = const Color(0xFFD4A843).withValues(alpha: 0.06)
-      ..style       = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-
-    const gridX = 72.0;
-    const gridY = 60.0;
-    for (double x = gridX / 2; x < size.width + gridX; x += gridX) {
-      for (double y = gridY / 2; y < size.height + gridY; y += gridY) {
-        final offset = Offset(x, y);
-        _drawStar(canvas, patternPaint, offset, 22, 8);
-        _drawStar(canvas, strokePaint,  offset, 22, 8);
-        _drawStar(canvas, strokePaint..color = const Color(0xFFD4A843).withValues(alpha: 0.04),
-            offset, 10, 4);
-      }
-    }
-
-    final linePaint = Paint()
-      ..color       = const Color(0xFFD4A843).withValues(alpha: 0.05)
-      ..strokeWidth = 0.6
-      ..style       = PaintingStyle.stroke;
-
-    for (double x = gridX / 2; x < size.width + gridX; x += gridX) {
-      for (double y = gridY / 2; y < size.height + gridY; y += gridY) {
-        canvas.drawLine(Offset(x - 36, y), Offset(x + 36, y), linePaint);
-        canvas.drawLine(Offset(x, y - 30), Offset(x, y + 30), linePaint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _BentoActionsRow extends StatelessWidget {
-  final VoidCallback onRead;
-  final VoidCallback onDaily;
-  final VoidCallback onSaved;
-  final VoidCallback onTafseer;
-
-  const _BentoActionsRow({
-    required this.onRead,
-    required this.onDaily,
-    required this.onSaved,
-    required this.onTafseer,
-  });
-
-  static const String _readQuranBgAsset = 'assets/images/read_quran_bg.png';
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        AspectRatio(
-          aspectRatio: 16 / 6.5,
-          child: InkWell(
-            onTap:         onRead,
-            borderRadius:  BorderRadius.circular(16),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color:        AppColorsV2.surfaceHigh,
-                border:       Border.all(color: Colors.white.withValues(alpha: 0.06)),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      _readQuranBgAsset,
-                      fit:            BoxFit.cover,
-                      alignment:      Alignment.centerRight,
-                      filterQuality:  FilterQuality.low,
-                    ),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin:  Alignment.bottomLeft,
-                          end:    Alignment.topRight,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.72),
-                            Colors.black.withValues(alpha: 0.38),
-                            Colors.transparent,
-                          ],
-                          stops: const [0.0, 0.55, 1.0],
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment:  MainAxisAlignment.end,
-                            children: [
-                              Text('Read Quran',
-                                  style: GoogleFonts.manrope(
-                                    color:       Colors.white,
-                                    fontSize:    20,
-                                    fontWeight:  FontWeight.w900,
-                                    letterSpacing: -0.2,
-                                  )),
-                              const SizedBox(height: 4),
-                              Text('Continue reading',
-                                  style: GoogleFonts.manrope(
-                                    color:      _kGreen,
-                                    fontSize:   12,
-                                    fontWeight: FontWeight.w700,
-                                  )),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          width:  46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            color:         _kGreen.withValues(alpha: 0.12),
-                            borderRadius:  BorderRadius.circular(14),
-                            border:        Border.all(color: _kGreen.withValues(alpha: 0.18)),
-                          ),
-                          child: const Icon(Icons.auto_stories_rounded, color: _kGreen),
-                        ),
-                      ]),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        Row(
-          children: [
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: _MiniBentoTile(
-                  title:    'Daily',
-                  subtitle: 'Ayah of the day',
-                  icon:     Icons.star_rounded,
-                  tint:     _kGold,
-                  onTap:    onDaily,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: _MiniBentoTile(
-                  title:    'Saved',
-                  subtitle: 'Bookmarks',
-                  icon:     Icons.bookmark_rounded,
-                  tint:     _kBlue,
-                  onTap:    onSaved,
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 12),
-
-        AspectRatio(
-          aspectRatio: 16 / 6.5,
-          child: InkWell(
-            onTap:        onTafseer,
-            borderRadius: BorderRadius.circular(16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  CustomPaint(painter: const _IslamicPatternPainter()),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin:  Alignment.centerLeft,
-                        end:    Alignment.centerRight,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.75),
-                          Colors.transparent,
-                        ],
-                        stops: const [0.0, 0.7],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment:  MainAxisAlignment.end,
-                          children: [
-                            Text('Tafseer',
-                                style: GoogleFonts.manrope(
-                                  color:        Colors.white,
-                                  fontSize:     20,
-                                  fontWeight:   FontWeight.w900,
-                                  letterSpacing: -0.2,
-                                )),
-                            const SizedBox(height: 4),
-                            Text('Meanings & context',
-                                style: GoogleFonts.manrope(
-                                  color:      _kAmber,
-                                  fontSize:   12,
-                                  fontWeight: FontWeight.w700,
-                                )),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width:  46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color:         _kAmber.withValues(alpha: 0.14),
-                          borderRadius:  BorderRadius.circular(14),
-                          border:        Border.all(color: _kAmber.withValues(alpha: 0.22)),
-                        ),
-                        child: const Icon(Icons.menu_book_rounded, color: _kAmber),
-                      ),
-                    ]),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _NextPrayerCard extends ConsumerWidget {
   @override
@@ -859,6 +421,8 @@ class _NextPrayerCard extends ConsumerWidget {
     );
   }
 }
+
+
 
 class _MiniBentoTile extends StatelessWidget {
   final String      title;

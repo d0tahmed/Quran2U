@@ -10,6 +10,7 @@ import 'package:quran_recitation/services/notification_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/widgets/calm_light_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:quran_recitation/screens/read_tab_screen.dart';
 
 
 final shellIndexProvider = StateProvider<int>((ref) => 0);
@@ -28,6 +29,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   static const _screens = [
     HomeScreen(),
     NowPlayingScreen(),
+    ReadTabScreen(),
     SettingsScreen(),
   ];
 
@@ -129,7 +131,7 @@ class _MainShellState extends ConsumerState<MainShell> {
               ),
               const SizedBox(height: 14),
               const Text(
-                'May Allah \u069b bless your journey with this app and strengthen your Imaan through His guidance and the words of the Holy Quran.\n\nMay every recitation bring you closer to Him. \u0622\u0645\u064a\u0646',
+                'May Allah bless your journey with this app and strengthen your Imaan through His guidance and the words of the Holy Quran.\nMay every recitation bring you closer to Him. \u0622\u0645\u064a\u0646',
                 style: TextStyle(
                   color: AppColorsV2.onSurfaceVariant,
                   fontSize: 13.5,
@@ -274,6 +276,11 @@ class _MainShellState extends ConsumerState<MainShell> {
                           icon: Icon(Icons.headphones_outlined, color: Colors.white70),
                           selectedIcon: Icon(Icons.headphones_rounded, color: AppColorsV2.primary),
                           label: 'Player',
+                        ),
+                        NavigationDestination(
+                          icon: Icon(Icons.auto_stories_outlined, color: Colors.white70),
+                          selectedIcon: Icon(Icons.auto_stories_rounded, color: AppColorsV2.primary),
+                          label: 'Read',
                         ),
                         NavigationDestination(
                           icon: Icon(Icons.settings_outlined, color: Colors.white70),
