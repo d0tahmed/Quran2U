@@ -81,6 +81,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final tarjumahMode       = ref.watch(tarjumahModeProvider);
     final isTarjumahSupported = ref.watch(isTarjumahSupportedProvider); 
     final bulkState          = ref.watch(bulkDownloadProvider);
+    final updateAsync        = ref.watch(updateCheckProvider);
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -254,9 +255,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     onChangeEnd: (v) => ref.read(audioPlayerServiceProvider).setPlaybackRate(v),
                   ),
                   const SizedBox(height: 6),
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       _TinyLabel('0.5X'),
                       _TinyLabel('1.0X'),
                       _TinyLabel('1.5X'),
@@ -337,7 +338,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   ref.read(interleavedAudioServiceProvider).player.stop();
                                 }
                               : null,
-                          activeColor: _kGreen,
+                          activeThumbColor: _kGreen,
                           activeTrackColor: _kGreen.withValues(alpha: 0.25),
                           inactiveThumbColor: Colors.white38,
                           inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
@@ -636,14 +637,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               borderRadius: BorderRadius.circular(24),
               tint: AppColorsV2.surfaceLow,
               child: Column(
-                children: const [
-                  _InfoRow(icon: Icons.info_outline_rounded, label: 'App', value: 'Quran2U'),
-                  Divider(color: Colors.white10, height: 16),
-                  _InfoRow(icon: Icons.tag_rounded, label: 'Version', value: '2.0.0'),
-                  Divider(color: Colors.white10, height: 16),
-                  _InfoRow(icon: Icons.library_music_outlined, label: 'Audio', value: 'mp3quran.net'),
-                  Divider(color: Colors.white10, height: 16),
-                  _InfoRow(icon: Icons.api_outlined, label: 'Data', value: 'api.quran.com'),
+                children: [
+                  const _InfoRow(icon: Icons.info_outline_rounded, label: 'App', value: 'Quran2U'),
+                  const Divider(color: Colors.white10, height: 16),
+                  _InfoRow(
+                    icon: Icons.tag_rounded, 
+                    label: 'Version', 
+                    value: updateAsync.valueOrNull?.isUpdateAvailable == true ? 'New: ${updateAsync.valueOrNull!.latestVersion}' : (updateAsync.valueOrNull?.currentVersion ?? '2.0.0'),
+                    actionText: updateAsync.valueOrNull?.isUpdateAvailable == true ? 'Update' : null,
+                    onTap: updateAsync.valueOrNull?.isUpdateAvailable == true ? () async {
+                      final url = Uri.parse(updateAsync.valueOrNull!.releaseUrl);
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
+                    } : null,
+                  ),
+                  const Divider(color: Colors.white10, height: 16),
+                  const _InfoRow(icon: Icons.library_music_outlined, label: 'Audio', value: 'mp3quran.net'),
+                  const Divider(color: Colors.white10, height: 16),
+                  const _InfoRow(icon: Icons.api_outlined, label: 'Data', value: 'api.quran.com'),
                 ],
               ),
             ),
@@ -1173,7 +1185,7 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
                         Switch(
                           value: _withTarjumah,
                           onChanged: (v) => setState(() => _withTarjumah = v),
-                          activeColor: _kGold,
+                          activeThumbColor: _kGold,
                           activeTrackColor: _kGold.withValues(alpha: 0.25),
                           inactiveThumbColor: Colors.white38,
                           inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
@@ -1442,18 +1454,45 @@ class _IconBox extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label, value;
-  const _InfoRow({required this.icon, required this.label, required this.value});
+  final VoidCallback? onTap;
+  final String? actionText;
+  const _InfoRow({required this.icon, required this.label, required this.value, this.onTap, this.actionText});
 
   @override
-  Widget build(BuildContext context) => Row(children: [
+  Widget build(BuildContext context) {
+    Widget child = Row(children: [
         Icon(icon, color: Colors.white24, size: 16),
         const SizedBox(width: 10),
         Text(label, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13)),
         const Spacer(),
+        if (actionText != null) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: _kGold.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _kGold.withValues(alpha: 0.3)),
+            ),
+            child: Text(actionText!, style: GoogleFonts.manrope(color: _kGold, fontSize: 12, fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(width: 8),
+        ],
         Text(value,
             style: GoogleFonts.outfit(
-                color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                color: actionText != null ? _kGold : Colors.white70, 
+                fontSize: 13, 
+                fontWeight: actionText != null ? FontWeight.w800 : FontWeight.w500)),
       ]);
+      
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: child),
+      );
+    }
+    return child;
+  }
 }
 class _QuranAccountSection extends ConsumerWidget {
   const _QuranAccountSection();

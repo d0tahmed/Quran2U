@@ -1,0 +1,162 @@
+Analyzing Quran2U...
+
+  error - lib/main.dart:90:26 - Invalid constant value. - invalid_constant
+  error - lib/screens/bookmarks_screen.dart:135:71 - Invalid constant value. - invalid_constant
+  error - lib/screens/bookmarks_screen.dart:195:27 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/screens/bookmarks_screen.dart:255:44 - Invalid constant value. - invalid_constant
+  error - lib/screens/bookmarks_screen.dart:257:61 - Invalid constant value. - invalid_constant
+  error - lib/screens/bookmarks_screen.dart:352:66 - Invalid constant value. - invalid_constant
+  error - lib/screens/bookmarks_screen.dart:449:69 - Invalid constant value. - invalid_constant
+  error - lib/screens/daily_inspiration_screen.dart:68:70 - Invalid constant value. - invalid_constant
+  error - lib/screens/daily_inspiration_screen.dart:125:38 - Invalid constant value. - invalid_constant
+  error - lib/screens/downloads_screen.dart:65:61 - Invalid constant value. - invalid_constant
+  error - lib/screens/downloads_screen.dart:75:65 - Invalid constant value. - invalid_constant
+  error - lib/screens/home_screen.dart:106:88 - Invalid constant value. - invalid_constant
+  error - lib/screens/home_screen.dart:221:87 - Invalid constant value. - invalid_constant
+  error - lib/screens/home_screen.dart:369:45 - Invalid constant value. - invalid_constant
+  error - lib/screens/home_screen.dart:444:68 - Invalid constant value. - invalid_constant
+  error - lib/screens/home_screen.dart:461:75 - Invalid constant value. - invalid_constant
+  error - lib/screens/home_screen.dart:501:58 - Invalid constant value. - invalid_constant
+  error - lib/screens/login_screen.dart:115:36 - Invalid constant value. - invalid_constant
+  error - lib/screens/main_shell.dart:44:22 - The argument type 'dynamic Function()' can't be assigned to the parameter type 'BuildContext'.  - argument_type_not_assignable
+  error - lib/screens/main_shell.dart:61:41 - The argument type 'dynamic Function()' can't be assigned to the parameter type 'BuildContext'.  - argument_type_not_assignable
+  error - lib/screens/main_shell.dart:120:28 - Invalid constant value. - invalid_constant
+  error - lib/screens/main_shell.dart:137:26 - Invalid constant value. - invalid_constant
+  error - lib/screens/main_shell.dart:159:34 - Invalid constant value. - invalid_constant
+  error - lib/screens/main_shell.dart:165:36 - Invalid constant value. - invalid_constant
+  error - lib/screens/main_shell.dart:273:78 - Invalid constant value. - invalid_constant
+  error - lib/screens/main_shell.dart:273:78 - The values in a const list literal must be constants. Try removing the keyword 'const' from the list literal. - non_constant_list_element
+  error - lib/screens/main_shell.dart:278:79 - Invalid constant value. - invalid_constant
+  error - lib/screens/main_shell.dart:278:79 - The values in a const list literal must be constants. Try removing the keyword 'const' from the list literal. - non_constant_list_element
+  error - lib/screens/main_shell.dart:283:81 - Invalid constant value. - invalid_constant
+  error - lib/screens/main_shell.dart:283:81 - The values in a const list literal must be constants. Try removing the keyword 'const' from the list literal. - non_constant_list_element
+  error - lib/screens/main_shell.dart:288:77 - Invalid constant value. - invalid_constant
+  error - lib/screens/main_shell.dart:288:77 - The values in a const list literal must be constants. Try removing the keyword 'const' from the list literal. - non_constant_list_element
+  error - lib/screens/now_playing_screen.dart:10:1 - Can't have modifier 'const' here. Try removing 'const'. - extraneous_modifier
+  error - lib/screens/now_playing_screen.dart:10:7 - Functions must have an explicit list of parameters. Try adding a parameter list. - missing_function_parameters
+  error - lib/screens/now_playing_screen.dart:10:14 - A function body must be provided. Try adding a function body. - missing_function_body
+  error - lib/screens/now_playing_screen.dart:10:14 - Expected a method, getter, setter or operator declaration. This appears to be incomplete code. Try removing it or completing it. - expected_executable
+  error - lib/screens/now_playing_screen.dart:10:15 - Functions must have an explicit list of parameters. Try adding a parameter list. - missing_function_parameters
+  error - lib/screens/now_playing_screen.dart:10:26 - A function body must be provided. Try adding a function body. - missing_function_body
+  error - lib/screens/now_playing_screen.dart:10:26 - Expected a method, getter, setter or operator declaration. This appears to be incomplete code. Try removing it or completing it. - expected_executable
+  error - lib/screens/now_playing_screen.dart:10:27 - Variables must be declared using the keywords 'const', 'final', 'var' or a type name. Try adding the name of the type of the variable or the keyword 'var'. - missing_const_final_var_or_type
+  error - lib/screens/now_playing_screen.dart:10:45 - The getter 'themeColors' isn't defined for the type 'dynamic Function()'. Try importing the library that defines 'themeColors', correcting the name to the name of an existing getter, or defining a getter or field named 'themeColors'. - undefined_getter
+  error - lib/screens/now_playing_screen.dart:497:63 - Invalid constant value. - invalid_constant
+  error - lib/screens/now_playing_screen.dart:592:22 - Invalid constant value. - invalid_constant
+  error - lib/screens/prayer_times_screen.dart:41:79 - Invalid constant value. - invalid_constant
+  error - lib/screens/qibla_screen.dart:78:83 - Invalid constant value. - invalid_constant
+  error - lib/screens/read_quran_screen.dart:191:71 - Invalid constant value. - invalid_constant
+  error - lib/screens/read_quran_screen.dart:426:81 - Invalid constant value. - invalid_constant
+  error - lib/screens/read_quran_screen.dart:464:81 - Invalid constant value. - invalid_constant
+  error - lib/screens/read_tab_screen.dart:451:80 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:393:74 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:438:74 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:558:54 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:597:66 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:877:67 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:1003:65 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:1034:56 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:1055:65 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:1128:68 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:1160:78 - Invalid constant value. - invalid_constant
+  error - lib/screens/settings_screen.dart:1515:68 - Invalid constant value. - invalid_constant
+  error - lib/screens/surah_detail_screen.dart:125:76 - Invalid constant value. - invalid_constant
+  error - lib/screens/surah_detail_screen.dart:563:68 - Invalid constant value. - invalid_constant
+  error - lib/screens/surah_detail_screen.dart:609:71 - Invalid constant value. - invalid_constant
+  error - lib/screens/surah_detail_screen.dart:1084:50 - Invalid constant value. - invalid_constant
+  error - lib/screens/tafseer_screen.dart:56:59 - Invalid constant value. - invalid_constant
+  error - lib/screens/tafseer_screen.dart:129:28 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/screens/tafseer_screen.dart:140:32 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/screens/tafseer_screen.dart:144:32 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+  error - lib/screens/tafseer_screen.dart:154:22 - Undefined name 'context'. Try correcting the name to one that is defined, or defining the name. - undefined_identifier
+warning - lib/main.dart:9:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/daily_inspiration_screen.dart:3:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/downloads_screen.dart:6:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/duas_screen.dart:5:8 - Unused import: '../ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/hadith_reader_screen.dart:7:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/home_screen.dart:18:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/login_screen.dart:6:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/main_shell.dart:10:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/now_playing_screen.dart:6:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/prayer_times_screen.dart:7:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/qibla_screen.dart:10:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/read_quran_screen.dart:8:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/read_tab_screen.dart:12:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/settings_screen.dart:11:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/surah_detail_screen.dart:9:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/screens/surah_detail_screen.dart:35:10 - The value of the field '_dlStatus' isn't used. Try removing the field, or using it. - unused_field
+warning - lib/services/quran_auth_service.dart:136:18 - The operand can't be 'null', so the condition is always 'true'. Remove the condition. - unnecessary_null_comparison
+warning - lib/services/update_service.dart:1:8 - Unused import: 'dart:convert'. Try removing the import directive. - unused_import
+warning - lib/ui_v2/widgets/calm_light_background.dart:4:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - lib/ui_v2/widgets/glass_panel.dart:4:8 - Unused import: 'package:quran_recitation/ui_v2/app_colors.dart'. Try removing the import directive. - unused_import
+warning - test_parse.dart:15:11 - The value of the local variable 'bookName' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - test_parse.dart:44:19 - The value of the local variable 'hadithNumber' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - test_parse.dart:45:19 - The value of the local variable 'arabicNumber' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - test_parse.dart:46:19 - The value of the local variable 'text' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - test_parse.dart:47:19 - The value of the local variable 'bookNumber' isn't used. Try removing the variable or using it. - unused_local_variable
+warning - test_parse.dart:48:19 - The value of the local variable 'hadithInBook' isn't used. Try removing the variable or using it. - unused_local_variable
+   info - lib/main.dart:63:9 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/providers/providers.dart:322:15 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - lib/screens/downloads_screen.dart:124:11 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - lib/screens/duas_screen.dart:188:15 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - lib/screens/duas_screen.dart:209:17 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - lib/screens/home_screen.dart:59:21 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/screens/home_screen.dart:62:21 - Statements in an if should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/screens/login_screen.dart:54:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/screens/login_screen.dart:55:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/screens/login_screen.dart:56:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/screens/login_screen.dart:218:42 - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext. - use_build_context_synchronously
+   info - lib/screens/now_playing_screen.dart:650:27 - Statements in a for should be enclosed in a block. Try wrapping the statement in a block. - curly_braces_in_flow_control_structures
+   info - lib/screens/read_tab_screen.dart:38:9 - 'parent' is deprecated and shouldn't be used. Will be removed in 3.0.0. See https://github.com/rrousselGit/riverpod/issues/3261#issuecomment-1973514033. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - lib/screens/read_tab_screen.dart:286:18 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - lib/screens/read_tab_screen.dart:289:17 - Use 'const' literals as arguments to constructors of '@immutable' classes. Try adding 'const' before the literal. - prefer_const_literals_to_create_immutables
+   info - lib/screens/read_tab_screen.dart:475:19 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - lib/screens/settings_screen.dart:254:19 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - lib/screens/settings_screen.dart:337:27 - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - lib/screens/settings_screen.dart:1184:27 - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - lib/services/database_helper.dart:3:8 - The imported package 'path' isn't a dependency of the importing package. Try adding a dependency for 'path' in the 'pubspec.yaml' file. - depend_on_referenced_packages
+   info - lib/services/database_helper.dart:25:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/database_helper.dart:39:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:13:7 - 'encryptedSharedPreferences' is deprecated and shouldn't be used. EncryptedSharedPreferences is deprecated and will be removed in v11. The Jetpack Security library is deprecated by Google. Your data will be automatically migrated to custom ciphers on first access. Remove this parameter - it will be ignored. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - lib/services/quran_auth_service.dart:46:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:57:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:59:41 - Type could be non-nullable. Try changing the type to be non-nullable. - unnecessary_nullable_for_final_variable_declarations
+   info - lib/services/quran_auth_service.dart:74:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:85:9 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:90:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:145:7 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:211:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:212:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:213:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - lib/services/quran_auth_service.dart:214:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:5:3 - Use 'const' for final variables initialized to a constant value. Try replacing 'final' with 'const'. - prefer_const_declarations
+   info - test_parse.dart:9:3 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:20:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:34:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:37:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:51:13 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:52:13 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:56:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:57:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:60:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse.dart:61:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse2.dart:5:3 - Use 'const' for final variables initialized to a constant value. Try replacing 'final' with 'const'. - prefer_const_declarations
+   info - test_parse2.dart:17:57 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse2.dart:18:57 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse2.dart:19:52 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse2.dart:20:51 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse2.dart:21:53 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse_final.dart:5:3 - Use 'const' for final variables initialized to a constant value. Try replacing 'final' with 'const'. - prefer_const_declarations
+   info - test_parse_final.dart:32:13 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_parse_final.dart:36:3 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_urls.dart:22:3 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_urls.dart:26:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_urls.dart:28:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_urls.dart:33:3 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_urls.dart:37:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_urls.dart:39:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_urls.dart:44:3 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_urls.dart:48:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+   info - test_urls.dart:50:5 - Don't invoke 'print' in production code. Try using a logging framework. - avoid_print
+
+158 issues found.

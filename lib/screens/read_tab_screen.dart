@@ -283,12 +283,12 @@ class _IslamicPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final bgPaint = Paint()
-      ..shader = LinearGradient(
+      ..shader = const LinearGradient(
         begin:  Alignment.centerLeft,
         end:    Alignment.centerRight,
         colors: [
-          const Color(0xFF1A2A1A),
-          const Color(0xFF2C1F0A),
+          Color(0xFF1A2A1A),
+          Color(0xFF2C1F0A),
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     canvas.drawRRect(
@@ -472,7 +472,7 @@ class _BentoActionsRow extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  CustomPaint(painter: const _IslamicPatternPainter()),
+                  const CustomPaint(painter: _IslamicPatternPainter()),
                   DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

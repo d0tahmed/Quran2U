@@ -1,0 +1,3570 @@
+diff --git a/lib/main.dart b/lib/main.dart
+index 2fc61ac..6c346e3 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -8,6 +8,7 @@ import 'package:quran_recitation/screens/main_shell.dart';
+ import 'package:quran_recitation/services/notification_service.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/app_theme.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ Future<void> main() async {
+   WidgetsFlutterBinding.ensureInitialized();
+@@ -85,10 +86,10 @@ class AuthGate extends ConsumerWidget {
+         // Otherwise, force them to log in!
+         return const LoginScreen();
+       },
+-      loading: () => const Scaffold(
+-        backgroundColor: AppColorsV2.bg,
++      loading: () => Scaffold(
++        backgroundColor: context.themeColors.bg,
+         body: Center(
+-          child: CircularProgressIndicator(color: AppColorsV2.primary),
++          child: CircularProgressIndicator(color: context.themeColors.primary),
+         ),
+       ),
+       error: (err, stack) => const LoginScreen(),
+diff --git a/lib/providers/providers.dart b/lib/providers/providers.dart
+index 70aa377..a119f93 100644
+--- a/lib/providers/providers.dart
++++ b/lib/providers/providers.dart
+@@ -9,9 +9,11 @@ import 'package:quran_recitation/services/interleaved_audio_service.dart';
+ import 'package:quran_recitation/services/download_service.dart';
+ import 'package:quran_recitation/services/mushaf_api_service.dart';
+ import 'package:adhan/adhan.dart';
+-import 'package:geolocator/geolocator.dart';
+ import 'package:just_audio/just_audio.dart';
+ import 'package:quran_recitation/services/quran_auth_service.dart';
++import 'package:quran_recitation/services/update_service.dart';
++import 'package:dio/dio.dart';
++import 'package:geolocator/geolocator.dart';
+ 
+ // ── Core services ─────────────────────────────────────────────────────────────
+ final quranApiServiceProvider = Provider((ref) => QuranApiService());
+@@ -30,6 +32,13 @@ final interleavedAudioServiceProvider = Provider((ref) {
+ 
+ final downloadServiceProvider = Provider((ref) => DownloadService());
+ 
++final updateServiceProvider = Provider((ref) => UpdateService(Dio()));
++
++final updateCheckProvider = FutureProvider<UpdateInfo>((ref) async {
++  final service = ref.watch(updateServiceProvider);
++  return await service.checkForUpdate();
++});
++
+ // ── Playback mode ─────────────────────────────────────────────────────────────
+ final tarjumahModeProvider = StateProvider<bool>((ref) => false);
+ 
+@@ -320,8 +329,12 @@ final streakProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
+ 
+ // ── Downloads ─────────────────────────────────────────────────────────────────
+ final downloadedSurahsProvider =
+-    FutureProvider<List<Map<String, dynamic>>>((ref) async {
+-  return ref.watch(downloadServiceProvider).getDownloadedSurahs();
++    StreamProvider<List<Map<String, dynamic>>>((ref) async* {
++  final service = ref.watch(downloadServiceProvider);
++  yield await service.getDownloadedSurahs();
++  await for (final _ in service.downloadUpdates) {
++    yield await service.getDownloadedSurahs();
++  }
+ });
+ 
+ class BulkDownloadState {
+@@ -402,7 +415,6 @@ class BulkDownloadNotifier extends StateNotifier<BulkDownloadState> {
+       onComplete: () {
+         if (!mounted) return;
+         state = const BulkDownloadState();
+-        _ref.invalidate(downloadedSurahsProvider);
+       },
+     );
+   }
+diff --git a/lib/screens/bookmarks_screen.dart b/lib/screens/bookmarks_screen.dart
+index e31a88a..ab43a08 100644
+--- a/lib/screens/bookmarks_screen.dart
++++ b/lib/screens/bookmarks_screen.dart
+@@ -7,10 +7,7 @@ import 'package:quran_recitation/screens/login_screen.dart';
+ import 'package:quran_recitation/screens/surah_detail_screen.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+-
+-const _kGreen = AppColorsV2.primary;
+-const _kGold  = AppColorsV2.tertiary;
+-const _kBg    = AppColorsV2.bg;
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class BookmarksScreen extends ConsumerWidget {
+   const BookmarksScreen({super.key});
+@@ -29,7 +26,7 @@ class BookmarksScreen extends ConsumerWidget {
+     // user navigates away — they will never leak to other pages.
+     return ScaffoldMessenger(
+       child: Scaffold(
+-      backgroundColor: _kBg,
++      backgroundColor: context.themeColors.bg,
+       body: Stack(
+         children: [
+           // Background glow
+@@ -40,7 +37,7 @@ class BookmarksScreen extends ConsumerWidget {
+               decoration: BoxDecoration(
+                 shape:    BoxShape.circle,
+                 gradient: RadialGradient(
+-                  colors: [_kGreen.withValues(alpha: 0.15), Colors.transparent],
++                  colors: [context.themeColors.primary.withValues(alpha: 0.15), Colors.transparent],
+                 ),
+               ),
+             ),
+@@ -74,7 +71,7 @@ class BookmarksScreen extends ConsumerWidget {
+                               child: Text(
+                                 'Saved',
+                                 style: GoogleFonts.manrope(
+-                                  color:        AppColorsV2.onSurface,
++                                  color:        context.themeColors.onSurface,
+                                   fontSize:     28,
+                                   fontWeight:   FontWeight.w900,
+                                   letterSpacing: -0.8,
+@@ -87,14 +84,14 @@ class BookmarksScreen extends ConsumerWidget {
+                             Container(
+                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                               decoration: BoxDecoration(
+-                                color:         _kGreen.withValues(alpha: 0.1),
++                                color:         context.themeColors.primary.withValues(alpha: 0.1),
+                                 borderRadius:  BorderRadius.circular(12),
+-                                border:        Border.all(color: _kGreen.withValues(alpha: 0.2)),
++                                border:        Border.all(color: context.themeColors.primary.withValues(alpha: 0.2)),
+                               ),
+                               child: Text(
+                                 '${bookmarks.length} ITEMS',
+                                 style: GoogleFonts.manrope(
+-                                  color:      _kGreen,
++                                  color:      context.themeColors.primary,
+                                   fontWeight: FontWeight.w900,
+                                   fontSize:   11,
+                                   letterSpacing: 2.0,
+@@ -134,8 +131,8 @@ class BookmarksScreen extends ConsumerWidget {
+                   child: bookmarks.isEmpty
+                       ? _buildEmptyState()
+                       : surahsAsync.when(
+-                          loading: () => const Center(
+-                              child: CircularProgressIndicator(color: _kGreen)),
++                          loading: () => Center(
++                              child: CircularProgressIndicator(color: context.themeColors.primary)),
+                           error: (e, _) => Center(
+                               child: Text('Error loading data',
+                                   style: GoogleFonts.manrope(color: Colors.white54))),
+@@ -195,7 +192,7 @@ class BookmarksScreen extends ConsumerWidget {
+             'Your bookmarked Surahs\nwill appear here.',
+             textAlign: TextAlign.center,
+             style: GoogleFonts.manrope(
+-              color:      AppColorsV2.onSurfaceVariant,
++              color:      context.themeColors.onSurfaceVariant,
+               fontSize:   14,
+               height:     1.5,
+               fontWeight: FontWeight.w600,
+@@ -243,26 +240,26 @@ class _SyncButton extends ConsumerWidget {
+         padding:  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+         decoration: BoxDecoration(
+           color: isSyncing
+-              ? _kGreen.withValues(alpha: 0.06)
+-              : _kGreen.withValues(alpha: 0.12),
++              ? context.themeColors.primary.withValues(alpha: 0.06)
++              : context.themeColors.primary.withValues(alpha: 0.12),
+           borderRadius: BorderRadius.circular(12),
+           border: Border.all(
+-            color: _kGreen.withValues(alpha: isSyncing ? 0.15 : 0.3),
++            color: context.themeColors.primary.withValues(alpha: isSyncing ? 0.15 : 0.3),
+           ),
+         ),
+         child: Row(mainAxisSize: MainAxisSize.min, children: [
+           isSyncing
+-              ? const SizedBox(
++              ? SizedBox(
+                   width:  13, height: 13,
+                   child: CircularProgressIndicator(
+-                    strokeWidth: 2, color: _kGreen),
++                    strokeWidth: 2, color: context.themeColors.primary),
+                 )
+-              : const Icon(Icons.cloud_sync_rounded, color: _kGreen, size: 16),
++              : Icon(Icons.cloud_sync_rounded, color: context.themeColors.primary, size: 16),
+           const SizedBox(width: 6),
+           Text(
+             isSyncing ? 'Syncing…' : 'Sync',
+             style: GoogleFonts.manrope(
+-              color:      _kGreen,
++              color:      context.themeColors.primary,
+               fontSize:   12,
+               fontWeight: FontWeight.w800,
+             ),
+@@ -288,7 +285,7 @@ class _SyncStatusBanner extends StatelessWidget {
+ 
+     final color = isError
+         ? Colors.redAccent
+-        : (isSuccess ? _kGreen : AppColorsV2.onSurfaceVariant);
++        : (isSuccess ? context.themeColors.primary : context.themeColors.onSurfaceVariant);
+ 
+     final icon = isError
+         ? Icons.error_outline_rounded
+@@ -341,18 +338,18 @@ class _LoginNudgeBanner extends StatelessWidget {
+         margin:  const EdgeInsets.fromLTRB(20, 10, 20, 4),
+         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+         decoration: BoxDecoration(
+-          color:         _kGold.withValues(alpha: 0.06),
++          color:         context.themeColors.tertiary.withValues(alpha: 0.06),
+           borderRadius:  BorderRadius.circular(14),
+-          border:        Border.all(color: _kGold.withValues(alpha: 0.2)),
++          border:        Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.2)),
+         ),
+         child: Row(children: [
+           Container(
+             padding:    const EdgeInsets.all(8),
+             decoration: BoxDecoration(
+-              color:         _kGold.withValues(alpha: 0.12),
++              color:         context.themeColors.tertiary.withValues(alpha: 0.12),
+               borderRadius:  BorderRadius.circular(10),
+             ),
+-            child: const Icon(Icons.cloud_upload_rounded, color: _kGold, size: 18),
++            child: Icon(Icons.cloud_upload_rounded, color: context.themeColors.tertiary, size: 18),
+           ),
+           const SizedBox(width: 12),
+           Expanded(
+@@ -365,7 +362,7 @@ class _LoginNudgeBanner extends StatelessWidget {
+                   )),
+               Text('Sign in to back up your bookmarks to the cloud.',
+                   style: GoogleFonts.manrope(
+-                    color:      AppColorsV2.onSurfaceVariant,
++                    color:      context.themeColors.onSurfaceVariant,
+                     fontSize:   11,
+                     height:     1.4,
+                     fontWeight: FontWeight.w600,
+@@ -420,7 +417,7 @@ class _BookmarkTile extends ConsumerWidget {
+         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+           content:          Text('Bookmark removed',
+               style: GoogleFonts.manrope(fontWeight: FontWeight.w700, color: Colors.white)),
+-          backgroundColor:  AppColorsV2.surfaceLow,
++          backgroundColor:  context.themeColors.surfaceLow,
+           behavior:         SnackBarBehavior.floating,
+           shape:            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+           duration:         const Duration(seconds: 2),
+@@ -431,7 +428,7 @@ class _BookmarkTile extends ConsumerWidget {
+         child: GlassPanel(
+           padding:      EdgeInsets.zero,
+           borderRadius: BorderRadius.circular(18),
+-          tint:         AppColorsV2.surfaceLow,
++          tint:         context.themeColors.surfaceLow,
+           child: ListTile(
+             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+             onTap: () => Navigator.of(context).push(PageRouteBuilder(
+@@ -445,11 +442,11 @@ class _BookmarkTile extends ConsumerWidget {
+                 Container(
+                   height: 42, width: 42,
+                   decoration: BoxDecoration(
+-                    color:         _kGreen.withValues(alpha: 0.1),
++                    color:         context.themeColors.primary.withValues(alpha: 0.1),
+                     borderRadius:  BorderRadius.circular(12),
+                   ),
+                   alignment: Alignment.center,
+-                  child: const Icon(Icons.menu_book_rounded, color: _kGreen, size: 20),
++                  child: Icon(Icons.menu_book_rounded, color: context.themeColors.primary, size: 20),
+                 ),
+                 // Cloud badge — shown if this bookmark came from cloud sync
+                 if (isCloud)
+@@ -458,9 +455,9 @@ class _BookmarkTile extends ConsumerWidget {
+                     child: Container(
+                       width: 16, height: 16,
+                       decoration: BoxDecoration(
+-                        color:        _kGold,
++                        color:        context.themeColors.tertiary,
+                         shape:        BoxShape.circle,
+-                        border:       Border.all(color: AppColorsV2.bg, width: 1.5),
++                        border:       Border.all(color: context.themeColors.bg, width: 1.5),
+                       ),
+                       child: const Icon(Icons.cloud_done_rounded,
+                           color: Colors.black, size: 9),
+@@ -471,7 +468,7 @@ class _BookmarkTile extends ConsumerWidget {
+             title: Text(
+               surah.name,
+               style: GoogleFonts.manrope(
+-                color:        AppColorsV2.onSurface,
++                color:        context.themeColors.onSurface,
+                 fontSize:     16,
+                 fontWeight:   FontWeight.w900,
+                 letterSpacing: -0.3,
+@@ -482,7 +479,7 @@ class _BookmarkTile extends ConsumerWidget {
+                 child: Text(
+                   'Saved on ${DateFormat('MMM d, yyyy').format(bookmark.createdAt)}',
+                   style: GoogleFonts.manrope(
+-                    color:      AppColorsV2.onSurfaceVariant,
++                    color:      context.themeColors.onSurfaceVariant,
+                     fontSize:   12,
+                     fontWeight: FontWeight.w600,
+                   ),
+@@ -494,13 +491,13 @@ class _BookmarkTile extends ConsumerWidget {
+                 Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                   decoration: BoxDecoration(
+-                    color:         _kGreen.withValues(alpha: 0.1),
++                    color:         context.themeColors.primary.withValues(alpha: 0.1),
+                     borderRadius:  BorderRadius.circular(6),
+                   ),
+                   child: Text(
+                     'Ayah ${bookmark.ayahNumber}',
+                     style: GoogleFonts.manrope(
+-                      color:      _kGreen,
++                      color:      context.themeColors.primary,
+                       fontSize:   10,
+                       fontWeight: FontWeight.w800,
+                     ),
+diff --git a/lib/screens/daily_inspiration_screen.dart b/lib/screens/daily_inspiration_screen.dart
+index 9849f43..ebc7218 100644
+--- a/lib/screens/daily_inspiration_screen.dart
++++ b/lib/screens/daily_inspiration_screen.dart
+@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
+ import 'package:google_fonts/google_fonts.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+-
+-const _kGreen = AppColorsV2.primary;
+-const _kGold = AppColorsV2.tertiary;
+-const _kBg = AppColorsV2.bg;
+-const _kCard = AppColorsV2.surfaceLow;
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class DailyInspirationScreen extends StatelessWidget {
+   const DailyInspirationScreen({super.key});
+@@ -19,7 +15,7 @@ class DailyInspirationScreen extends StatelessWidget {
+     final todayData    = _dailyData[contentIndex];
+ 
+     return Scaffold(
+-      backgroundColor: _kBg,
++      backgroundColor: context.themeColors.bg,
+       body: Stack(
+         children: [
+           // Background ambient glow
+@@ -30,7 +26,7 @@ class DailyInspirationScreen extends StatelessWidget {
+               decoration: BoxDecoration(
+                 shape: BoxShape.circle,
+                 gradient: RadialGradient(
+-                  colors: [_kGold.withValues(alpha: 0.12), Colors.transparent],
++                  colors: [context.themeColors.tertiary.withValues(alpha: 0.12), Colors.transparent],
+                 ),
+               ),
+             ),
+@@ -64,16 +60,16 @@ class DailyInspirationScreen extends StatelessWidget {
+                         ),
+                         Text('A daily dose of Quran & Sunnah',
+                             style: GoogleFonts.manrope(
+-                                color: AppColorsV2.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600)),
++                                color: context.themeColors.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600)),
+                         const SizedBox(height: 24),
+ 
+                         // ── Ayah of the Day ──────────────────────────────
+                         Row(children: [
+-                          const Icon(Icons.menu_book_rounded, color: _kGold, size: 20),
++                          Icon(Icons.menu_book_rounded, color: context.themeColors.tertiary, size: 20),
+                           const SizedBox(width: 8),
+                           Text('Ayah of the Day',
+                               style: GoogleFonts.manrope(
+-                                  color: _kGold,
++                                  color: context.themeColors.tertiary,
+                                   fontSize: 14,
+                                   fontWeight: FontWeight.w900,
+                                   letterSpacing: 2.0)),
+@@ -82,8 +78,8 @@ class DailyInspirationScreen extends StatelessWidget {
+                         GlassPanel(
+                           padding: const EdgeInsets.all(20),
+                           borderRadius: BorderRadius.circular(24),
+-                          tint: _kCard,
+-                          border: Border.all(color: _kGold.withValues(alpha: 0.18), width: 1.5),
++                          tint: context.themeColors.surfaceLow,
++                          border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.18), width: 1.5),
+                           child: Column(children: [
+                             Text(
+                               todayData.arabicAyah,
+@@ -115,7 +111,7 @@ class DailyInspirationScreen extends StatelessWidget {
+                             const SizedBox(height: 12),
+                             Text(todayData.referenceAyah,
+                                 style: GoogleFonts.manrope(
+-                                    color: _kGold,
++                                    color: context.themeColors.tertiary,
+                                     fontSize: 12,
+                                     fontWeight: FontWeight.w900)),
+                           ]),
+@@ -125,12 +121,12 @@ class DailyInspirationScreen extends StatelessWidget {
+ 
+                         // ── Hadith of the Day ─────────────────────────────
+                         Row(children: [
+-                          const Icon(Icons.chat_bubble_rounded,
+-                              color: _kGreen, size: 18),
++                          Icon(Icons.chat_bubble_rounded,
++                              color: context.themeColors.primary, size: 18),
+                           const SizedBox(width: 8),
+                           Text('Hadith of the Day',
+                               style: GoogleFonts.manrope(
+-                                  color: _kGreen,
++                                  color: context.themeColors.primary,
+                                   fontSize: 14,
+                                   fontWeight: FontWeight.w900,
+                                   letterSpacing: 2.0)),
+@@ -139,8 +135,8 @@ class DailyInspirationScreen extends StatelessWidget {
+                         GlassPanel(
+                           padding: const EdgeInsets.all(20),
+                           borderRadius: BorderRadius.circular(24),
+-                          tint: _kCard,
+-                          border: Border.all(color: _kGreen.withValues(alpha: 0.18), width: 1.5),
++                          tint: context.themeColors.surfaceLow,
++                          border: Border.all(color: context.themeColors.primary.withValues(alpha: 0.18), width: 1.5),
+                           child: Column(children: [
+                             Text(
+                               '"${todayData.hadithText}"',
+@@ -156,7 +152,7 @@ class DailyInspirationScreen extends StatelessWidget {
+                             const SizedBox(height: 16),
+                             Text(todayData.referenceHadith,
+                                 style: GoogleFonts.manrope(
+-                                    color: _kGreen,
++                                    color: context.themeColors.primary,
+                                     fontSize: 12,
+                                     fontWeight: FontWeight.w900)),
+                           ]),
+diff --git a/lib/screens/downloads_screen.dart b/lib/screens/downloads_screen.dart
+index 30bd769..f837988 100644
+--- a/lib/screens/downloads_screen.dart
++++ b/lib/screens/downloads_screen.dart
+@@ -5,11 +5,7 @@ import 'package:quran_recitation/providers/providers.dart';
+ import 'package:quran_recitation/services/download_service.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+-
+-const _kGreen = AppColorsV2.primary;
+-const _kGold = AppColorsV2.tertiary;
+-const _kBg = AppColorsV2.bg;
+-const _kCard = AppColorsV2.surfaceLow;
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class DownloadsScreen extends ConsumerStatefulWidget {
+   const DownloadsScreen({super.key});
+@@ -26,9 +22,9 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
+     final imams = ref.watch(imamsProvider);
+ 
+     return Scaffold(
+-      backgroundColor: _kBg,
++      backgroundColor: context.themeColors.bg,
+       appBar: AppBar(
+-        backgroundColor: _kBg.withValues(alpha: 0.80),
++        backgroundColor: context.themeColors.bg.withValues(alpha: 0.80),
+         elevation: 0,
+         leading: IconButton(
+           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
+@@ -37,7 +33,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
+         title: Text(
+           'Downloads',
+           style: GoogleFonts.manrope(
+-            color: AppColorsV2.onSurface,
++            color: context.themeColors.onSurface,
+             fontSize: 18,
+             fontWeight: FontWeight.w900,
+             letterSpacing: -0.2,
+@@ -55,7 +51,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
+               child: Text(
+                 'OFFLINE SURAHs',
+                 style: GoogleFonts.manrope(
+-                  color: AppColorsV2.onSurfaceVariant,
++                  color: context.themeColors.onSurfaceVariant,
+                   fontSize: 11,
+                   fontWeight: FontWeight.w900,
+                   letterSpacing: 2.2,
+@@ -65,8 +61,8 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
+             const SizedBox(height: 16),
+             Expanded(
+               child: downloadedAsync.when(
+-                loading: () => const Center(
+-                    child: CircularProgressIndicator(color: _kGreen)),
++                loading: () => Center(
++                    child: CircularProgressIndicator(color: context.themeColors.primary)),
+                 error: (e, _) => Center(
+                     child: Text('Error: $e',
+                         style: GoogleFonts.manrope(color: Colors.white54))),
+@@ -75,8 +71,8 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
+                     return _buildEmpty();
+                   }
+                   return surahsAsync.when(
+-                    loading: () => const Center(
+-                        child: CircularProgressIndicator(color: _kGreen)),
++                    loading: () => Center(
++                        child: CircularProgressIndicator(color: context.themeColors.primary)),
+                     error: (e, _) => const SizedBox.shrink(),
+                     data: (surahs) => ListView.builder(
+                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+@@ -105,7 +101,6 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
+                               await ref
+                                   .read(downloadServiceProvider)
+                                   .deleteDownload(surahNum, imamId);
+-                              ref.invalidate(downloadedSurahsProvider);
+                             }
+                           },
+                         );
+@@ -147,7 +142,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
+   Future<bool?> _confirmDelete(BuildContext context) => showDialog<bool>(
+         context: context,
+         builder: (ctx) => AlertDialog(
+-          backgroundColor: _kCard,
++          backgroundColor: context.themeColors.surfaceLow,
+           shape:
+               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+           title: Text('Delete Download',
+@@ -217,7 +212,7 @@ class _DownloadedTileState extends State<_DownloadedTile> {
+     return GlassPanel(
+       padding: const EdgeInsets.all(16),
+       borderRadius: BorderRadius.circular(20),
+-      tint: _kCard,
++      tint: context.themeColors.surfaceLow,
+       child: Row(
+         children: [
+           // Surah number badge
+@@ -225,14 +220,14 @@ class _DownloadedTileState extends State<_DownloadedTile> {
+             width: 40,
+             height: 40,
+             decoration: BoxDecoration(
+-              color: _kGreen.withValues(alpha: 0.12),
++              color: context.themeColors.primary.withValues(alpha: 0.12),
+               borderRadius: BorderRadius.circular(10),
+             ),
+             child: Center(
+               child: Text(
+                 '${widget.surahNumber}',
+                 style: GoogleFonts.manrope(
+-                    color: _kGreen,
++                    color: context.themeColors.primary,
+                     fontWeight: FontWeight.w900,
+                     fontSize: 13),
+               ),
+@@ -260,7 +255,7 @@ class _DownloadedTileState extends State<_DownloadedTile> {
+                           overflow: TextOverflow.ellipsis,
+                           style: TextStyle(
+                               fontSize: 14,
+-                              color: _kGold,
++                              color: context.themeColors.tertiary,
+                               fontFamily:
+                                   GoogleFonts.amiri().fontFamily)),
+                     ),
+@@ -272,7 +267,7 @@ class _DownloadedTileState extends State<_DownloadedTile> {
+                       ? widget.imamName.split(' ').skip(1).join(' ')
+                       : widget.imamName,
+                   style: GoogleFonts.manrope(
+-                      color: AppColorsV2.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600),
++                      color: context.themeColors.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600),
+                 ),
+                 const SizedBox(height: 6),
+                 Wrap(
+@@ -283,13 +278,13 @@ class _DownloadedTileState extends State<_DownloadedTile> {
+                     _Badge(
+                       icon: Icons.headphones_rounded,
+                       label: 'Recitation',
+-                      color: _kGreen,
++                      color: context.themeColors.primary,
+                     ),
+                     if (widget.hasUrdu)
+                       _Badge(
+                         icon: Icons.translate_rounded,
+                         label: 'Urdu Tarjumah',
+-                        color: _kGold,
++                        color: context.themeColors.tertiary,
+                       ),
+                     const SizedBox(width: 4),
+                     Text(_size,
+diff --git a/lib/screens/hadith_reader_screen.dart b/lib/screens/hadith_reader_screen.dart
+index 70faa0d..3ecdeb4 100644
+--- a/lib/screens/hadith_reader_screen.dart
++++ b/lib/screens/hadith_reader_screen.dart
+@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
+ import 'package:quran_recitation/models/hadith_model.dart';
+ import 'package:quran_recitation/providers/hadith_providers.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ const _kGold = Color(0xFFD4A843);
+ 
+@@ -35,7 +36,7 @@ class _HadithReaderScreenState extends ConsumerState<HadithReaderScreen> {
+     final currentLang = ref.watch(hadithLanguageProvider);
+ 
+     return Scaffold(
+-      backgroundColor: AppColorsV2.bg,
++      backgroundColor: context.themeColors.bg,
+       body: CustomScrollView(
+         physics: const BouncingScrollPhysics(),
+         slivers: [
+@@ -43,7 +44,7 @@ class _HadithReaderScreenState extends ConsumerState<HadithReaderScreen> {
+           SliverAppBar(
+             expandedHeight: 190,
+             pinned: true,
+-            backgroundColor: AppColorsV2.bg,
++            backgroundColor: context.themeColors.bg,
+             elevation: 0,
+             leading: IconButton(
+               icon: const Icon(Icons.arrow_back_ios_new_rounded,
+@@ -135,7 +136,7 @@ class _HadithReaderScreenState extends ConsumerState<HadithReaderScreen> {
+                           decoration: BoxDecoration(
+                             color: selected
+                                 ? _kGold.withValues(alpha: 0.18)
+-                                : AppColorsV2.surfaceLow,
++                                : context.themeColors.surfaceLow,
+                             borderRadius: BorderRadius.circular(10),
+                             border: Border.all(
+                               color: selected
+@@ -257,7 +258,7 @@ class _HadithCard extends StatelessWidget {
+       child: Container(
+         padding: const EdgeInsets.all(16),
+         decoration: BoxDecoration(
+-          color:        AppColorsV2.surfaceLow,
++          color:        context.themeColors.surfaceLow,
+           borderRadius: BorderRadius.circular(16),
+           border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+         ),
+diff --git a/lib/screens/home_screen.dart b/lib/screens/home_screen.dart
+index 20ca4f5..f9e066c 100644
+--- a/lib/screens/home_screen.dart
++++ b/lib/screens/home_screen.dart
+@@ -10,15 +10,14 @@ import 'package:quran_recitation/providers/providers.dart';
+ import 'package:quran_recitation/screens/surah_detail_screen.dart';
+ import 'package:quran_recitation/screens/qibla_screen.dart';
+ import 'package:quran_recitation/screens/prayer_times_screen.dart';
++import 'package:quran_recitation/screens/duas_screen.dart';
+ 
+ import 'package:quran_recitation/screens/daily_inspiration_screen.dart';
+ import 'package:quran_recitation/screens/bookmarks_screen.dart';
+ import 'package:quran_recitation/screens/main_shell.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+-
+-const _kGreen = AppColorsV2.primary;
+-const _kGold  = AppColorsV2.tertiary;
+-const _kBlue  = AppColorsV2.secondary;
++import 'package:url_launcher/url_launcher.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class HomeScreen extends ConsumerStatefulWidget {
+   const HomeScreen({super.key});
+@@ -45,6 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
+     final surahsAsync  = ref.watch(surahsProvider);
+     final selectedImam = ref.watch(selectedImamProvider);
+     final imams        = ref.watch(imamsProvider);
++    final updateAsync  = ref.watch(updateCheckProvider);
+ 
+     return Scaffold(
+       backgroundColor: Colors.transparent,
+@@ -70,16 +70,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
+                       height: 72,
+                       child: Padding(
+                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+-                        child: Center(
+-                          child: Text(
+-                            'Quran2U',
+-                            style: GoogleFonts.outfit(
+-                              color: _kGreen,
+-                              fontSize: 24,
+-                              fontWeight: FontWeight.w800,
+-                              letterSpacing: -1.0,
++                        child: Stack(
++                          alignment: Alignment.center,
++                          children: [
++                            Text(
++                              'Quran2U',
++                              style: GoogleFonts.outfit(
++                                color: context.themeColors.primary,
++                                fontSize: 24,
++                                fontWeight: FontWeight.w800,
++                                letterSpacing: -1.0,
++                              ),
+                             ),
+-                          ),
++                            if (updateAsync.valueOrNull?.isUpdateAvailable == true)
++                              Positioned(
++                                right: 0,
++                                child: InkWell(
++                                  onTap: () async {
++                                    final url = Uri.parse(updateAsync.valueOrNull!.releaseUrl);
++                                    if (await canLaunchUrl(url)) {
++                                      await launchUrl(url, mode: LaunchMode.externalApplication);
++                                    }
++                                  },
++                                  borderRadius: BorderRadius.circular(12),
++                                  child: Container(
++                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
++                                    decoration: BoxDecoration(
++                                      color: context.themeColors.tertiary.withValues(alpha: 0.15),
++                                      borderRadius: BorderRadius.circular(12),
++                                      border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.3)),
++                                    ),
++                                    child: Row(
++                                      mainAxisSize: MainAxisSize.min,
++                                      children: [
++                                        Icon(Icons.system_update_rounded, color: context.themeColors.tertiary, size: 14),
++                                        const SizedBox(width: 4),
++                                        Text('Update', style: GoogleFonts.manrope(color: context.themeColors.tertiary, fontSize: 12, fontWeight: FontWeight.w800)),
++                                      ],
++                                    ),
++                                  ),
++                                ),
++                              ),
++                          ],
+                         ),
+                       ),
+                     ),
+@@ -131,7 +163,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
+                                     title:    'Daily',
+                                     subtitle: 'Ayah of the day',
+                                     icon:     Icons.star_rounded,
+-                                    tint:     _kGold,
++                                    tint:     context.themeColors.tertiary,
+                                     onTap:    () => Navigator.push(
+                                       context,
+                                       MaterialPageRoute(builder: (_) => const DailyInspirationScreen()),
+@@ -147,7 +179,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
+                                     title:    'Saved',
+                                     subtitle: 'Bookmarks',
+                                     icon:     Icons.bookmark_rounded,
+-                                    tint:     _kBlue,
++                                    tint:     context.themeColors.secondary,
+                                     onTap:    () => Navigator.push(
+                                       context,
+                                       MaterialPageRoute(builder: (_) => const BookmarksScreen()),
+@@ -159,6 +191,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
+                           ),
+                         ),
+ 
++                        const SizedBox(height: 12),
++
++                        // Full width Duas button
++                        Padding(
++                          padding: const EdgeInsets.symmetric(horizontal: 16),
++                          child: InkWell(
++                            onTap: () => Navigator.push(
++                              context,
++                              MaterialPageRoute(builder: (_) => const DuasScreen()),
++                            ),
++                            borderRadius: BorderRadius.circular(24),
++                            child: Container(
++                              width: double.infinity,
++                              padding: const EdgeInsets.all(20),
++                              decoration: BoxDecoration(
++                                color: context.themeColors.surfaceLow,
++                                borderRadius: BorderRadius.circular(24),
++                                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
++                              ),
++                              child: Row(
++                                children: [
++                                  Container(
++                                    padding: const EdgeInsets.all(12),
++                                    decoration: BoxDecoration(
++                                      color: context.themeColors.primary.withValues(alpha: 0.15),
++                                      shape: BoxShape.circle,
++                                    ),
++                                    child: Icon(Icons.menu_book_rounded, color: context.themeColors.primary, size: 24),
++                                  ),
++                                  const SizedBox(width: 16),
++                                  Expanded(
++                                    child: Column(
++                                      crossAxisAlignment: CrossAxisAlignment.start,
++                                      children: [
++                                        Text(
++                                          'Hisnul Muslim',
++                                          style: GoogleFonts.manrope(
++                                            color: Colors.white,
++                                            fontSize: 16,
++                                            fontWeight: FontWeight.w900,
++                                          ),
++                                        ),
++                                        const SizedBox(height: 4),
++                                        Text(
++                                          'Everyday Supplications',
++                                          style: GoogleFonts.manrope(
++                                            color: context.themeColors.onSurfaceVariant,
++                                            fontSize: 12,
++                                            fontWeight: FontWeight.w600,
++                                          ),
++                                        ),
++                                      ],
++                                    ),
++                                  ),
++                                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 16),
++                                ],
++                              ),
++                            ),
++                          ),
++                        ),
++
+                         const SizedBox(height: 16),
+ 
+                         Padding(
+@@ -272,8 +365,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
+           OutlinedButton.icon(
+             onPressed: () => ref.refresh(surahsProvider),
+             style: OutlinedButton.styleFrom(
+-              foregroundColor: _kGreen,
+-              side: const BorderSide(color: _kGreen),
++              foregroundColor: context.themeColors.primary,
++              side: BorderSide(color: context.themeColors.primary),
+               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+             ),
+             icon:  const Icon(Icons.refresh_rounded),
+@@ -297,7 +390,7 @@ class _NextPrayerCard extends ConsumerWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+       decoration: BoxDecoration(
+-        color:        AppColorsV2.surfaceHigh,
++        color:        context.themeColors.surfaceHigh,
+         borderRadius: BorderRadius.circular(16),
+         boxShadow: [
+           BoxShadow(
+@@ -328,7 +421,7 @@ class _NextPrayerCard extends ConsumerWidget {
+                     children: [
+                       Text('NEXT PRAYER',
+                           style: GoogleFonts.manrope(
+-                            color:        AppColorsV2.onSurfaceVariant,
++                            color:        context.themeColors.onSurfaceVariant,
+                             fontSize:     10,
+                             fontWeight:   FontWeight.w900,
+                             letterSpacing: 2.0,
+@@ -348,7 +441,7 @@ class _NextPrayerCard extends ConsumerWidget {
+                               )),
+                           Container(
+                             width:  6, height: 6,
+-                            decoration: const BoxDecoration(color: _kGreen, shape: BoxShape.circle),
++                            decoration: BoxDecoration(color: context.themeColors.primary, shape: BoxShape.circle),
+                           ),
+                           Text(timeStr,
+                               style: GoogleFonts.manrope(
+@@ -362,10 +455,10 @@ class _NextPrayerCard extends ConsumerWidget {
+                   ),
+                 );
+               },
+-              loading: () => const Center(
++              loading: () => Center(
+                 child: SizedBox(
+                   height: 24, width: 24,
+-                  child: CircularProgressIndicator(strokeWidth: 2, color: _kGreen),
++                  child: CircularProgressIndicator(strokeWidth: 2, color: context.themeColors.primary),
+                 ),
+               ),
+               error: (_, __) => Column(
+@@ -374,7 +467,7 @@ class _NextPrayerCard extends ConsumerWidget {
+                 children: [
+                   Text('NEXT PRAYER',
+                       style: GoogleFonts.manrope(
+-                        color:        AppColorsV2.onSurfaceVariant,
++                        color:        context.themeColors.onSurfaceVariant,
+                         fontSize:     10,
+                         fontWeight:   FontWeight.w900,
+                         letterSpacing: 2.0,
+@@ -382,7 +475,7 @@ class _NextPrayerCard extends ConsumerWidget {
+                   const SizedBox(height: 4),
+                   Text('Location required',
+                       style: GoogleFonts.manrope(
+-                        color:      AppColorsV2.danger,
++                        color:      context.themeColors.danger,
+                         fontSize:   16,
+                         fontWeight: FontWeight.w700,
+                       )),
+@@ -400,16 +493,16 @@ class _NextPrayerCard extends ConsumerWidget {
+             child: Container(
+               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+               decoration: BoxDecoration(
+-                color:         _kGreen.withValues(alpha: 0.15),
++                color:         context.themeColors.primary.withValues(alpha: 0.15),
+                 borderRadius:  BorderRadius.circular(12),
+-                border:        Border.all(color: _kGreen.withValues(alpha: 0.3)),
++                border:        Border.all(color: context.themeColors.primary.withValues(alpha: 0.3)),
+               ),
+               child: Row(mainAxisSize: MainAxisSize.min, children: [
+-                const Icon(Icons.explore_rounded, color: _kGreen, size: 18),
++                Icon(Icons.explore_rounded, color: context.themeColors.primary, size: 18),
+                 const SizedBox(width: 6),
+                 Text('Qibla',
+                     style: GoogleFonts.manrope(
+-                      color:      _kGreen,
++                      color:      context.themeColors.primary,
+                       fontSize:   13,
+                       fontWeight: FontWeight.w800,
+                     )),
+@@ -446,7 +539,7 @@ class _MiniBentoTile extends StatelessWidget {
+       child: Container(
+         padding: const EdgeInsets.all(14),
+         decoration: BoxDecoration(
+-          color:         AppColorsV2.surfaceLow,
++          color:         context.themeColors.surfaceLow,
+           borderRadius:  BorderRadius.circular(16),
+           border:        Border.all(color: Colors.white.withValues(alpha: 0.06)),
+         ),
+@@ -464,6 +557,7 @@ class _MiniBentoTile extends StatelessWidget {
+             ),
+             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+               Text(title,
++                  overflow: TextOverflow.ellipsis,
+                   style: GoogleFonts.manrope(
+                     color:      Colors.white,
+                     fontSize:   14,
+@@ -471,8 +565,9 @@ class _MiniBentoTile extends StatelessWidget {
+                   )),
+               const SizedBox(height: 2),
+               Text(subtitle,
++                  overflow: TextOverflow.ellipsis,
+                   style: GoogleFonts.manrope(
+-                    color:      AppColorsV2.onSurfaceVariant,
++                    color:      context.themeColors.onSurfaceVariant,
+                     fontSize:   11,
+                     fontWeight: FontWeight.w600,
+                   )),
+@@ -501,13 +596,13 @@ class _ReciterPill extends StatelessWidget {
+         child: Container(
+           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+           decoration: BoxDecoration(
+-            color:         selected ? _kGreen : AppColorsV2.surfaceHigh,
++            color:         selected ? context.themeColors.primary : context.themeColors.surfaceHigh,
+             borderRadius:  BorderRadius.circular(999),
+-            border:        Border.all(color: selected ? _kGreen : Colors.white.withValues(alpha: 0.08)),
++            border:        Border.all(color: selected ? context.themeColors.primary : Colors.white.withValues(alpha: 0.08)),
+           ),
+           child: Text(text,
+               style: GoogleFonts.manrope(
+-                color:      selected ? const Color(0xFF002113) : AppColorsV2.onSurfaceVariant,
++                color:      selected ? const Color(0xFF002113) : context.themeColors.onSurfaceVariant,
+                 fontSize:   12,
+                 fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+               )),
+@@ -537,7 +632,7 @@ class _SurahCardRow extends ConsumerWidget {
+         child: Container(
+           padding: const EdgeInsets.all(14),
+           decoration: BoxDecoration(
+-            color:         AppColorsV2.surfaceLow,
++            color:         context.themeColors.surfaceLow,
+             borderRadius:  BorderRadius.circular(16),
+             border:        Border.all(color: Colors.white.withValues(alpha: 0.06)),
+           ),
+@@ -546,12 +641,12 @@ class _SurahCardRow extends ConsumerWidget {
+               width: 42, height: 42,
+               alignment: Alignment.center,
+               decoration: BoxDecoration(
+-                color:         AppColorsV2.surfaceHighest,
++                color:         context.themeColors.surfaceHighest,
+                 borderRadius:  BorderRadius.circular(12),
+               ),
+               child: Text(
+                 surah.number.toString().padLeft(3, '0'),
+-                style: GoogleFonts.manrope(color: _kGreen, fontSize: 12, fontWeight: FontWeight.w900),
++                style: GoogleFonts.manrope(color: context.themeColors.primary, fontSize: 12, fontWeight: FontWeight.w900),
+               ),
+             ),
+             const SizedBox(width: 14),
+@@ -561,7 +656,7 @@ class _SurahCardRow extends ConsumerWidget {
+               const SizedBox(height: 3),
+               Text('${surah.nameTranslation} • ${surah.ayahCount} Verses',
+                   style: GoogleFonts.manrope(
+-                    color:      AppColorsV2.onSurfaceVariant,
++                    color:      context.themeColors.onSurfaceVariant,
+                     fontSize:   11,
+                     fontWeight: FontWeight.w600,
+                   ),
+@@ -573,7 +668,7 @@ class _SurahCardRow extends ConsumerWidget {
+               textDirection: TextDirection.rtl,
+               style: TextStyle(
+                 fontSize:   22,
+-                color:      _kGreen.withValues(alpha: 0.90),
++                color:      context.themeColors.primary.withValues(alpha: 0.90),
+                 fontFamily: GoogleFonts.amiri().fontFamily,
+                 fontWeight: FontWeight.w700,
+               ),
+@@ -600,7 +695,7 @@ class _SurahCardRow extends ConsumerWidget {
+               },
+               icon: Icon(
+                 isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+-                color: isBookmarked ? _kGreen : Colors.white24,
++                color: isBookmarked ? context.themeColors.primary : Colors.white24,
+                 size:  20,
+               ),
+             ),
+@@ -658,7 +753,7 @@ class _ShimmerListState extends State<_ShimmerList> with SingleTickerProviderSta
+     return AnimatedBuilder(
+       animation: _anim,
+       builder:   (_, __) {
+-        final shimmer = Color.lerp(AppColorsV2.surfaceLow, AppColorsV2.surfaceHigh, _anim.value)!;
++        final shimmer = Color.lerp(context.themeColors.surfaceLow, context.themeColors.surfaceHigh, _anim.value)!;
+         return SliverPadding(
+           padding: const EdgeInsets.only(top: 8, bottom: 140),
+           sliver:  SliverList(
+diff --git a/lib/screens/login_screen.dart b/lib/screens/login_screen.dart
+index 2af53f5..1821d96 100644
+--- a/lib/screens/login_screen.dart
++++ b/lib/screens/login_screen.dart
+@@ -5,6 +5,7 @@ import 'package:quran_recitation/providers/providers.dart';
+ import 'package:quran_recitation/screens/main_shell.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class LoginScreen extends ConsumerStatefulWidget {
+   const LoginScreen({super.key});
+@@ -64,7 +65,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
+   @override
+   Widget build(BuildContext context) {
+     return Scaffold(
+-      backgroundColor: AppColorsV2.bg,
++      backgroundColor: context.themeColors.bg,
+       body: Stack(
+         children: [
+           // Glow
+@@ -75,7 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
+               decoration: BoxDecoration(
+                 shape: BoxShape.circle,
+                 gradient: RadialGradient(colors: [
+-                  AppColorsV2.primary.withValues(alpha: 0.12),
++                  context.themeColors.primary.withValues(alpha: 0.12),
+                   Colors.transparent,
+                 ]),
+               ),
+@@ -103,15 +104,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
+                           width: 80, height: 80,
+                           decoration: BoxDecoration(
+                             shape: BoxShape.circle,
+-                            color: AppColorsV2.primary.withValues(alpha: 0.12),
++                            color: context.themeColors.primary.withValues(alpha: 0.12),
+                             border: Border.all(
+-                              color: AppColorsV2.primary.withValues(alpha: 0.3),
++                              color: context.themeColors.primary.withValues(alpha: 0.3),
+                               width: 1.5,
+                             ),
+                           ),
+-                          child: const Icon(
++                          child: Icon(
+                             Icons.menu_book_rounded,
+-                            color: AppColorsV2.primary,
++                            color: context.themeColors.primary,
+                             size: 36,
+                           ),
+                         ),
+@@ -133,7 +134,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
+                         Text(
+                           'Sign in to securely back up your saved Ayahs and Surahs to the cloud.',
+                           style: GoogleFonts.manrope(
+-                            color: AppColorsV2.onSurfaceVariant,
++                            color: context.themeColors.onSurfaceVariant,
+                             fontSize: 14,
+                             height: 1.6,
+                             fontWeight: FontWeight.w500,
+@@ -177,10 +178,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
+                           child: ElevatedButton(
+                             onPressed: _loading ? null : _handleLogin,
+                             style: ElevatedButton.styleFrom(
+-                              backgroundColor: AppColorsV2.primary,
++                              backgroundColor: context.themeColors.primary,
+                               foregroundColor: const Color(0xFF00311F),
+                               disabledBackgroundColor:
+-                                  AppColorsV2.primary.withValues(alpha: 0.4),
++                                  context.themeColors.primary.withValues(alpha: 0.4),
+                               shape: RoundedRectangleBorder(
+                                 borderRadius: BorderRadius.circular(16),
+                               ),
+@@ -266,17 +267,17 @@ class _FeatureRow extends StatelessWidget {
+         Container(
+           width: 36, height: 36,
+           decoration: BoxDecoration(
+-            color: AppColorsV2.primary.withValues(alpha: 0.1),
++            color: context.themeColors.primary.withValues(alpha: 0.1),
+             borderRadius: BorderRadius.circular(10),
+           ),
+-          child: Icon(icon, color: AppColorsV2.primary, size: 18),
++          child: Icon(icon, color: context.themeColors.primary, size: 18),
+         ),
+         const SizedBox(width: 14),
+         Expanded(
+           child: Text(
+             label,
+             style: GoogleFonts.manrope(
+-              color: AppColorsV2.onSurfaceVariant,
++              color: context.themeColors.onSurfaceVariant,
+               fontSize: 14,
+               fontWeight: FontWeight.w600,
+             ),
+diff --git a/lib/screens/main_shell.dart b/lib/screens/main_shell.dart
+index 9a59c13..8cdd178 100644
+--- a/lib/screens/main_shell.dart
++++ b/lib/screens/main_shell.dart
+@@ -11,6 +11,7 @@ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/calm_light_background.dart';
+ import 'package:shared_preferences/shared_preferences.dart';
+ import 'package:quran_recitation/screens/read_tab_screen.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ 
+ final shellIndexProvider = StateProvider<int>((ref) => 0);
+@@ -78,15 +79,15 @@ class _MainShellState extends ConsumerState<MainShell> {
+         child: Container(
+           padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+           decoration: BoxDecoration(
+-            color: AppColorsV2.surface.withValues(alpha: 0.95),
++            color: context.themeColors.surface.withValues(alpha: 0.95),
+             borderRadius: BorderRadius.circular(28),
+             border: Border.all(
+-              color: AppColorsV2.primary.withValues(alpha: 0.25),
++              color: context.themeColors.primary.withValues(alpha: 0.25),
+               width: 1.2,
+             ),
+             boxShadow: [
+               BoxShadow(
+-                color: AppColorsV2.primary.withValues(alpha: 0.12),
++                color: context.themeColors.primary.withValues(alpha: 0.12),
+                 blurRadius: 40,
+                 spreadRadius: 4,
+               ),
+@@ -98,7 +99,7 @@ class _MainShellState extends ConsumerState<MainShell> {
+               Text(
+                 '@d0tahmed',
+                 style: TextStyle(
+-                  color: AppColorsV2.primary.withValues(alpha: 0.7),
++                  color: context.themeColors.primary.withValues(alpha: 0.7),
+                   fontSize: 12,
+                   fontWeight: FontWeight.w800,
+                   letterSpacing: 1.5,
+@@ -109,14 +110,14 @@ class _MainShellState extends ConsumerState<MainShell> {
+                 width: 64, height: 64,
+                 decoration: BoxDecoration(
+                   shape: BoxShape.circle,
+-                  color: AppColorsV2.primary.withValues(alpha: 0.1),
++                  color: context.themeColors.primary.withValues(alpha: 0.1),
+                   border: Border.all(
+-                    color: AppColorsV2.primary.withValues(alpha: 0.3),
++                    color: context.themeColors.primary.withValues(alpha: 0.3),
+                     width: 1.5,
+                   ),
+                 ),
+-                child: const Icon(Icons.menu_book_rounded,
+-                    color: AppColorsV2.primary, size: 30),
++                child: Icon(Icons.menu_book_rounded,
++                    color: context.themeColors.primary, size: 30),
+               ),
+               const SizedBox(height: 20),
+               const Text(
+@@ -130,10 +131,10 @@ class _MainShellState extends ConsumerState<MainShell> {
+                 textAlign: TextAlign.center,
+               ),
+               const SizedBox(height: 14),
+-              const Text(
++              Text(
+                 'May Allah bless your journey with this app and strengthen your Imaan through His guidance and the words of the Holy Quran.\nMay every recitation bring you closer to Him. \u0622\u0645\u064a\u0646',
+                 style: TextStyle(
+-                  color: AppColorsV2.onSurfaceVariant,
++                  color: context.themeColors.onSurfaceVariant,
+                   fontSize: 13.5,
+                   height: 1.7,
+                   fontWeight: FontWeight.w500,
+@@ -147,21 +148,21 @@ class _MainShellState extends ConsumerState<MainShell> {
+                 Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                   decoration: BoxDecoration(
+-                    color: AppColorsV2.tertiary.withValues(alpha: 0.08),
++                    color: context.themeColors.tertiary.withValues(alpha: 0.08),
+                     borderRadius: BorderRadius.circular(14),
+-                    border: Border.all(color: AppColorsV2.tertiary.withValues(alpha: 0.22)),
++                    border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.22)),
+                   ),
+                   child: Row(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+-                      const Icon(Icons.cloud_upload_rounded,
+-                          color: AppColorsV2.tertiary, size: 18),
++                      Icon(Icons.cloud_upload_rounded,
++                          color: context.themeColors.tertiary, size: 18),
+                       const SizedBox(width: 10),
+-                      const Expanded(
++                      Expanded(
+                         child: Text(
+                           '💡 Tip: Connect your Quran.com account from Settings to sync bookmarks across devices and unlock the full experience!',
+                           style: TextStyle(
+-                            color: AppColorsV2.onSurfaceVariant,
++                            color: context.themeColors.onSurfaceVariant,
+                             fontSize: 12,
+                             height: 1.55,
+                             fontWeight: FontWeight.w500,
+@@ -180,7 +181,7 @@ class _MainShellState extends ConsumerState<MainShell> {
+                 child: ElevatedButton(
+                   onPressed: () => Navigator.of(context).pop(),
+                   style: ElevatedButton.styleFrom(
+-                    backgroundColor: AppColorsV2.primary,
++                    backgroundColor: context.themeColors.primary,
+                     foregroundColor: const Color(0xFF00311F),
+                     elevation: 0,
+                     shape: RoundedRectangleBorder(
+@@ -253,7 +254,7 @@ class _MainShellState extends ConsumerState<MainShell> {
+                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                 child: Container(
+                   decoration: BoxDecoration(
+-                    color: AppColorsV2.surface.withValues(alpha: 0.5), 
++                    color: context.themeColors.surface.withValues(alpha: 0.5), 
+                     borderRadius: BorderRadius.circular(28),
+                     border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1),
+                   ),
+@@ -262,29 +263,29 @@ class _MainShellState extends ConsumerState<MainShell> {
+                     child: NavigationBar(
+                       backgroundColor: Colors.transparent,
+                       elevation: 0,
+-                      indicatorColor: AppColorsV2.primary.withValues(alpha: 0.25),
++                      indicatorColor: context.themeColors.primary.withValues(alpha: 0.25),
+                       selectedIndex: index,
+                       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+                       onDestinationSelected: (i) => ref.read(shellIndexProvider.notifier).state = i,
+-                      destinations: const [
++                      destinations: [
+                         NavigationDestination(
+                           icon: Icon(Icons.menu_book_outlined, color: Colors.white70),
+-                          selectedIcon: Icon(Icons.menu_book_rounded, color: AppColorsV2.primary),
++                          selectedIcon: Icon(Icons.menu_book_rounded, color: context.themeColors.primary),
+                           label: 'Surahs',
+                         ),
+                         NavigationDestination(
+                           icon: Icon(Icons.headphones_outlined, color: Colors.white70),
+-                          selectedIcon: Icon(Icons.headphones_rounded, color: AppColorsV2.primary),
++                          selectedIcon: Icon(Icons.headphones_rounded, color: context.themeColors.primary),
+                           label: 'Player',
+                         ),
+                         NavigationDestination(
+                           icon: Icon(Icons.auto_stories_outlined, color: Colors.white70),
+-                          selectedIcon: Icon(Icons.auto_stories_rounded, color: AppColorsV2.primary),
++                          selectedIcon: Icon(Icons.auto_stories_rounded, color: context.themeColors.primary),
+                           label: 'Read',
+                         ),
+                         NavigationDestination(
+                           icon: Icon(Icons.settings_outlined, color: Colors.white70),
+-                          selectedIcon: Icon(Icons.settings_rounded, color: AppColorsV2.primary),
++                          selectedIcon: Icon(Icons.settings_rounded, color: context.themeColors.primary),
+                           label: 'Settings',
+                         ),
+                       ],
+diff --git a/lib/screens/now_playing_screen.dart b/lib/screens/now_playing_screen.dart
+index 94e4c63..8af73e2 100644
+--- a/lib/screens/now_playing_screen.dart
++++ b/lib/screens/now_playing_screen.dart
+@@ -5,11 +5,9 @@ import 'package:quran_recitation/models/models.dart';
+ import 'package:quran_recitation/providers/providers.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+-const _kGreen = AppColorsV2.primary;
+-const _kGold = AppColorsV2.tertiary;
+-const _kBg = AppColorsV2.bg;
+-const _kSlate = AppColorsV2.surface; // glass tint base
++const context.themeColors.surface = context.themeColors.surface; // glass tint base
+ 
+ class NowPlayingScreen extends ConsumerStatefulWidget {
+   const NowPlayingScreen({super.key});
+@@ -90,7 +88,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+         : 0.0;
+ 
+     return Scaffold(
+-      backgroundColor: _kBg,
++      backgroundColor: context.themeColors.bg,
+       body: Stack(
+         children: [
+           // Soft background glow blobs like Stitch
+@@ -104,7 +102,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                 shape: BoxShape.circle,
+                 gradient: RadialGradient(
+                   colors: [
+-                    _kGreen.withValues(alpha: 0.10),
++                    context.themeColors.primary.withValues(alpha: 0.10),
+                     Colors.transparent,
+                   ],
+                 ),
+@@ -124,7 +122,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                       child: Text(
+                         'NOW PLAYING',
+                         style: GoogleFonts.manrope(
+-                          color: _kGreen,
++                          color: context.themeColors.primary,
+                           fontSize: 12,
+                           fontWeight: FontWeight.w900,
+                           letterSpacing: 3,
+@@ -180,7 +178,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                                 padding: isShort
+                                     ? const EdgeInsets.fromLTRB(18, 14, 18, 14)
+                                     : const EdgeInsets.fromLTRB(22, 18, 22, 18),
+-                                tint: _kSlate,
++                                tint: context.themeColors.surface,
+                                 child: Column(
+                                   mainAxisSize: MainAxisSize.min,
+                                   children: [
+@@ -191,7 +189,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                               textAlign: TextAlign.center,
+                               style: TextStyle(
+                                 fontSize: isShort ? 34 : 40,
+-                                color: AppColorsV2.onSurface,
++                                color: context.themeColors.onSurface,
+                                 height: 1.35,
+                                 fontFamily: GoogleFonts.amiri().fontFamily,
+                                 fontWeight: FontWeight.w700,
+@@ -202,7 +200,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                               surah.name,
+                               textAlign: TextAlign.center,
+                               style: GoogleFonts.manrope(
+-                                color: _kGreen,
++                                color: context.themeColors.primary,
+                                 fontSize: isShort ? 18 : 22,
+                                 fontWeight: FontWeight.w900,
+                                 letterSpacing: -0.2,
+@@ -216,17 +214,17 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                                   Container(
+                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                     decoration: BoxDecoration(
+-                                      color: _kGold.withValues(alpha: 0.14),
++                                      color: context.themeColors.tertiary.withValues(alpha: 0.14),
+                                       borderRadius: BorderRadius.circular(10),
+-                                      border: Border.all(color: _kGold.withValues(alpha: 0.25)),
++                                      border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.25)),
+                                     ),
+                                     child: Row(
+                                       children: [
+-                                        Icon(isUrdu ? Icons.translate_rounded : Icons.record_voice_over_rounded, color: _kGold, size: 13),
++                                        Icon(isUrdu ? Icons.translate_rounded : Icons.record_voice_over_rounded, color: context.themeColors.tertiary, size: 13),
+                                         const SizedBox(width: 5),
+                                         Text(
+                                           isUrdu ? 'Urdu' : 'Arabic',
+-                                          style: GoogleFonts.manrope(color: _kGold, fontSize: 11, fontWeight: FontWeight.w800),
++                                          style: GoogleFonts.manrope(color: context.themeColors.tertiary, fontSize: 11, fontWeight: FontWeight.w800),
+                                         ),
+                                       ],
+                                     ),
+@@ -243,7 +241,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                                 selectedImam?.name ?? 'Select reciter',
+                                 textAlign: TextAlign.center,
+                                 style: GoogleFonts.manrope(
+-                                  color: AppColorsV2.onSurfaceVariant,
++                                  color: context.themeColors.onSurfaceVariant,
+                                   fontSize: isShort ? 12 : 13,
+                                   fontWeight: FontWeight.w700,
+                                 ),
+@@ -264,8 +262,8 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                           Row(
+                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                             children: [
+-                              Text(_fmt(pos), style: GoogleFonts.manrope(color: AppColorsV2.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.8)),
+-                              Text(dur != null ? _fmt(dur) : '00:00', style: GoogleFonts.manrope(color: AppColorsV2.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.8)),
++                              Text(_fmt(pos), style: GoogleFonts.manrope(color: context.themeColors.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.8)),
++                              Text(dur != null ? _fmt(dur) : '00:00', style: GoogleFonts.manrope(color: context.themeColors.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.8)),
+                             ],
+                           ),
+                           SizedBox(height: isShort ? 6 : 8),
+@@ -274,9 +272,9 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                             child: LinearProgressIndicator(
+                               value: progress,
+                               minHeight: isShort ? 5 : 6,
+-                              backgroundColor: AppColorsV2.surfaceHighest,
++                              backgroundColor: context.themeColors.surfaceHighest,
+                               valueColor: AlwaysStoppedAnimation<Color>(
+-                                Color.lerp(AppColorsV2.primaryContainer, _kGreen, 0.6) ?? _kGreen,
++                                Color.lerp(context.themeColors.primaryContainer, context.themeColors.primary, 0.6) ?? context.themeColors.primary,
+                               ),
+                             ),
+                           ),
+@@ -402,7 +400,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                                       icon: Icon(
+                                         Icons.repeat_rounded,
+                                         size: 20,
+-                                        color: tarjumahMode ? Colors.white24 : (isLoop ? _kGreen : Colors.white54),
++                                        color: tarjumahMode ? Colors.white24 : (isLoop ? context.themeColors.primary : Colors.white54),
+                                       ),
+                                     );
+                                   }),
+@@ -442,7 +440,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
+                                               ref.read(loopProvider.notifier).state = newVal;
+                                               audioPlayer.setLoopMode(newVal);
+                                             },
+-                                      icon: Icon(Icons.repeat_rounded, color: tarjumahMode ? Colors.white24 : (isLoop ? _kGreen : Colors.white54)),
++                                      icon: Icon(Icons.repeat_rounded, color: tarjumahMode ? Colors.white24 : (isLoop ? context.themeColors.primary : Colors.white54)),
+                                     );
+                                   }),
+                                 ],
+@@ -495,8 +493,8 @@ class _ProgressDisc extends StatelessWidget {
+             child: CircularProgressIndicator(
+               value: surahNumber != null ? progress : 0,
+               strokeWidth: 4,
+-              backgroundColor: AppColorsV2.surfaceHighest,
+-              valueColor: const AlwaysStoppedAnimation<Color>(_kGreen),
++              backgroundColor: context.themeColors.surfaceHighest,
++              valueColor: AlwaysStoppedAnimation<Color>(context.themeColors.primary),
+               strokeCap: StrokeCap.round,
+             ),
+           ),
+@@ -505,10 +503,10 @@ class _ProgressDisc extends StatelessWidget {
+             height: size - 24,
+             decoration: BoxDecoration(
+               shape: BoxShape.circle,
+-              border: Border.all(color: _kGreen.withValues(alpha: 0.12), width: 1.5),
++              border: Border.all(color: context.themeColors.primary.withValues(alpha: 0.12), width: 1.5),
+               gradient: RadialGradient(
+                 colors: [
+-                  _kGreen.withValues(alpha: 0.10),
++                  context.themeColors.primary.withValues(alpha: 0.10),
+                   Colors.transparent,
+                 ],
+               ),
+@@ -521,7 +519,7 @@ class _ProgressDisc extends StatelessWidget {
+                 Text(
+                   'سورة',
+                   style: TextStyle(
+-                    color: _kGreen,
++                    color: context.themeColors.primary,
+                     fontSize: (size * 0.115).clamp(20, 30),
+                     fontFamily: GoogleFonts.amiri().fontFamily,
+                     fontWeight: FontWeight.w700,
+@@ -530,7 +528,7 @@ class _ProgressDisc extends StatelessWidget {
+                 Text(
+                   surahNumber!.toString().padLeft(3, '0'),
+                   style: GoogleFonts.manrope(
+-                    color: AppColorsV2.onSurface,
++                    color: context.themeColors.onSurface,
+                     fontSize: (size * 0.245).clamp(44, 64),
+                     fontWeight: FontWeight.w900,
+                     letterSpacing: -1.0,
+@@ -548,7 +546,7 @@ class _ProgressDisc extends StatelessWidget {
+                 child: Container(
+                   decoration: BoxDecoration(
+                     shape: BoxShape.circle,
+-                    border: Border.all(color: _kGreen.withValues(alpha: 0.10), width: 4),
++                    border: Border.all(color: context.themeColors.primary.withValues(alpha: 0.10), width: 4),
+                   ),
+                 ),
+               ),
+@@ -569,7 +567,7 @@ class _BigCtrlBtn extends StatelessWidget {
+   @override
+   Widget build(BuildContext context) => IconButton(
+         onPressed: enabled ? onTap : null,
+-        icon: Icon(icon, size: 38, color: enabled ? AppColorsV2.onSurface : Colors.white24),
++        icon: Icon(icon, size: 38, color: enabled ? context.themeColors.onSurface : Colors.white24),
+       );
+ }
+ 
+@@ -588,13 +586,13 @@ class _PlayPauseBtn extends StatelessWidget {
+         height: 78,
+         decoration: BoxDecoration(
+           shape: BoxShape.circle,
+-          gradient: const LinearGradient(
++          gradient: LinearGradient(
+             begin: Alignment.topLeft,
+             end: Alignment.bottomRight,
+-            colors: [AppColorsV2.primary, AppColorsV2.primaryContainer],
++            colors: [context.themeColors.primary, context.themeColors.primaryContainer],
+           ),
+           boxShadow: [
+-            BoxShadow(color: _kGreen.withValues(alpha: 0.30), blurRadius: 40),
++            BoxShadow(color: context.themeColors.primary.withValues(alpha: 0.30), blurRadius: 40),
+           ],
+         ),
+         child: Icon(isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 42, color: const Color(0xFF00311F)),
+@@ -667,7 +665,7 @@ class _EqualizerBarsState extends State<_EqualizerBars> with TickerProviderState
+               width: 4.0,
+               height: 24.0 * _anims[i].value,
+               decoration: BoxDecoration(
+-                color: _kGreen,
++                color: context.themeColors.primary,
+                 borderRadius: BorderRadius.circular(2),
+               ),
+             );
+diff --git a/lib/screens/prayer_times_screen.dart b/lib/screens/prayer_times_screen.dart
+index 65590e5..7e0e662 100644
+--- a/lib/screens/prayer_times_screen.dart
++++ b/lib/screens/prayer_times_screen.dart
+@@ -6,10 +6,7 @@ import 'package:adhan/adhan.dart';
+ import 'package:quran_recitation/providers/providers.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+-
+-const _kGreen = AppColorsV2.primary;
+-const _kBg = AppColorsV2.bg;
+-const _kCard = AppColorsV2.surfaceLow;
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class PrayerTimesScreen extends ConsumerWidget {
+   const PrayerTimesScreen({super.key});
+@@ -20,7 +17,7 @@ class PrayerTimesScreen extends ConsumerWidget {
+     final locationAsync = ref.watch(locationProvider);
+ 
+     return Scaffold(
+-      backgroundColor: _kBg,
++      backgroundColor: context.themeColors.bg,
+       appBar: AppBar(
+         leading: IconButton(
+           icon: const Icon(Icons.arrow_back_rounded, color: Colors.white70),
+@@ -29,19 +26,19 @@ class PrayerTimesScreen extends ConsumerWidget {
+         title: Text(
+           'Prayer Times',
+           style: GoogleFonts.manrope(
+-            color: AppColorsV2.onSurface,
++            color: context.themeColors.onSurface,
+             fontWeight: FontWeight.w900,
+             fontSize: 18,
+             letterSpacing: -0.2,
+           ),
+         ),
+-        backgroundColor: _kBg.withValues(alpha: 0.80),
++        backgroundColor: context.themeColors.bg.withValues(alpha: 0.80),
+         elevation: 0,
+         centerTitle: false,
+       ),
+       body: SafeArea(
+         child: prayerAsync.when(
+-          loading: () => const Center(child: CircularProgressIndicator(color: _kGreen)),
++          loading: () => Center(child: CircularProgressIndicator(color: context.themeColors.primary)),
+           error: (e, _) => Center(child: Text('Error loading times', style: GoogleFonts.manrope(color: Colors.white54))),
+           data: (prayerTimes) {
+             final nextPrayer = prayerTimes.nextPrayer();
+@@ -58,7 +55,7 @@ class PrayerTimesScreen extends ConsumerWidget {
+                 locationAsync.when(
+                   data: (coords) => Text(
+                     '${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}',
+-                    style: GoogleFonts.manrope(color: AppColorsV2.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.6),
++                    style: GoogleFonts.manrope(color: context.themeColors.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.6),
+                   ),
+                   loading: () => const SizedBox(),
+                   error: (_, __) => const SizedBox(),
+@@ -103,9 +100,9 @@ class _PrayerRow extends StatelessWidget {
+       child: GlassPanel(
+         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+         borderRadius: BorderRadius.circular(20),
+-        tint: _kCard,
++        tint: context.themeColors.surfaceLow,
+         border: Border.all(
+-          color: isHighlighted ? _kGreen.withValues(alpha: 0.22) : Colors.white.withValues(alpha: 0.06),
++          color: isHighlighted ? context.themeColors.primary.withValues(alpha: 0.22) : Colors.white.withValues(alpha: 0.06),
+           width: isHighlighted ? 1.5 : 1.0,
+         ),
+       child: Row(
+@@ -115,7 +112,7 @@ class _PrayerRow extends StatelessWidget {
+             child: Text(
+               name,
+               style: GoogleFonts.manrope(
+-                color: isHighlighted ? _kGreen : Colors.white,
++                color: isHighlighted ? context.themeColors.primary : Colors.white,
+                 fontSize: 16,
+                 fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.w700,
+               ),
+@@ -123,7 +120,7 @@ class _PrayerRow extends StatelessWidget {
+           ),
+           Icon(
+             isSun ? Icons.wb_sunny_rounded : Icons.volume_up_rounded, 
+-            color: isHighlighted ? _kGreen : Colors.white24, 
++            color: isHighlighted ? context.themeColors.primary : Colors.white24, 
+             size: 20
+           ),
+           Expanded(
+diff --git a/lib/screens/qibla_screen.dart b/lib/screens/qibla_screen.dart
+index 559abbb..784a019 100644
+--- a/lib/screens/qibla_screen.dart
++++ b/lib/screens/qibla_screen.dart
+@@ -8,9 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
+ import 'package:adhan/adhan.dart';
+ import 'package:quran_recitation/providers/providers.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+-
+-const _kGreen = AppColorsV2.primary;
+-const _kBg = AppColorsV2.bg;
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class QiblaScreen extends ConsumerStatefulWidget {
+   const QiblaScreen({super.key});
+@@ -59,7 +57,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
+     final locationAsync = ref.watch(locationProvider);
+ 
+     return Scaffold(
+-      backgroundColor: _kBg,
++      backgroundColor: context.themeColors.bg,
+       body: Stack(
+         children: [
+           Positioned(
+@@ -69,7 +67,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
+               decoration: BoxDecoration(
+                 shape: BoxShape.circle,
+                 gradient: RadialGradient(
+-                  colors: [_kGreen.withValues(alpha: 0.1), Colors.transparent],
++                  colors: [context.themeColors.primary.withValues(alpha: 0.1), Colors.transparent],
+                 ),
+               ),
+             ),
+@@ -77,7 +75,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
+           
+           SafeArea(
+             child: locationAsync.when(
+-              loading: () => const Center(child: CircularProgressIndicator(color: _kGreen)),
++              loading: () => Center(child: CircularProgressIndicator(color: context.themeColors.primary)),
+               error: (e, _) => _buildErrorState(),
+               data: (coords) {
+                 final qiblaDir = Qibla(coords).direction;
+@@ -110,7 +108,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
+                         style: GoogleFonts.manrope(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8)),
+                     const SizedBox(height: 4),
+                     Text('${coords.latitude.toStringAsFixed(4)}, ${coords.longitude.toStringAsFixed(4)}',
+-                        style: GoogleFonts.manrope(color: AppColorsV2.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.6)),
++                        style: GoogleFonts.manrope(color: context.themeColors.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.6)),
+                     
+                     const Spacer(),
+ 
+@@ -159,7 +157,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
+                               Icon(
+                                 Icons.navigation_rounded, 
+                                 size: 80, 
+-                                color: _isFacingQibla ? _kGreen : Colors.white,
++                                color: _isFacingQibla ? context.themeColors.primary : Colors.white,
+                               ),
+                               const SizedBox(height: 8),
+                               AnimatedOpacity(
+@@ -167,7 +165,7 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen> {
+                                 duration: const Duration(milliseconds: 200),
+                                 child: Text(
+                                   'Facing Qibla',
+-                                  style: GoogleFonts.manrope(color: _kGreen, fontWeight: FontWeight.w900, fontSize: 18),
++                                  style: GoogleFonts.manrope(color: context.themeColors.primary, fontWeight: FontWeight.w900, fontSize: 18),
+                                 ),
+                               ),
+                             ],
+diff --git a/lib/screens/read_quran_screen.dart b/lib/screens/read_quran_screen.dart
+index 30e4b1e..3b5d3a9 100644
+--- a/lib/screens/read_quran_screen.dart
++++ b/lib/screens/read_quran_screen.dart
+@@ -6,10 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
+ import 'package:quran_recitation/models/models.dart';
+ import 'package:quran_recitation/providers/providers.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+-
+-const _kGreen = AppColorsV2.primary;
+-const _kGold = AppColorsV2.tertiary;
+-const _kBg = AppColorsV2.bg;
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ // ── Tajweed color map ──────────────────────────────────────────────────────────
+ const Map<String, Color> _tajweedColors = {
+@@ -106,7 +103,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+           builder: (context, scrollController) {
+             return Container(
+               decoration: BoxDecoration(
+-                color: _kBg.withValues(alpha: 0.98),
++                color: context.themeColors.bg.withValues(alpha: 0.98),
+                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                 border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+               ),
+@@ -183,15 +180,15 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+                               ),
+                               focusedBorder: OutlineInputBorder(
+                                 borderRadius: BorderRadius.circular(18),
+-                                borderSide: BorderSide(color: _kGold.withValues(alpha: 0.35)),
++                                borderSide: BorderSide(color: context.themeColors.tertiary.withValues(alpha: 0.35)),
+                               ),
+                             ),
+                           ),
+                         ),
+                         Expanded(
+                           child: surahsAsync.when(
+-                            loading: () => const Center(
+-                              child: CircularProgressIndicator(color: _kGreen),
++                            loading: () => Center(
++                              child: CircularProgressIndicator(color: context.themeColors.primary),
+                             ),
+                             error: (e, _) => Padding(
+                               padding: const EdgeInsets.all(20),
+@@ -241,14 +238,14 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+                                       height: 40,
+                                       alignment: Alignment.center,
+                                       decoration: BoxDecoration(
+-                                        color: _kGold.withValues(alpha: 0.08),
++                                        color: context.themeColors.tertiary.withValues(alpha: 0.08),
+                                         borderRadius: BorderRadius.circular(12),
+-                                        border: Border.all(color: _kGold.withValues(alpha: 0.18)),
++                                        border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.18)),
+                                       ),
+                                       child: Text(
+                                         s.number.toString().padLeft(2, '0'),
+                                         style: GoogleFonts.manrope(
+-                                          color: _kGold,
++                                          color: context.themeColors.tertiary,
+                                           fontWeight: FontWeight.w900,
+                                           fontSize: 12,
+                                         ),
+@@ -328,7 +325,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+   @override
+   Widget build(BuildContext context) {
+     return Scaffold(
+-      backgroundColor: _kBg,
++      backgroundColor: context.themeColors.bg,
+       body: Stack(
+         children: [
+           TabBarView(
+@@ -353,7 +350,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+                 child: Container(
+                   padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                   decoration: BoxDecoration(
+-                    color: _kBg.withValues(alpha: 0.75),
++                    color: context.themeColors.bg.withValues(alpha: 0.75),
+                     border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+                   ),
+                   child: Column(
+@@ -390,8 +387,8 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+                       ),
+                       TabBar(
+                         controller: _tabController,
+-                        indicatorColor: _kGreen,
+-                        labelColor: _kGreen,
++                        indicatorColor: context.themeColors.primary,
++                        labelColor: context.themeColors.primary,
+                         unselectedLabelColor: Colors.white38,
+                         indicatorWeight: 3,
+                         dividerColor: Colors.transparent,
+@@ -426,7 +423,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+           final asyncPage = ref.watch(mushafPageProvider((pageNum, scriptType)));
+ 
+           return asyncPage.when(
+-            loading: () => const Center(child: CircularProgressIndicator(color: _kGreen)),
++            loading: () => Center(child: CircularProgressIndicator(color: context.themeColors.primary)),
+             error: (e, _) => _buildErrorState(e.toString()),
+             data: (pageText) {
+               if (pageText.startsWith('Offline') || pageText.startsWith('Error')) {
+@@ -464,7 +461,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+           final asyncPage = ref.watch(tajweedPageProvider(pageNum));
+ 
+           return asyncPage.when(
+-            loading: () => const Center(child: CircularProgressIndicator(color: _kGreen)),
++            loading: () => Center(child: CircularProgressIndicator(color: context.themeColors.primary)),
+             error: (e, _) => _buildErrorState(e.toString()),
+             data: (verses) {
+               if (verses.isEmpty) {
+@@ -501,7 +498,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+       allSpans.add(TextSpan(
+         text: ' ﴿${_convertToArabicNumber(ayahNum)}﴾ ',
+         style: TextStyle(
+-          color: _kGold.withValues(alpha: 0.7),
++          color: context.themeColors.tertiary.withValues(alpha: 0.7),
+           fontSize: 20,
+           fontFamily: GoogleFonts.amiri().fontFamily,
+         ),
+@@ -517,9 +514,9 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+       decoration: BoxDecoration(
+         color: const Color(0xFF0A0F18),
+         borderRadius: BorderRadius.circular(16),
+-        border: Border.all(color: _kGold.withValues(alpha: 0.3), width: 1.5),
++        border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.3), width: 1.5),
+         boxShadow: [
+-          BoxShadow(color: _kGold.withValues(alpha: 0.05), blurRadius: 20, spreadRadius: 5)
++          BoxShadow(color: context.themeColors.tertiary.withValues(alpha: 0.05), blurRadius: 20, spreadRadius: 5)
+         ],
+       ),
+       child: Stack(
+@@ -528,15 +525,15 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+             child: Container(
+               margin: const EdgeInsets.all(6),
+               decoration: BoxDecoration(
+-                border: Border.all(color: _kGold.withValues(alpha: 0.15), width: 1),
++                border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.15), width: 1),
+                 borderRadius: BorderRadius.circular(10),
+               ),
+             ),
+           ),
+-          Positioned(top: 10, left: 10, child: Icon(Icons.star_border_rounded, color: _kGold.withValues(alpha: 0.4), size: 20)),
+-          Positioned(top: 10, right: 10, child: Icon(Icons.star_border_rounded, color: _kGold.withValues(alpha: 0.4), size: 20)),
+-          Positioned(bottom: 10, left: 10, child: Icon(Icons.star_border_rounded, color: _kGold.withValues(alpha: 0.4), size: 20)),
+-          Positioned(bottom: 10, right: 10, child: Icon(Icons.star_border_rounded, color: _kGold.withValues(alpha: 0.4), size: 20)),
++          Positioned(top: 10, left: 10, child: Icon(Icons.star_border_rounded, color: context.themeColors.tertiary.withValues(alpha: 0.4), size: 20)),
++          Positioned(top: 10, right: 10, child: Icon(Icons.star_border_rounded, color: context.themeColors.tertiary.withValues(alpha: 0.4), size: 20)),
++          Positioned(bottom: 10, left: 10, child: Icon(Icons.star_border_rounded, color: context.themeColors.tertiary.withValues(alpha: 0.4), size: 20)),
++          Positioned(bottom: 10, right: 10, child: Icon(Icons.star_border_rounded, color: context.themeColors.tertiary.withValues(alpha: 0.4), size: 20)),
+ 
+           Padding(
+             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+@@ -613,9 +610,9 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+       decoration: BoxDecoration(
+         color: const Color(0xFF0A0F18), 
+         borderRadius: BorderRadius.circular(16),
+-        border: Border.all(color: _kGold.withValues(alpha: 0.3), width: 1.5),
++        border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.3), width: 1.5),
+         boxShadow: [
+-          BoxShadow(color: _kGold.withValues(alpha: 0.05), blurRadius: 20, spreadRadius: 5)
++          BoxShadow(color: context.themeColors.tertiary.withValues(alpha: 0.05), blurRadius: 20, spreadRadius: 5)
+         ]
+       ),
+       child: Stack(
+@@ -624,15 +621,15 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
+             child: Container(
+               margin: const EdgeInsets.all(6),
+               decoration: BoxDecoration(
+-                border: Border.all(color: _kGold.withValues(alpha: 0.15), width: 1),
++                border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.15), width: 1),
+                 borderRadius: BorderRadius.circular(10),
+               ),
+             ),
+           ),
+-          Positioned(top: 10, left: 10, child: Icon(Icons.star_border_rounded, color: _kGold.withValues(alpha: 0.4), size: 20)),
+-          Positioned(top: 10, right: 10, child: Icon(Icons.star_border_rounded, color: _kGold.withValues(alpha: 0.4), size: 20)),
+-          Positioned(bottom: 10, left: 10, child: Icon(Icons.star_border_rounded, color: _kGold.withValues(alpha: 0.4), size: 20)),
+-          Positioned(bottom: 10, right: 10, child: Icon(Icons.star_border_rounded, color: _kGold.withValues(alpha: 0.4), size: 20)),
++          Positioned(top: 10, left: 10, child: Icon(Icons.star_border_rounded, color: context.themeColors.tertiary.withValues(alpha: 0.4), size: 20)),
++          Positioned(top: 10, right: 10, child: Icon(Icons.star_border_rounded, color: context.themeColors.tertiary.withValues(alpha: 0.4), size: 20)),
++          Positioned(bottom: 10, left: 10, child: Icon(Icons.star_border_rounded, color: context.themeColors.tertiary.withValues(alpha: 0.4), size: 20)),
++          Positioned(bottom: 10, right: 10, child: Icon(Icons.star_border_rounded, color: context.themeColors.tertiary.withValues(alpha: 0.4), size: 20)),
+ 
+           Padding(
+             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+diff --git a/lib/screens/read_tab_screen.dart b/lib/screens/read_tab_screen.dart
+index 44887e9..0fbd386 100644
+--- a/lib/screens/read_tab_screen.dart
++++ b/lib/screens/read_tab_screen.dart
+@@ -10,8 +10,8 @@ import 'package:quran_recitation/screens/read_quran_screen.dart';
+ import 'package:quran_recitation/screens/hadith_reader_screen.dart';
+ import 'package:quran_recitation/screens/tafseer_screen.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+-const _kGreen = AppColorsV2.primary;
+ const _kAmber = Color(0xFFD4A843);
+ 
+ 
+@@ -209,7 +209,7 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
+                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                       margin:  const EdgeInsets.only(bottom: 6),
+                       decoration: BoxDecoration(
+-                        color:         AppColorsV2.surfaceLow,
++                        color:         context.themeColors.surfaceLow,
+                         borderRadius:  BorderRadius.circular(12),
+                         border:        Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                       ),
+@@ -387,7 +387,7 @@ class _BentoActionsRow extends StatelessWidget {
+             child: Container(
+               decoration: BoxDecoration(
+                 borderRadius: BorderRadius.circular(16),
+-                color:        AppColorsV2.surfaceHigh,
++                color:        context.themeColors.surfaceHigh,
+                 border:       Border.all(color: Colors.white.withValues(alpha: 0.06)),
+               ),
+               child: ClipRRect(
+@@ -433,7 +433,7 @@ class _BentoActionsRow extends StatelessWidget {
+                               const SizedBox(height: 4),
+                               Text('Continue reading',
+                                   style: GoogleFonts.manrope(
+-                                    color:      _kGreen,
++                                    color:      context.themeColors.primary,
+                                     fontSize:   12,
+                                     fontWeight: FontWeight.w700,
+                                   )),
+@@ -444,11 +444,11 @@ class _BentoActionsRow extends StatelessWidget {
+                           width:  46,
+                           height: 46,
+                           decoration: BoxDecoration(
+-                            color:         _kGreen.withValues(alpha: 0.12),
++                            color:         context.themeColors.primary.withValues(alpha: 0.12),
+                             borderRadius:  BorderRadius.circular(14),
+-                            border:        Border.all(color: _kGreen.withValues(alpha: 0.18)),
++                            border:        Border.all(color: context.themeColors.primary.withValues(alpha: 0.18)),
+                           ),
+-                          child: const Icon(Icons.auto_stories_rounded, color: _kGreen),
++                          child: Icon(Icons.auto_stories_rounded, color: context.themeColors.primary),
+                         ),
+                       ]),
+                     ),
+@@ -970,7 +970,7 @@ class _HadithSectionPickerSheetState
+                               horizontal: 14, vertical: 12),
+                           margin: const EdgeInsets.only(bottom: 6),
+                           decoration: BoxDecoration(
+-                            color: AppColorsV2.surfaceLow,
++                            color: context.themeColors.surfaceLow,
+                             borderRadius: BorderRadius.circular(12),
+                             border: Border.all(
+                                 color: Colors.white.withValues(alpha: 0.06)),
+diff --git a/lib/screens/settings_screen.dart b/lib/screens/settings_screen.dart
+index 777c4f4..abbe5cc 100644
+--- a/lib/screens/settings_screen.dart
++++ b/lib/screens/settings_screen.dart
+@@ -10,11 +10,7 @@ import 'package:quran_recitation/screens/login_screen.dart';
+ import 'package:quran_recitation/services/interleaved_audio_service.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+-
+-const _kGreen = AppColorsV2.primary;
+-const _kGold = AppColorsV2.tertiary;
+-const _kBg = AppColorsV2.bg;
+-const _kCard = AppColorsV2.surfaceLow;
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class SettingsScreen extends ConsumerStatefulWidget {
+   const SettingsScreen({super.key});
+@@ -81,9 +77,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+     final tarjumahMode       = ref.watch(tarjumahModeProvider);
+     final isTarjumahSupported = ref.watch(isTarjumahSupportedProvider); 
+     final bulkState          = ref.watch(bulkDownloadProvider);
++    final updateAsync        = ref.watch(updateCheckProvider);
+ 
+     return Scaffold(
+-      backgroundColor: _kBg,
++      backgroundColor: context.themeColors.bg,
+       body: SafeArea(
+         bottom: false,
+         child: ListView(
+@@ -93,7 +90,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+               child: Text(
+                 'Quran2U',
+                 style: GoogleFonts.manrope(
+-                  color: _kGreen,
++                  color: context.themeColors.primary,
+                   fontSize: 22,
+                   fontWeight: FontWeight.w900,
+                   letterSpacing: -0.4,
+@@ -106,7 +103,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+             Text(
+               'Settings',
+               style: GoogleFonts.manrope(
+-                color: AppColorsV2.onSurface,
++                color: context.themeColors.onSurface,
+                 fontSize: 34,
+                 fontWeight: FontWeight.w900,
+                 letterSpacing: -1.2,
+@@ -116,7 +113,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+             Text(
+               'Personalize your spiritual experience',
+               style: GoogleFonts.manrope(
+-                color: AppColorsV2.onSurfaceVariant,
++                color: context.themeColors.onSurfaceVariant,
+                 fontSize: 13,
+                 fontWeight: FontWeight.w600,
+               ),
+@@ -130,7 +127,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+               Container(
+                 padding: const EdgeInsets.all(16),
+                 decoration: BoxDecoration(
+-                  color: AppColorsV2.surfaceLow,
++                  color: context.themeColors.surfaceLow,
+                   borderRadius: BorderRadius.circular(28),
+                   border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                 ),
+@@ -140,15 +137,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                       width: 64,
+                       height: 64,
+                       decoration: BoxDecoration(
+-                        color: _kGreen.withValues(alpha: 0.14),
++                        color: context.themeColors.primary.withValues(alpha: 0.14),
+                         borderRadius: BorderRadius.circular(18),
+-                        border: Border.all(color: _kGreen.withValues(alpha: 0.18), width: 2),
++                        border: Border.all(color: context.themeColors.primary.withValues(alpha: 0.18), width: 2),
+                       ),
+                       alignment: Alignment.center,
+                       child: Text(
+                         selectedImam.name.split(' ').last.characters.first.toUpperCase(),
+                         style: GoogleFonts.manrope(
+-                          color: _kGreen,
++                          color: context.themeColors.primary,
+                           fontSize: 22,
+                           fontWeight: FontWeight.w900,
+                         ),
+@@ -162,13 +159,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                           Container(
+                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                             decoration: BoxDecoration(
+-                              color: _kGreen.withValues(alpha: 0.10),
++                              color: context.themeColors.primary.withValues(alpha: 0.10),
+                               borderRadius: BorderRadius.circular(999),
+                             ),
+                             child: Text(
+                               'CURRENT RECITER',
+                               style: GoogleFonts.manrope(
+-                                color: _kGreen,
++                                color: context.themeColors.primary,
+                                 fontSize: 10,
+                                 fontWeight: FontWeight.w900,
+                                 letterSpacing: 2.0,
+@@ -179,7 +176,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                           Text(
+                             selectedImam.name,
+                             style: GoogleFonts.manrope(
+-                              color: AppColorsV2.onSurface,
++                              color: context.themeColors.onSurface,
+                               fontSize: 16,
+                               fontWeight: FontWeight.w900,
+                               letterSpacing: -0.4,
+@@ -190,7 +187,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                           Text(
+                             selectedImam.country,
+                             style: GoogleFonts.manrope(
+-                              color: AppColorsV2.onSurfaceVariant,
++                              color: context.themeColors.onSurfaceVariant,
+                               fontSize: 12,
+                               fontWeight: FontWeight.w600,
+                             ),
+@@ -210,7 +207,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+             Container(
+               padding: const EdgeInsets.all(18),
+               decoration: BoxDecoration(
+-                color: AppColorsV2.surfaceLow,
++                color: context.themeColors.surfaceLow,
+                 borderRadius: BorderRadius.circular(28),
+                 border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+               ),
+@@ -221,7 +218,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                       Text(
+                         'Playback Speed',
+                         style: GoogleFonts.manrope(
+-                          color: AppColorsV2.onSurface,
++                          color: context.themeColors.onSurface,
+                           fontSize: 14,
+                           fontWeight: FontWeight.w900,
+                         ),
+@@ -230,13 +227,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                       Container(
+                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                         decoration: BoxDecoration(
+-                          color: _kGreen.withValues(alpha: 0.10),
++                          color: context.themeColors.primary.withValues(alpha: 0.10),
+                           borderRadius: BorderRadius.circular(14),
+                         ),
+                         child: Text(
+                           '${_speed.toStringAsFixed(2)}x',
+                           style: GoogleFonts.manrope(
+-                            color: _kGreen,
++                            color: context.themeColors.primary,
+                             fontSize: 12,
+                             fontWeight: FontWeight.w900,
+                           ),
+@@ -272,11 +269,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+             AnimatedContainer(
+               duration: const Duration(milliseconds: 200),
+               decoration: BoxDecoration(
+-                color: AppColorsV2.surfaceLow,
++                color: context.themeColors.surfaceLow,
+                 borderRadius: BorderRadius.circular(28),
+                 border: Border.all(
+                   color: tarjumahMode 
+-                      ? _kGold.withValues(alpha: 0.4)
++                      ? context.themeColors.tertiary.withValues(alpha: 0.4)
+                       : Colors.white.withValues(alpha: 0.06),
+                 ),
+               ),
+@@ -292,12 +289,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                           height: 42,
+                           decoration: BoxDecoration(
+                             color: isTarjumahSupported
+-                                ? _kGold.withValues(alpha: 0.12)
++                                ? context.themeColors.tertiary.withValues(alpha: 0.12)
+                                 : Colors.grey.withValues(alpha: 0.12),
+                             borderRadius: BorderRadius.circular(14),
+                           ),
+                           child: Icon(Icons.record_voice_over_rounded,
+-                              color: isTarjumahSupported ? _kGold : Colors.grey),
++                              color: isTarjumahSupported ? context.themeColors.tertiary : Colors.grey),
+                         ),
+                         const SizedBox(width: 12),
+                         Expanded(
+@@ -307,7 +304,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                               Text(
+                                 'Audio Tarjumah',
+                                 style: GoogleFonts.manrope(
+-                                  color: isTarjumahSupported ? AppColorsV2.onSurface : Colors.grey,
++                                  color: isTarjumahSupported ? context.themeColors.onSurface : Colors.grey,
+                                   fontSize: 14,
+                                   fontWeight: FontWeight.w900,
+                                 ),
+@@ -319,7 +316,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                                     : 'Not available for Sheikh Bandar',
+                                 style: GoogleFonts.manrope(
+                                   color: isTarjumahSupported
+-                                      ? AppColorsV2.onSurfaceVariant
++                                      ? context.themeColors.onSurfaceVariant
+                                       : Colors.redAccent.withValues(alpha: 0.8),
+                                   fontSize: 12,
+                                   fontWeight: FontWeight.w600,
+@@ -337,8 +334,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                                   ref.read(interleavedAudioServiceProvider).player.stop();
+                                 }
+                               : null,
+-                          activeColor: _kGreen,
+-                          activeTrackColor: _kGreen.withValues(alpha: 0.25),
++                          activeColor: context.themeColors.primary,
++                          activeTrackColor: context.themeColors.primary.withValues(alpha: 0.25),
+                           inactiveThumbColor: Colors.white38,
+                           inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
+                         ),
+@@ -379,13 +376,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                                     padding: const EdgeInsets.symmetric(vertical: 10),
+                                     decoration: BoxDecoration(
+                                       color: _audioLang == TranslationMode.urdu
+-                                          ? AppColorsV2.surfaceHigh
+-                                          : AppColorsV2.surface,
++                                          ? context.themeColors.surfaceHigh
++                                          : context.themeColors.surface,
+                                       borderRadius: const BorderRadius.horizontal(
+                                           left: Radius.circular(12)),
+                                       border: Border.all(
+                                           color: _audioLang == TranslationMode.urdu
+-                                              ? _kGold.withValues(alpha: 0.5)
++                                              ? context.themeColors.tertiary.withValues(alpha: 0.5)
+                                               : Colors.white10),
+                                     ),
+                                     alignment: Alignment.center,
+@@ -393,13 +390,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                                       mainAxisAlignment: MainAxisAlignment.center,
+                                       children: [
+                                         if (_audioLang == TranslationMode.urdu)
+-                                          const Icon(Icons.check, color: _kGold, size: 16),
++                                          Icon(Icons.check, color: context.themeColors.tertiary, size: 16),
+                                         if (_audioLang == TranslationMode.urdu)
+                                           const SizedBox(width: 6),
+                                         Text('Urdu',
+                                             style: GoogleFonts.manrope(
+                                                 color: _audioLang == TranslationMode.urdu
+-                                                    ? _kGold
++                                                    ? context.themeColors.tertiary
+                                                     : Colors.white54,
+                                                 fontWeight: _audioLang == TranslationMode.urdu
+                                                     ? FontWeight.bold
+@@ -424,13 +421,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                                     padding: const EdgeInsets.symmetric(vertical: 10),
+                                     decoration: BoxDecoration(
+                                       color: _audioLang == TranslationMode.english
+-                                          ? AppColorsV2.surfaceHigh
+-                                          : AppColorsV2.surface,
++                                          ? context.themeColors.surfaceHigh
++                                          : context.themeColors.surface,
+                                       borderRadius: const BorderRadius.horizontal(
+                                           right: Radius.circular(12)),
+                                       border: Border.all(
+                                           color: _audioLang == TranslationMode.english
+-                                              ? _kGold.withValues(alpha: 0.5)
++                                              ? context.themeColors.tertiary.withValues(alpha: 0.5)
+                                               : Colors.white10),
+                                     ),
+                                     alignment: Alignment.center,
+@@ -438,13 +435,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                                       mainAxisAlignment: MainAxisAlignment.center,
+                                       children: [
+                                         if (_audioLang == TranslationMode.english)
+-                                          const Icon(Icons.check, color: _kGold, size: 16),
++                                          Icon(Icons.check, color: context.themeColors.tertiary, size: 16),
+                                         if (_audioLang == TranslationMode.english)
+                                           const SizedBox(width: 6),
+                                         Text('English',
+                                             style: GoogleFonts.manrope(
+                                                 color: _audioLang == TranslationMode.english
+-                                                    ? _kGold
++                                                    ? context.themeColors.tertiary
+                                                     : Colors.white54,
+                                                 fontWeight: _audioLang == TranslationMode.english
+                                                     ? FontWeight.bold
+@@ -475,7 +472,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+             _ExpandableCard(
+               expanded: _translationExpanded,
+               onToggle: () => setState(() => _translationExpanded = !_translationExpanded),
+-              accentColor: _kGreen,
++              accentColor: context.themeColors.primary,
+               iconData: Icons.translate_rounded,
+               title: 'Translation Language',
+               subtitle: selectedTranslation == 0
+@@ -487,7 +484,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                 _ChoiceRow(
+                   icon: Icons.block_rounded, label: 'Off', subtitle: 'Arabic only',
+                   selected: selectedTranslation == 0,
+-                  accentColor: _kGreen,
++                  accentColor: context.themeColors.primary,
+                   onTap: () { ref.read(selectedTranslationProvider.notifier).state = 0;
+                     setState(() => _translationExpanded = false); },
+                 ),
+@@ -495,7 +492,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                   icon: Icons.language_rounded, label: 'English',
+                   subtitle: 'Sahih International',
+                   selected: selectedTranslation == 20,
+-                  accentColor: _kGreen,
++                  accentColor: context.themeColors.primary,
+                   onTap: () { ref.read(selectedTranslationProvider.notifier).state = 20;
+                     setState(() => _translationExpanded = false); },
+                 ),
+@@ -503,7 +500,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                   icon: Icons.text_fields_rounded, label: 'اردو',
+                   subtitle: 'مولانا فتح محمد جالندھری',
+                   selected: selectedTranslation == 97,
+-                  accentColor: _kGreen,
++                  accentColor: context.themeColors.primary,
+                   onTap: () { ref.read(selectedTranslationProvider.notifier).state = 97;
+                     setState(() => _translationExpanded = false); },
+                 ),
+@@ -519,23 +516,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                 Expanded(
+                   child: _TileButton(
+                     icon: Icons.download_for_offline_rounded,
+-                    iconColor: _kGold,
++                    iconColor: context.themeColors.tertiary,
+                     title: 'Manage Downloads',
+                     subtitle: 'Offline Surahs',
+                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DownloadsScreen())),
+-                    background: AppColorsV2.surfaceLow,
++                    background: context.themeColors.surfaceLow,
+                   ),
+                 ),
+                 const SizedBox(width: 12),
+                 Expanded(
+                   child: _TileButton(
+                     icon: Icons.cloud_download_rounded,
+-                    iconColor: _kGreen,
++                    iconColor: context.themeColors.primary,
+                     title: 'Offline Mode',
+                     subtitle: 'Download Entire Quran',
+                     onTap: () => _QuranDownloadTile(bulkState: bulkState).show(context, ref),
+-                    background: _kGreen.withValues(alpha: 0.10),
+-                    borderColor: _kGreen.withValues(alpha: 0.22),
++                    background: context.themeColors.primary.withValues(alpha: 0.10),
++                    borderColor: context.themeColors.primary.withValues(alpha: 0.22),
+                   ),
+                 ),
+               ],
+@@ -546,19 +543,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+               Container(
+                 padding: const EdgeInsets.all(16),
+                 decoration: BoxDecoration(
+-                  color: _kGreen.withValues(alpha: 0.08),
++                  color: context.themeColors.primary.withValues(alpha: 0.08),
+                   borderRadius: BorderRadius.circular(16),
+-                  border: Border.all(color: _kGreen.withValues(alpha: 0.22)),
++                  border: Border.all(color: context.themeColors.primary.withValues(alpha: 0.22)),
+                 ),
+                 child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Row(
+                       children: [
+-                        const SizedBox(
++                        SizedBox(
+                           width: 14, height: 14,
+                           child: CircularProgressIndicator(
+-                              strokeWidth: 2, color: _kGreen),
++                              strokeWidth: 2, color: context.themeColors.primary),
+                         ),
+                         const SizedBox(width: 10),
+                         Expanded(
+@@ -566,7 +563,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                             'Surah ${bulkState.currentSurah} of 114  ·  '
+                             '${(bulkState.overallProgress * 100).toStringAsFixed(0)}%',
+                             style: GoogleFonts.manrope(
+-                                color: _kGreen,
++                                color: context.themeColors.primary,
+                                 fontSize: 12,
+                                 fontWeight: FontWeight.w700),
+                           ),
+@@ -588,7 +585,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                     const SizedBox(height: 8),
+                     Text(bulkState.status,
+                         style: GoogleFonts.manrope(
+-                            color: AppColorsV2.onSurfaceVariant, fontSize: 10),
++                            color: context.themeColors.onSurfaceVariant, fontSize: 10),
+                         overflow: TextOverflow.ellipsis),
+                     const SizedBox(height: 8),
+                     ClipRRect(
+@@ -597,7 +594,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+                         value: bulkState.overallProgress,
+                         minHeight: 4,
+                         backgroundColor: Colors.white.withValues(alpha: 0.08),
+-                        valueColor: const AlwaysStoppedAnimation(_kGreen),
++                        valueColor: AlwaysStoppedAnimation(context.themeColors.primary),
+                       ),
+                     ),
+                   ],
+@@ -608,11 +605,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+             const SizedBox(height: 12),
+             _TileButton(
+               icon: Icons.palette_rounded,
+-              iconColor: _kGold,
++              iconColor: context.themeColors.tertiary,
+               title: 'Tajweed Guide',
+               subtitle: 'Color-coded pronunciation rules',
+               onTap: () => _showTajweedGuide(context),
+-              background: AppColorsV2.surfaceLow,
++              background: context.themeColors.surfaceLow,
+             ),
+ 
+             const SizedBox(height: 22),
+@@ -621,11 +618,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+             const SizedBox(height: 10),
+             _TileButton(
+               icon: Icons.bug_report_rounded,
+-              iconColor: AppColorsV2.danger,
++              iconColor: context.themeColors.danger,
+               title: 'Report a Bug',
+               subtitle: 'Help us improve the app',
+               onTap: _reportBug,
+-              background: AppColorsV2.surfaceLow,
++              background: context.themeColors.surfaceLow,
+             ),
+ 
+             const SizedBox(height: 22),
+@@ -634,16 +631,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+             GlassPanel(
+               padding: const EdgeInsets.all(16),
+               borderRadius: BorderRadius.circular(24),
+-              tint: AppColorsV2.surfaceLow,
++              tint: context.themeColors.surfaceLow,
+               child: Column(
+-                children: const [
+-                  _InfoRow(icon: Icons.info_outline_rounded, label: 'App', value: 'Quran2U'),
+-                  Divider(color: Colors.white10, height: 16),
+-                  _InfoRow(icon: Icons.tag_rounded, label: 'Version', value: '2.0.0'),
+-                  Divider(color: Colors.white10, height: 16),
+-                  _InfoRow(icon: Icons.library_music_outlined, label: 'Audio', value: 'mp3quran.net'),
+-                  Divider(color: Colors.white10, height: 16),
+-                  _InfoRow(icon: Icons.api_outlined, label: 'Data', value: 'api.quran.com'),
++                children: [
++                  const _InfoRow(icon: Icons.info_outline_rounded, label: 'App', value: 'Quran2U'),
++                  const Divider(color: Colors.white10, height: 16),
++                  _InfoRow(
++                    icon: Icons.tag_rounded, 
++                    label: 'Version', 
++                    value: updateAsync.valueOrNull?.isUpdateAvailable == true ? 'New: ${updateAsync.valueOrNull!.latestVersion}' : (updateAsync.valueOrNull?.currentVersion ?? '2.0.0'),
++                    actionText: updateAsync.valueOrNull?.isUpdateAvailable == true ? 'Update' : null,
++                    onTap: updateAsync.valueOrNull?.isUpdateAvailable == true ? () async {
++                      final url = Uri.parse(updateAsync.valueOrNull!.releaseUrl);
++                      if (await canLaunchUrl(url)) {
++                        await launchUrl(url, mode: LaunchMode.externalApplication);
++                      }
++                    } : null,
++                  ),
++                  const Divider(color: Colors.white10, height: 16),
++                  const _InfoRow(icon: Icons.library_music_outlined, label: 'Audio', value: 'mp3quran.net'),
++                  const Divider(color: Colors.white10, height: 16),
++                  const _InfoRow(icon: Icons.api_outlined, label: 'Data', value: 'api.quran.com'),
+                 ],
+               ),
+             ),
+@@ -704,12 +712,12 @@ class _SectionHeader extends StatelessWidget {
+   @override
+   Widget build(BuildContext context) => Row(
+         children: [
+-          Icon(icon, color: _kGreen, size: 16),
++          Icon(icon, color: context.themeColors.primary, size: 16),
+           const SizedBox(width: 8),
+           Text(
+             text.toUpperCase(),
+             style: GoogleFonts.manrope(
+-              color: AppColorsV2.onSurfaceVariant,
++              color: context.themeColors.onSurfaceVariant,
+               fontSize: 11,
+               fontWeight: FontWeight.w900,
+               letterSpacing: 2.0,
+@@ -727,7 +735,7 @@ class _TinyLabel extends StatelessWidget {
+   Widget build(BuildContext context) => Text(
+         text,
+         style: GoogleFonts.manrope(
+-          color: AppColorsV2.onSurfaceVariant.withValues(alpha: 0.55),
++          color: context.themeColors.onSurfaceVariant.withValues(alpha: 0.55),
+           fontSize: 10,
+           fontWeight: FontWeight.w900,
+           letterSpacing: 1.6,
+@@ -781,7 +789,7 @@ class _TileButton extends StatelessWidget {
+               Text(
+                 title,
+                 style: GoogleFonts.manrope(
+-                  color: AppColorsV2.onSurface,
++                  color: context.themeColors.onSurface,
+                   fontSize: 15,
+                   fontWeight: FontWeight.w900,
+                   letterSpacing: -0.3,
+@@ -791,7 +799,7 @@ class _TileButton extends StatelessWidget {
+               Text(
+                 subtitle,
+                 style: GoogleFonts.manrope(
+-                  color: AppColorsV2.onSurfaceVariant,
++                  color: context.themeColors.onSurfaceVariant,
+                   fontSize: 12,
+                   fontWeight: FontWeight.w600,
+                 ),
+@@ -863,10 +871,10 @@ class _TajweedGuideSheet extends StatelessWidget {
+                 Container(
+                   padding: const EdgeInsets.all(10),
+                   decoration: BoxDecoration(
+-                    color: _kGold.withValues(alpha: 0.12),
++                    color: context.themeColors.tertiary.withValues(alpha: 0.12),
+                     borderRadius: BorderRadius.circular(12),
+                   ),
+-                  child: const Icon(Icons.palette_rounded, color: _kGold, size: 22),
++                  child: Icon(Icons.palette_rounded, color: context.themeColors.tertiary, size: 22),
+                 ),
+                 const SizedBox(width: 14),
+                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+@@ -989,10 +997,10 @@ class _QuranDownloadTile extends ConsumerWidget {
+   Widget build(BuildContext context, WidgetRef ref) {
+     if (bulkState.isDownloading) {
+       return _GlassCard(
+-        accentColor: _kGreen.withValues(alpha: 0.3),
++        accentColor: context.themeColors.primary.withValues(alpha: 0.3),
+         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+           Row(children: [
+-            const _IconBox(icon: Icons.download_rounded, color: _kGreen),
++            _IconBox(icon: Icons.download_rounded, color: context.themeColors.primary),
+             const SizedBox(width: 14),
+             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+               Text('Downloading Quran…',
+@@ -1000,7 +1008,7 @@ class _QuranDownloadTile extends ConsumerWidget {
+                       color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+               Text(
+                 'Surah ${bulkState.currentSurah} of 114  ·  ${(bulkState.overallProgress * 100).toStringAsFixed(0)}%',
+-                style: GoogleFonts.outfit(color: _kGreen, fontSize: 11),
++                style: GoogleFonts.outfit(color: context.themeColors.primary, fontSize: 11),
+               ),
+             ])),
+             TextButton(
+@@ -1023,7 +1031,7 @@ class _QuranDownloadTile extends ConsumerWidget {
+               value: bulkState.overallProgress,
+               minHeight: 4,
+               backgroundColor: Colors.white.withValues(alpha: 0.08),
+-              valueColor: const AlwaysStoppedAnimation(_kGreen),
++              valueColor: AlwaysStoppedAnimation(context.themeColors.primary),
+             ),
+           ),
+         ]),
+@@ -1039,12 +1047,12 @@ class _QuranDownloadTile extends ConsumerWidget {
+             padding: const EdgeInsets.all(9),
+             decoration: BoxDecoration(
+               gradient: LinearGradient(
+-                colors: [_kGreen.withValues(alpha: 0.25), _kGold.withValues(alpha: 0.15)],
++                colors: [context.themeColors.primary.withValues(alpha: 0.25), context.themeColors.tertiary.withValues(alpha: 0.15)],
+                 begin: Alignment.topLeft, end: Alignment.bottomRight,
+               ),
+               borderRadius: BorderRadius.circular(10),
+             ),
+-            child: const Icon(Icons.downloading_rounded, color: _kGreen, size: 18),
++            child: Icon(Icons.downloading_rounded, color: context.themeColors.primary, size: 18),
+           ),
+           const SizedBox(width: 14),
+           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+@@ -1117,7 +1125,7 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Row(children: [
+-                      const Icon(Icons.downloading_rounded, color: _kGreen, size: 22),
++                      Icon(Icons.downloading_rounded, color: context.themeColors.primary, size: 22),
+                       const SizedBox(width: 10),
+                       Text('Download Entire Quran',
+                           style: GoogleFonts.outfit(
+@@ -1147,9 +1155,9 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
+                             fontWeight: FontWeight.w600, letterSpacing: 1.4)),
+                     const SizedBox(height: 10),
+                     _GlassCard(
+-                      accentColor: _withTarjumah ? _kGold.withValues(alpha: 0.3) : null,
++                      accentColor: _withTarjumah ? context.themeColors.tertiary.withValues(alpha: 0.3) : null,
+                       child: Row(children: [
+-                        const _IconBox(icon: Icons.translate_rounded, color: _kGold),
++                        _IconBox(icon: Icons.translate_rounded, color: context.themeColors.tertiary),
+                         const SizedBox(width: 12),
+                         Expanded(
+                           child: Column(
+@@ -1164,7 +1172,7 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
+                                     ? 'Per-ayah (Shamshad Ali Khan) · ~4× storage'
+                                     : 'Recitation only · ~570 MB per reciter',
+                                 style: GoogleFonts.outfit(
+-                                    color: _withTarjumah ? _kGold : Colors.white38,
++                                    color: _withTarjumah ? context.themeColors.tertiary : Colors.white38,
+                                     fontSize: 10, height: 1.4),
+                               ),
+                             ],
+@@ -1173,8 +1181,8 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
+                         Switch(
+                           value: _withTarjumah,
+                           onChanged: (v) => setState(() => _withTarjumah = v),
+-                          activeColor: _kGold,
+-                          activeTrackColor: _kGold.withValues(alpha: 0.25),
++                          activeColor: context.themeColors.tertiary,
++                          activeTrackColor: context.themeColors.tertiary.withValues(alpha: 0.25),
+                           inactiveThumbColor: Colors.white38,
+                           inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
+                         ),
+@@ -1216,9 +1224,9 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
+                               style: GoogleFonts.outfit(
+                                   fontSize: 14, fontWeight: FontWeight.w600)),
+                           style: ElevatedButton.styleFrom(
+-                            backgroundColor: _kGreen,
++                            backgroundColor: context.themeColors.primary,
+                             foregroundColor: Colors.white,
+-                            disabledBackgroundColor: _kGreen,
++                            disabledBackgroundColor: context.themeColors.primary,
+                             disabledForegroundColor: Colors.white,
+                             padding: const EdgeInsets.symmetric(vertical: 15),
+                             shape: RoundedRectangleBorder(
+@@ -1267,11 +1275,11 @@ class _ImamChoice extends StatelessWidget {
+           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+           decoration: BoxDecoration(
+             color: selected
+-                ? _kGreen.withValues(alpha: 0.08)
++                ? context.themeColors.primary.withValues(alpha: 0.08)
+                 : Colors.white.withValues(alpha: 0.03),
+             borderRadius: BorderRadius.circular(12),
+             border: Border.all(
+-              color: selected ? _kGreen.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.06),
++              color: selected ? context.themeColors.primary.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.06),
+             ),
+           ),
+           child: Row(children: [
+@@ -1281,8 +1289,8 @@ class _ImamChoice extends StatelessWidget {
+               decoration: BoxDecoration(
+                 shape: BoxShape.circle,
+                 border: Border.all(
+-                  color: selected ? _kGreen : Colors.white24, width: selected ? 2 : 1.5),
+-                color: selected ? _kGreen : Colors.transparent,
++                  color: selected ? context.themeColors.primary : Colors.white24, width: selected ? 2 : 1.5),
++                color: selected ? context.themeColors.primary : Colors.transparent,
+               ),
+               child: selected
+                   ? const Icon(Icons.check_rounded, size: 12, color: Colors.white)
+@@ -1314,7 +1322,7 @@ class _GlassCard extends StatelessWidget {
+   Widget build(BuildContext context) => Container(
+         padding: const EdgeInsets.all(16),
+         decoration: BoxDecoration(
+-          color: _kCard,
++          color: context.themeColors.surfaceLow,
+           borderRadius: BorderRadius.circular(14),
+           border: Border.all(color: accentColor ?? Colors.white.withValues(alpha: 0.07)),
+         ),
+@@ -1342,7 +1350,7 @@ class _ExpandableCard extends StatelessWidget {
+     return AnimatedContainer(
+       duration: const Duration(milliseconds: 200),
+       decoration: BoxDecoration(
+-        color: _kCard,
++        color: context.themeColors.surfaceLow,
+         borderRadius: BorderRadius.circular(14),
+         border: Border.all(
+           color: expanded ? accentColor.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.07),
+@@ -1442,18 +1450,41 @@ class _IconBox extends StatelessWidget {
+ class _InfoRow extends StatelessWidget {
+   final IconData icon;
+   final String label, value;
+-  const _InfoRow({required this.icon, required this.label, required this.value});
++  final VoidCallback? onTap;
++  final String? actionText;
++  const _InfoRow({required this.icon, required this.label, required this.value, this.onTap, this.actionText});
+ 
+   @override
+-  Widget build(BuildContext context) => Row(children: [
++  Widget build(BuildContext context) {
++    Widget child = Row(children: [
+         Icon(icon, color: Colors.white24, size: 16),
+         const SizedBox(width: 10),
+         Text(label, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13)),
+         const Spacer(),
++        if (actionText != null) ...[
++          Container(
++            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
++            decoration: BoxDecoration(
++              color: context.themeColors.tertiary.withValues(alpha: 0.15),
++              borderRadius: BorderRadius.circular(10),
++              border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.3)),
++            ),
++            child: Text(actionText!, style: GoogleFonts.manrope(color: context.themeColors.tertiary, fontSize: 12, fontWeight: FontWeight.w800)),
++          ),
++          const SizedBox(width: 8),
++        ],
+         Text(value,
+             style: GoogleFonts.outfit(
+-                color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
++                color: actionText != null ? context.themeColors.tertiary : Colors.white70, 
++                fontSize: 13, 
++                fontWeight: actionText != null ? FontWeight.w800 : FontWeight.w500)),
+       ]);
++      
++      if (onTap != null) {
++        return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(8), child: child);
++      }
++      return child;
++  }
+ }
+ class _QuranAccountSection extends ConsumerWidget {
+   const _QuranAccountSection();
+@@ -1465,7 +1496,7 @@ class _QuranAccountSection extends ConsumerWidget {
+     return Container(
+       padding: const EdgeInsets.all(18),
+       decoration: BoxDecoration(
+-        color: AppColorsV2.surfaceLow,
++        color: context.themeColors.surfaceLow,
+         borderRadius: BorderRadius.circular(28),
+         border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+       ),
+@@ -1478,10 +1509,10 @@ class _QuranAccountSection extends ConsumerWidget {
+                 width: 42,
+                 height: 42,
+                 decoration: BoxDecoration(
+-                  color: _kGreen.withValues(alpha: 0.12),
++                  color: context.themeColors.primary.withValues(alpha: 0.12),
+                   borderRadius: BorderRadius.circular(14),
+                 ),
+-                child: const Icon(Icons.cloud_sync_rounded, color: _kGreen),
++                child: Icon(Icons.cloud_sync_rounded, color: context.themeColors.primary),
+               ),
+               const SizedBox(width: 12),
+               Expanded(
+@@ -1491,7 +1522,7 @@ class _QuranAccountSection extends ConsumerWidget {
+                     Text(
+                       'Quran.com Cloud Sync',
+                       style: GoogleFonts.manrope(
+-                        color: AppColorsV2.onSurface,
++                        color: context.themeColors.onSurface,
+                         fontSize: 15,
+                         fontWeight: FontWeight.w900,
+                         letterSpacing: -0.3,
+@@ -1501,7 +1532,7 @@ class _QuranAccountSection extends ConsumerWidget {
+                     Text(
+                       isLoggedIn ? 'Signed in to Quran.com' : 'Signed out',
+                       style: GoogleFonts.manrope(
+-                        color: isLoggedIn ? _kGreen : AppColorsV2.onSurfaceVariant,
++                        color: isLoggedIn ? context.themeColors.primary : context.themeColors.onSurfaceVariant,
+                         fontSize: 12,
+                         fontWeight: FontWeight.w600,
+                       ),
+@@ -1516,7 +1547,7 @@ class _QuranAccountSection extends ConsumerWidget {
+             Text(
+               'Your bookmarks (saved Surahs & Ayahs) are safely backed up to the cloud.',
+               style: GoogleFonts.manrope(
+-                color: AppColorsV2.onSurfaceVariant,
++                color: context.themeColors.onSurfaceVariant,
+                 fontSize: 12,
+                 height: 1.5,
+               ),
+@@ -1530,7 +1561,7 @@ class _QuranAccountSection extends ConsumerWidget {
+                       ScaffoldMessenger.of(context).showSnackBar(
+                         SnackBar(
+                           content: Text('Syncing bookmarks...', style: GoogleFonts.manrope(fontWeight: FontWeight.w600)),
+-                          backgroundColor: _kCard,
++                          backgroundColor: context.themeColors.surfaceLow,
+                           duration: const Duration(seconds: 1),
+                         ),
+                       );
+@@ -1538,16 +1569,16 @@ class _QuranAccountSection extends ConsumerWidget {
+                         if (!context.mounted) return;
+                         ScaffoldMessenger.of(context).showSnackBar(
+                           SnackBar(
+-                            content: Text('Sync Complete', style: GoogleFonts.manrope(fontWeight: FontWeight.w600, color: _kGreen)),
+-                            backgroundColor: _kCard,
++                            content: Text('Sync Complete', style: GoogleFonts.manrope(fontWeight: FontWeight.w600, color: context.themeColors.primary)),
++                            backgroundColor: context.themeColors.surfaceLow,
+                             duration: const Duration(seconds: 2),
+                           ),
+                         );
+                       });
+                     },
+                     style: ElevatedButton.styleFrom(
+-                      backgroundColor: _kGreen.withValues(alpha: 0.1),
+-                      foregroundColor: _kGreen,
++                      backgroundColor: context.themeColors.primary.withValues(alpha: 0.1),
++                      foregroundColor: context.themeColors.primary,
+                       elevation: 0,
+                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                       padding: const EdgeInsets.symmetric(vertical: 12),
+@@ -1565,7 +1596,7 @@ class _QuranAccountSection extends ConsumerWidget {
+                       ref.invalidate(userProfileProvider);
+                     },
+                     style: TextButton.styleFrom(
+-                      foregroundColor: AppColorsV2.danger,
++                      foregroundColor: context.themeColors.danger,
+                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                       padding: const EdgeInsets.symmetric(vertical: 12),
+                     ),
+@@ -1579,7 +1610,7 @@ class _QuranAccountSection extends ConsumerWidget {
+             Text(
+               'Sign in to securely back up your saved Ayahs and Surahs to the cloud and access them across devices.',
+               style: GoogleFonts.manrope(
+-                color: AppColorsV2.onSurfaceVariant,
++                color: context.themeColors.onSurfaceVariant,
+                 fontSize: 12,
+                 height: 1.5,
+               ),
+@@ -1593,7 +1624,7 @@ class _QuranAccountSection extends ConsumerWidget {
+                   MaterialPageRoute(builder: (_) => const LoginScreen()),
+                 ),
+                 style: ElevatedButton.styleFrom(
+-                  backgroundColor: _kGreen,
++                  backgroundColor: context.themeColors.primary,
+                   foregroundColor: const Color(0xFF00311F),
+                   elevation: 0,
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+diff --git a/lib/screens/surah_detail_screen.dart b/lib/screens/surah_detail_screen.dart
+index 6732b12..006e657 100644
+--- a/lib/screens/surah_detail_screen.dart
++++ b/lib/screens/surah_detail_screen.dart
+@@ -9,10 +9,7 @@ import 'package:quran_recitation/services/interleaved_audio_service.dart'; // Ad
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+ import 'package:uuid/uuid.dart';
+-
+-const _kGreen = AppColorsV2.primary;
+-const _kGold = AppColorsV2.tertiary;
+-const _kBg = AppColorsV2.bg;
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class SurahDetailScreen extends ConsumerStatefulWidget {
+   final Surah surah;
+@@ -30,6 +27,9 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+ 
+   bool _isRecDownloaded = false;
+   bool _isUrduDownloaded = false;
++
++  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
++
+   bool _isDownloading = false;
+   double _dlProgress = 0.0;
+   String _dlStatus = '';
+@@ -108,9 +108,11 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+ 
+     isPlaying ? _pulseCtrl.repeat(reverse: true) : _pulseCtrl.stop();
+ 
+-    return Scaffold(
+-      backgroundColor: _kBg,
+-      body: Stack(
++    return ScaffoldMessenger(
++      key: _scaffoldMessengerKey,
++      child: Scaffold(
++        backgroundColor: context.themeColors.bg,
++        body: Stack(
+         children: [
+           Column(
+             children: [
+@@ -120,7 +122,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+                   data: (ayahs) =>
+                       _buildAyahList(ayahs, bookmarks, currentSurahData),
+                   loading: () =>
+-                      const Center(child: CircularProgressIndicator(color: _kGreen)),
++                      Center(child: CircularProgressIndicator(color: context.themeColors.primary)),
+                   error: (e, _) => Center(
+                     child: Text(
+                       'Error: $e',
+@@ -140,6 +142,8 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+             child: _MiniPlaybackBar(
+               surah: currentSurahData,
+               tarjumahMode: tarjumahMode,
++              isDownloading: _isDownloading,
++              dlProgress: _dlProgress,
+               onDownloadTap: () {
+                 final imam = ref.read(selectedImamProvider);
+                 if (imam == null) return;
+@@ -194,12 +198,12 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+           ),
+         ],
+       ),
+-    );
++    ));
+   }
+ 
+   Widget _buildSurahHeader(BuildContext context, Surah surah) {
+     return Container(
+-      color: _kBg.withValues(alpha: 0.85),
++      color: context.themeColors.bg.withValues(alpha: 0.85),
+       child: SafeArea(
+         bottom: false,
+         child: Padding(
+@@ -217,7 +221,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+                     Text(
+                       '${surah.name} (${surah.nameTranslation})',
+                       style: GoogleFonts.manrope(
+-                        color: AppColorsV2.onSurface,
++                        color: context.themeColors.onSurface,
+                         fontSize: 16,
+                         fontWeight: FontWeight.w800,
+                         letterSpacing: -0.2,
+@@ -225,11 +229,12 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+                       overflow: TextOverflow.ellipsis,
+                     ),
+                     const SizedBox(height: 6),
+-                    Row(
++                    Wrap(
++                      spacing: 8,
++                      runSpacing: 4,
+                       children: [
+-                        _TagPill(text: '${surah.ayahCount} Verses', color: _kGold),
+-                        const SizedBox(width: 8),
+-                        _TagPill(text: surah.revelationType, color: AppColorsV2.secondary),
++                        _TagPill(text: '${surah.ayahCount} Verses', color: context.themeColors.tertiary),
++                        _TagPill(text: surah.revelationType, color: context.themeColors.secondary),
+                       ],
+                     )
+                   ],
+@@ -240,7 +245,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+                 surah.nameArabic,
+                 style: TextStyle(
+                   fontSize: 24,
+-                  color: _kGreen,
++                  color: context.themeColors.primary,
+                   fontFamily: GoogleFonts.amiri().fontFamily,
+                   fontWeight: FontWeight.w700,
+                 ),
+@@ -287,7 +292,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+                   style: TextStyle(
+                     fontSize: 26,
+                     height: 2.2,
+-                    color: AppColorsV2.onSurfaceVariant.withValues(alpha: 0.9),
++                    color: context.themeColors.onSurfaceVariant.withValues(alpha: 0.9),
+                     fontFamily: GoogleFonts.amiri().fontFamily,
+                     fontWeight: FontWeight.w700,
+                   ),
+@@ -300,7 +305,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+                     gradient: LinearGradient(
+                       colors: [
+                         Colors.transparent,
+-                        AppColorsV2.outlineVariant.withValues(alpha: 0.45),
++                        context.themeColors.outlineVariant.withValues(alpha: 0.45),
+                         Colors.transparent,
+                       ],
+                     ),
+@@ -379,7 +384,6 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+         onDelete: () async {
+           Navigator.pop(ctx);
+           await _dlService.deleteDownload(surahNumber, imam.id);
+-          ref.invalidate(downloadedSurahsProvider);
+           if (mounted) setState(() { _isRecDownloaded = false; _isUrduDownloaded = false; });
+         },
+       ),
+@@ -398,18 +402,22 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+       onError: (e) {
+         if (mounted) {
+           setState(() => _isDownloading = false);
+-          ScaffoldMessenger.of(context).showSnackBar(
++          _scaffoldMessengerKey.currentState?.showSnackBar(
+               SnackBar(content: Text('Download failed: $e'),
++                  behavior: SnackBarBehavior.floating,
+                   backgroundColor: Colors.red.shade800));
+         }
+       },
+       onComplete: () {
+         if (mounted) {
+           setState(() { _isDownloading = false; _isRecDownloaded = true; });
+-          ref.invalidate(downloadedSurahsProvider);
+-          ScaffoldMessenger.of(context).showSnackBar(
+-              const SnackBar(content: Text('✓ Recitation saved offline'),
+-                  backgroundColor: Color(0xFF065F46)));
++          _scaffoldMessengerKey.currentState?.showSnackBar(
++              const SnackBar(
++                content: Text('✓ Recitation saved offline'),
++                backgroundColor: Color(0xFF065F46),
++                behavior: SnackBarBehavior.floating,
++                margin: EdgeInsets.all(16),
++              ));
+         }
+       },
+     );
+@@ -427,19 +435,22 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
+       onError: (e) {
+         if (mounted) {
+           setState(() => _isDownloading = false);
+-          ScaffoldMessenger.of(context).showSnackBar(
++          _scaffoldMessengerKey.currentState?.showSnackBar(
+               SnackBar(content: Text('Download failed: $e'),
++                  behavior: SnackBarBehavior.floating,
+                   backgroundColor: Colors.red.shade800));
+         }
+       },
+       onComplete: () {
+         if (mounted) {
+           setState(() { _isDownloading = false; _isUrduDownloaded = true; _isRecDownloaded = true; });
+-          ref.invalidate(downloadedSurahsProvider);
+-          ScaffoldMessenger.of(context).showSnackBar(
++          _scaffoldMessengerKey.currentState?.showSnackBar(
+               const SnackBar(
+                   content: Text('✓ Recitation + Tarjumah saved offline'),
+-                  backgroundColor: Color(0xFF065F46)));
++                  backgroundColor: Color(0xFF065F46),
++                  behavior: SnackBarBehavior.floating,
++                  margin: EdgeInsets.all(16),
++              ));
+         }
+       },
+     );
+@@ -455,7 +466,7 @@ class _TagPill extends StatelessWidget {
+   Widget build(BuildContext context) => Container(
+         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+         decoration: BoxDecoration(
+-          color: AppColorsV2.surfaceHigh,
++          color: context.themeColors.surfaceHigh,
+           borderRadius: BorderRadius.circular(999),
+           border: Border.all(color: color.withValues(alpha: 0.25)),
+         ),
+@@ -474,12 +485,16 @@ class _TagPill extends StatelessWidget {
+ class _MiniPlaybackBar extends ConsumerStatefulWidget {
+   final Surah surah;
+   final bool tarjumahMode;
++  final bool isDownloading;
++  final double dlProgress;
+   final VoidCallback onDownloadTap;
+   final VoidCallback onPlayPauseTap;
+ 
+   const _MiniPlaybackBar({
+     required this.surah,
+     required this.tarjumahMode,
++    this.isDownloading = false,
++    this.dlProgress = 0.0,
+     required this.onDownloadTap,
+     required this.onPlayPauseTap,
+   });
+@@ -530,8 +545,8 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
+     return GlassPanel(
+       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+       borderRadius: BorderRadius.circular(22),
+-      tint: AppColorsV2.bg,
+-      border: Border.all(color: AppColorsV2.outlineVariant.withValues(alpha: 0.18)),
++      tint: context.themeColors.bg,
++      border: Border.all(color: context.themeColors.outlineVariant.withValues(alpha: 0.18)),
+       child: Column(
+         mainAxisSize: MainAxisSize.min,
+         children: [
+@@ -541,11 +556,11 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
+                 width: 44,
+                 height: 44,
+                 decoration: BoxDecoration(
+-                  color: _kGreen.withValues(alpha: 0.16),
++                  color: context.themeColors.primary.withValues(alpha: 0.16),
+                   borderRadius: BorderRadius.circular(14),
+-                  border: Border.all(color: _kGreen.withValues(alpha: 0.22)),
++                  border: Border.all(color: context.themeColors.primary.withValues(alpha: 0.22)),
+                 ),
+-                child: const Icon(Icons.graphic_eq_rounded, color: _kGreen),
++                child: Icon(Icons.graphic_eq_rounded, color: context.themeColors.primary),
+               ),
+               const SizedBox(width: 12),
+               Expanded(
+@@ -558,7 +573,7 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
+                           ? 'LOADING...'
+                           : (widget.tarjumahMode ? 'TARJUMAH MODE' : 'RECITING'),
+                       style: GoogleFonts.manrope(
+-                        color: AppColorsV2.onSurfaceVariant,
++                        color: context.themeColors.onSurfaceVariant,
+                         fontSize: 10,
+                         fontWeight: FontWeight.w900,
+                         letterSpacing: 2.2,
+@@ -568,7 +583,7 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
+                     Text(
+                       imam?.name ?? widget.surah.name,
+                       style: GoogleFonts.manrope(
+-                        color: AppColorsV2.onSurface,
++                        color: context.themeColors.onSurface,
+                         fontSize: 13,
+                         fontWeight: FontWeight.w900,
+                         letterSpacing: -0.2,
+@@ -578,10 +593,21 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
+                   ],
+                 ),
+               ),
+-              IconButton(
+-                onPressed: widget.onDownloadTap,
+-                icon: const Icon(Icons.download_rounded, color: AppColorsV2.onSurfaceVariant),
+-              ),
++              widget.isDownloading
++                  ? Container(
++                      width: 40,
++                      height: 40,
++                      padding: const EdgeInsets.all(10),
++                      child: CircularProgressIndicator(
++                        value: widget.dlProgress > 0 ? widget.dlProgress : null,
++                        strokeWidth: 2,
++                        color: context.themeColors.primary,
++                      ),
++                    )
++                  : IconButton(
++                      onPressed: widget.onDownloadTap,
++                      icon: Icon(Icons.download_rounded, color: context.themeColors.onSurfaceVariant),
++                    ),
+               IconButton(
+                 onPressed: widget.tarjumahMode
+                     ? null
+@@ -598,7 +624,7 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
+                   Icons.repeat_rounded,
+                   color: widget.tarjumahMode
+                       ? Colors.white24
+-                      : (loop ? _kGreen : AppColorsV2.onSurfaceVariant),
++                      : (loop ? context.themeColors.primary : context.themeColors.onSurfaceVariant),
+                 ),
+               ),
+               const SizedBox(width: 6),
+@@ -610,9 +636,9 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
+                   height: 48,
+                   decoration: BoxDecoration(
+                     shape: BoxShape.circle,
+-                    color: _kGreen,
++                    color: context.themeColors.primary,
+                     boxShadow: [
+-                      BoxShadow(color: _kGreen.withValues(alpha: 0.35), blurRadius: 18),
++                      BoxShadow(color: context.themeColors.primary.withValues(alpha: 0.35), blurRadius: 18),
+                     ],
+                   ),
+                   alignment: Alignment.center,
+@@ -640,10 +666,10 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
+               trackHeight: 3,
+               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+               overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+-              activeTrackColor: _kGreen.withValues(alpha: 0.85),
+-              inactiveTrackColor: AppColorsV2.surfaceHighest,
+-              thumbColor: _kGreen,
+-              overlayColor: _kGreen.withValues(alpha: 0.15),
++              activeTrackColor: context.themeColors.primary.withValues(alpha: 0.85),
++              inactiveTrackColor: context.themeColors.surfaceHighest,
++              thumbColor: context.themeColors.primary,
++              overlayColor: context.themeColors.primary.withValues(alpha: 0.15),
+             ),
+             child: Slider(
+               value: sliderValue,
+@@ -704,10 +730,10 @@ class _VerseCard extends StatelessWidget {
+       margin: const EdgeInsets.only(bottom: 22),
+       padding: const EdgeInsets.symmetric(vertical: 8),
+       decoration: BoxDecoration(
+-        color: isActive ? AppColorsV2.surfaceHigh.withValues(alpha: 0.35) : Colors.transparent,
++        color: isActive ? context.themeColors.surfaceHigh.withValues(alpha: 0.35) : Colors.transparent,
+         borderRadius: BorderRadius.circular(22),
+         border: isActive
+-            ? Border.all(color: _kGreen.withValues(alpha: 0.18))
++            ? Border.all(color: context.themeColors.primary.withValues(alpha: 0.18))
+             : null,
+       ),
+       child: Column(
+@@ -718,69 +744,74 @@ class _VerseCard extends StatelessWidget {
+             child: Row(
+               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+               children: [
+-                Row(
+-                  children: [
+-                    Container(
+-                      width: 32,
+-                      height: 32,
+-                      alignment: Alignment.center,
+-                      decoration: BoxDecoration(
+-                        shape: BoxShape.circle,
+-                        border: Border.all(
+-                          color: AppColorsV2.outlineVariant.withValues(alpha: 0.35),
+-                        ),
+-                      ),
+-                      child: Text(
+-                        '${ayah.numberInSurah}',
+-                        style: GoogleFonts.manrope(
+-                          color: _kGold,
+-                          fontSize: 11,
+-                          fontWeight: FontWeight.w900,
++                Expanded(
++                  child: SingleChildScrollView(
++                    scrollDirection: Axis.horizontal,
++                    child: Row(
++                      children: [
++                        Container(
++                          width: 32,
++                          height: 32,
++                          alignment: Alignment.center,
++                          decoration: BoxDecoration(
++                            shape: BoxShape.circle,
++                            border: Border.all(
++                              color: context.themeColors.outlineVariant.withValues(alpha: 0.35),
++                            ),
++                          ),
++                          child: Text(
++                            '${ayah.numberInSurah}',
++                            style: GoogleFonts.manrope(
++                              color: context.themeColors.tertiary,
++                              fontSize: 11,
++                              fontWeight: FontWeight.w900,
++                            ),
++                          ),
+                         ),
+-                      ),
+-                    ),
+-                    const SizedBox(width: 10),
+-                    Container(
+-                      width: 26,
+-                      height: 1,
+-                      color: AppColorsV2.outlineVariant.withValues(alpha: 0.22),
+-                    ),
+-                    if (isActive) ...[
+-                      const SizedBox(width: 10),
+-                      Container(
+-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+-                        decoration: BoxDecoration(
+-                          color: _kGold.withValues(alpha: 0.12),
+-                          borderRadius: BorderRadius.circular(999),
+-                          border: Border.all(color: _kGold.withValues(alpha: 0.22)),
++                        const SizedBox(width: 10),
++                        Container(
++                          width: 26,
++                          height: 1,
++                          color: context.themeColors.outlineVariant.withValues(alpha: 0.22),
+                         ),
+-                        child: Row(
+-                          mainAxisSize: MainAxisSize.min,
+-                          children: [
+-                            Icon(
+-                              isTranslationSegment
+-                                  ? Icons.translate_rounded
+-                                  : Icons.record_voice_over_rounded,
+-                              color: _kGold,
+-                              size: 12,
++                        if (isActive) ...[
++                          const SizedBox(width: 10),
++                          Container(
++                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
++                            decoration: BoxDecoration(
++                              color: context.themeColors.tertiary.withValues(alpha: 0.12),
++                              borderRadius: BorderRadius.circular(999),
++                              border: Border.all(color: context.themeColors.tertiary.withValues(alpha: 0.22)),
+                             ),
+-                            const SizedBox(width: 5),
+-                            // 👇 Dynamic label based on Audio selection! 👇
+-                            Text(
+-                              isTranslationSegment 
+-                                  ? (isEnglishAudio ? 'ENGLISH' : 'اردو') 
+-                                  : 'عربی',
+-                              style: GoogleFonts.manrope(
+-                                color: _kGold,
+-                                fontSize: 10,
+-                                fontWeight: FontWeight.w900,
+-                              ),
++                            child: Row(
++                              mainAxisSize: MainAxisSize.min,
++                              children: [
++                                Icon(
++                                  isTranslationSegment
++                                      ? Icons.translate_rounded
++                                      : Icons.record_voice_over_rounded,
++                                  color: context.themeColors.tertiary,
++                                  size: 12,
++                                ),
++                                const SizedBox(width: 5),
++                                // 👇 Dynamic label based on Audio selection! 👇
++                                Text(
++                                  isTranslationSegment 
++                                      ? (isEnglishAudio ? 'ENGLISH' : 'اردو') 
++                                      : 'عربی',
++                                  style: GoogleFonts.manrope(
++                                    color: context.themeColors.tertiary,
++                                    fontSize: 10,
++                                    fontWeight: FontWeight.w900,
++                                  ),
++                                ),
++                              ],
+                             ),
+-                          ],
+-                        ),
+-                      )
+-                    ],
+-                  ],
++                          )
++                        ],
++                      ],
++                    ),
++                  ),
+                 ),
+                 Row(
+                   children: [
+@@ -790,7 +821,7 @@ class _VerseCard extends StatelessWidget {
+                         isBookmarked
+                             ? Icons.bookmark_rounded
+                             : Icons.bookmark_border_rounded,
+-                        color: AppColorsV2.onSurfaceVariant,
++                        color: context.themeColors.onSurfaceVariant,
+                       ),
+                       splashRadius: 20,
+                     ),
+@@ -832,8 +863,8 @@ class _VerseCard extends StatelessWidget {
+                   ),
+                   decoration: BoxDecoration(
+                     border: Border(
+-                      left: isRtl ? BorderSide.none : BorderSide(color: _kGreen.withValues(alpha: 0.22), width: 2),
+-                      right: isRtl ? BorderSide(color: _kGreen.withValues(alpha: 0.22), width: 2) : BorderSide.none,
++                      left: isRtl ? BorderSide.none : BorderSide(color: context.themeColors.primary.withValues(alpha: 0.22), width: 2),
++                      right: isRtl ? BorderSide(color: context.themeColors.primary.withValues(alpha: 0.22), width: 2) : BorderSide.none,
+                     ),
+                   ),
+                   child: Text(
+@@ -841,7 +872,7 @@ class _VerseCard extends StatelessWidget {
+                     textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+                     textAlign: isRtl ? TextAlign.right : TextAlign.left,
+                     style: GoogleFonts.manrope(
+-                      color: AppColorsV2.onSurfaceVariant,
++                      color: context.themeColors.onSurfaceVariant,
+                       fontSize: 13,
+                       height: 1.65,
+                       fontWeight: FontWeight.w600,
+@@ -907,7 +938,7 @@ class _DownloadSheet extends StatelessWidget {
+                   Text(surah.nameArabic,
+                       style: TextStyle(
+                           fontSize: 18,
+-                          color: _kGold,
++                          color: context.themeColors.tertiary,
+                           fontFamily: GoogleFonts.amiri().fontFamily)),
+                 ],
+               ),
+@@ -920,7 +951,7 @@ class _DownloadSheet extends StatelessWidget {
+                 icon: Icons.headphones_rounded,
+                 title: 'Recitation Only',
+                 subtitle: 'Download full surah MP3 (~5 MB)',
+-                color: _kGreen,
++                color: context.themeColors.primary,
+                 trailing: isRecDownloaded ? _DoneChip() : null,
+                 onTap: isRecDownloaded ? null : onDownloadRecitation,
+               ),
+@@ -931,7 +962,7 @@ class _DownloadSheet extends StatelessWidget {
+                 title: 'With Tarjumah',
+                 subtitle: 'Download per-ayah audio + Translation\n'
+                     '(~${(surah.ayahCount * 0.15).toStringAsFixed(0)} MB)',
+-                color: _kGold,
++                color: context.themeColors.tertiary,
+                 trailing: isUrduDownloaded ? _DoneChip() : null,
+                 onTap: isUrduDownloaded ? null : onDownloadWithUrdu,
+               ),
+@@ -1044,17 +1075,17 @@ class _DoneChip extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+       decoration: BoxDecoration(
+-        color: _kGreen.withValues(alpha: 0.12),
++        color: context.themeColors.primary.withValues(alpha: 0.12),
+         borderRadius: BorderRadius.circular(6),
+       ),
+       child: Row(
+         mainAxisSize: MainAxisSize.min,
+         children: [
+-          const Icon(Icons.check_rounded, color: _kGreen, size: 11),
++          Icon(Icons.check_rounded, color: context.themeColors.primary, size: 11),
+           const SizedBox(width: 3),
+           Text('Saved',
+               style: GoogleFonts.outfit(
+-                  color: _kGreen, fontSize: 10, fontWeight: FontWeight.w600)),
++                  color: context.themeColors.primary, fontSize: 10, fontWeight: FontWeight.w600)),
+         ],
+       ),
+     );
+diff --git a/lib/screens/tafseer_screen.dart b/lib/screens/tafseer_screen.dart
+index b9a0540..106bc99 100644
+--- a/lib/screens/tafseer_screen.dart
++++ b/lib/screens/tafseer_screen.dart
+@@ -5,6 +5,7 @@ import 'package:quran_recitation/models/models.dart';
+ import 'package:quran_recitation/services/tafseer_service.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
+ import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ // ── Providers ────────────────────────────────────────────────────────────────
+ 
+@@ -41,7 +42,7 @@ class TafseerScreen extends ConsumerWidget {
+     final tafseerAsync = ref.watch(tafseerProvider((surah.number, tafsirId)));
+ 
+     return Scaffold(
+-      backgroundColor: AppColorsV2.bg,
++      backgroundColor: context.themeColors.bg,
+       body: SafeArea(
+         child: Column(
+           crossAxisAlignment: CrossAxisAlignment.start,
+@@ -51,8 +52,8 @@ class TafseerScreen extends ConsumerWidget {
+             const Divider(color: Colors.white10, height: 1),
+             Expanded(
+               child: tafseerAsync.when(
+-                loading: () => const Center(
+-                  child: CircularProgressIndicator(color: AppColorsV2.primary),
++                loading: () => Center(
++                  child: CircularProgressIndicator(color: context.themeColors.primary),
+                 ),
+                 error: (e, _) => _buildError(e.toString()),
+                 data: (entries) => _buildList(entries, source),
+@@ -88,7 +89,7 @@ class TafseerScreen extends ConsumerWidget {
+           GlassPanel(
+             padding: const EdgeInsets.all(4),
+             borderRadius: BorderRadius.circular(14),
+-            tint: AppColorsV2.surfaceLow,
++            tint: context.themeColors.surfaceLow,
+             child: Row(
+               mainAxisSize: MainAxisSize.min,
+               children: [
+@@ -125,7 +126,7 @@ class TafseerScreen extends ConsumerWidget {
+                 Text(
+                   '${surah.name} — ${surah.nameTranslation}',
+                   style: GoogleFonts.manrope(
+-                    color: AppColorsV2.onSurface,
++                    color: context.themeColors.onSurface,
+                     fontSize: 18,
+                     fontWeight: FontWeight.w900,
+                     letterSpacing: -0.4,
+@@ -136,11 +137,11 @@ class TafseerScreen extends ConsumerWidget {
+                   children: [
+                     _Pill(
+                         text: '${surah.ayahCount} Verses',
+-                        color: AppColorsV2.tertiary),
++                        color: context.themeColors.tertiary),
+                     const SizedBox(width: 8),
+                     _Pill(
+                         text: surah.revelationType,
+-                        color: AppColorsV2.secondary),
++                        color: context.themeColors.secondary),
+                   ],
+                 ),
+               ],
+@@ -150,7 +151,7 @@ class TafseerScreen extends ConsumerWidget {
+             surah.nameArabic,
+             style: TextStyle(
+               fontSize: 28,
+-              color: AppColorsV2.primary,
++              color: context.themeColors.primary,
+               fontFamily: GoogleFonts.amiri().fontFamily,
+               fontWeight: FontWeight.w700,
+             ),
+@@ -231,9 +232,9 @@ class _TafseerCardState extends State<_TafseerCard> {
+     return GlassPanel(
+       padding: const EdgeInsets.all(16),
+       borderRadius: BorderRadius.circular(18),
+-      tint: AppColorsV2.surfaceLow,
++      tint: context.themeColors.surfaceLow,
+       border: Border.all(
+-          color: AppColorsV2.outlineVariant.withValues(alpha: 0.12)),
++          color: context.themeColors.outlineVariant.withValues(alpha: 0.12)),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         children: [
+@@ -244,15 +245,15 @@ class _TafseerCardState extends State<_TafseerCard> {
+                 padding:
+                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                 decoration: BoxDecoration(
+-                  color: AppColorsV2.primary.withValues(alpha: 0.12),
++                  color: context.themeColors.primary.withValues(alpha: 0.12),
+                   borderRadius: BorderRadius.circular(999),
+                   border: Border.all(
+-                      color: AppColorsV2.primary.withValues(alpha: 0.25)),
++                      color: context.themeColors.primary.withValues(alpha: 0.25)),
+                 ),
+                 child: Text(
+                   'Ayah ${widget.entry.ayahNumber}',
+                   style: GoogleFonts.manrope(
+-                    color: AppColorsV2.primary,
++                    color: context.themeColors.primary,
+                     fontSize: 11,
+                     fontWeight: FontWeight.w900,
+                     letterSpacing: 1.2,
+@@ -278,7 +279,7 @@ class _TafseerCardState extends State<_TafseerCard> {
+             child: Text(
+               displayText,
+               style: GoogleFonts.manrope(
+-                color: AppColorsV2.onSurfaceVariant,
++                color: context.themeColors.onSurfaceVariant,
+                 fontSize: 13.5,
+                 height: 1.75,
+                 fontWeight: FontWeight.w500,
+@@ -294,7 +295,7 @@ class _TafseerCardState extends State<_TafseerCard> {
+               child: Text(
+                 _expanded ? 'Show less ↑' : 'Read more ↓',
+                 style: GoogleFonts.manrope(
+-                  color: AppColorsV2.primary,
++                  color: context.themeColors.primary,
+                   fontSize: 12,
+                   fontWeight: FontWeight.w800,
+                 ),
+@@ -326,19 +327,19 @@ class _ToggleChip extends StatelessWidget {
+         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+         decoration: BoxDecoration(
+           color: active
+-              ? AppColorsV2.primary.withValues(alpha: 0.18)
++              ? context.themeColors.primary.withValues(alpha: 0.18)
+               : Colors.transparent,
+           borderRadius: BorderRadius.circular(10),
+           border: Border.all(
+             color: active
+-                ? AppColorsV2.primary.withValues(alpha: 0.35)
++                ? context.themeColors.primary.withValues(alpha: 0.35)
+                 : Colors.transparent,
+           ),
+         ),
+         child: Text(
+           label,
+           style: GoogleFonts.manrope(
+-            color: active ? AppColorsV2.primary : Colors.white38,
++            color: active ? context.themeColors.primary : Colors.white38,
+             fontSize: 11,
+             fontWeight: FontWeight.w800,
+           ),
+@@ -359,7 +360,7 @@ class _Pill extends StatelessWidget {
+     return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+       decoration: BoxDecoration(
+-        color: AppColorsV2.surfaceHigh,
++        color: context.themeColors.surfaceHigh,
+         borderRadius: BorderRadius.circular(999),
+         border: Border.all(color: color.withValues(alpha: 0.25)),
+       ),
+diff --git a/lib/services/download_service.dart b/lib/services/download_service.dart
+index 6339e86..5958c42 100644
+--- a/lib/services/download_service.dart
++++ b/lib/services/download_service.dart
+@@ -1,3 +1,4 @@
++import 'dart:async';
+ import 'dart:io';
+ import 'package:dio/dio.dart';
+ import 'package:path_provider/path_provider.dart';
+@@ -21,6 +22,10 @@ class DownloadService {
+   final _dio = Dio();
+   final Map<String, CancelToken> _tokens = {};
+ 
++  // SENIOR FIX: Stream to notify UI of download completions
++  final _updatesController = StreamController<void>.broadcast();
++  Stream<void> get downloadUpdates => _updatesController.stream;
++
+   // SENIOR FIX: Cache the directory so we don't spam the OS and lag the UI!
+   Directory? _cachedBaseDir;
+ 
+@@ -113,6 +118,7 @@ class DownloadService {
+ 
+       final prefs = await SharedPreferences.getInstance();
+       await prefs.setBool(_recKey(surahNumber, imamId), true);
++      _updatesController.add(null);
+       onComplete();
+     } on DioException catch (e) {
+       if (CancelToken.isCancel(e)) return;
+@@ -175,6 +181,7 @@ class DownloadService {
+ 
+       final prefs = await SharedPreferences.getInstance();
+       await prefs.setBool(_urduKey(surahNumber, imamId), true);
++      _updatesController.add(null);
+       onComplete();
+     } on DioException catch (e) {
+       if (CancelToken.isCancel(e)) return;
+@@ -210,6 +217,7 @@ class DownloadService {
+ 
+     await prefs.remove(_recKey(surah, imam));
+     await prefs.remove(_urduKey(surah, imam));
++    _updatesController.add(null);
+   }
+ 
+   Future<List<Map<String, dynamic>>> getDownloadedSurahs() async {
+@@ -343,6 +351,7 @@ class DownloadService {
+             final prefs = await SharedPreferences.getInstance();
+             await prefs.setBool(_recKey(surah, imamId), true);
+             await prefs.setBool(_urduKey(surah, imamId), true);
++            _updatesController.add(null);
+           } else {
+             onProgress(surah, 114, 1.0, 'Surah $surah — Already downloaded');
+           }
+@@ -361,6 +370,7 @@ class DownloadService {
+             );
+             final prefs = await SharedPreferences.getInstance();
+             await prefs.setBool(_recKey(surah, imamId), true);
++            _updatesController.add(null);
+           } else {
+             onProgress(surah, 114, 1.0, 'Surah $surah — Already downloaded');
+           }
+diff --git a/lib/ui_v2/widgets/calm_light_background.dart b/lib/ui_v2/widgets/calm_light_background.dart
+index 3d39929..3582f0d 100644
+--- a/lib/ui_v2/widgets/calm_light_background.dart
++++ b/lib/ui_v2/widgets/calm_light_background.dart
+@@ -2,6 +2,7 @@ import 'dart:math' as math;
+ import 'dart:ui';
+ import 'package:flutter/material.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class CalmLightBackground extends StatefulWidget {
+   final Widget child;
+@@ -31,7 +32,7 @@ class _CalmLightBackgroundState extends State<CalmLightBackground> with SingleTi
+   Widget build(BuildContext context) {
+     return Stack(
+       children: [
+-        Container(color: AppColorsV2.bg),
++        Container(color: context.themeColors.bg),
+         AnimatedBuilder(
+           animation: _controller,
+           builder: (context, child) {
+@@ -45,7 +46,7 @@ class _CalmLightBackgroundState extends State<CalmLightBackground> with SingleTi
+                     height: 250,
+                     decoration: BoxDecoration(
+                       shape: BoxShape.circle,
+-                      color: AppColorsV2.primary.withValues(alpha: 0.15),
++                      color: context.themeColors.primary.withValues(alpha: 0.15),
+                     ),
+                   ),
+                 ),
+diff --git a/lib/ui_v2/widgets/glass_panel.dart b/lib/ui_v2/widgets/glass_panel.dart
+index fd7a710..76ca359 100644
+--- a/lib/ui_v2/widgets/glass_panel.dart
++++ b/lib/ui_v2/widgets/glass_panel.dart
+@@ -2,6 +2,7 @@ import 'dart:ui';
+ 
+ import 'package:flutter/material.dart';
+ import 'package:quran_recitation/ui_v2/app_colors.dart';
++import 'package:quran_recitation/ui_v2/app_colors_extension.dart';
+ 
+ class GlassPanel extends StatelessWidget {
+   final Widget child;
+@@ -32,7 +33,7 @@ class GlassPanel extends StatelessWidget {
+           filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+           child: DecoratedBox(
+             decoration: BoxDecoration(
+-              color: (tint ?? AppColorsV2.surface).withValues(alpha: 0.60),
++              color: (tint ?? context.themeColors.surface).withValues(alpha: 0.60),
+               borderRadius: borderRadius,
+               border: border ??
+                   Border.all(
+diff --git a/macos/Flutter/GeneratedPluginRegistrant.swift b/macos/Flutter/GeneratedPluginRegistrant.swift
+index 83c4827..eb841c6 100644
+--- a/macos/Flutter/GeneratedPluginRegistrant.swift
++++ b/macos/Flutter/GeneratedPluginRegistrant.swift
+@@ -12,6 +12,7 @@ import flutter_local_notifications
+ import flutter_secure_storage_darwin
+ import geolocator_apple
+ import just_audio
++import package_info_plus
+ import shared_preferences_foundation
+ import sqflite_darwin
+ import url_launcher_macos
+@@ -24,6 +25,7 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+   FlutterSecureStorageDarwinPlugin.register(with: registry.registrar(forPlugin: "FlutterSecureStorageDarwinPlugin"))
+   GeolocatorPlugin.register(with: registry.registrar(forPlugin: "GeolocatorPlugin"))
+   JustAudioPlugin.register(with: registry.registrar(forPlugin: "JustAudioPlugin"))
++  FPPPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FPPPackageInfoPlusPlugin"))
+   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))
+   SqflitePlugin.register(with: registry.registrar(forPlugin: "SqflitePlugin"))
+   UrlLauncherPlugin.register(with: registry.registrar(forPlugin: "UrlLauncherPlugin"))
+diff --git a/pubspec.lock b/pubspec.lock
+index 80c73c1..3b72787 100644
+--- a/pubspec.lock
++++ b/pubspec.lock
+@@ -753,6 +753,22 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "2.2.0"
++  package_info_plus:
++    dependency: "direct main"
++    description:
++      name: package_info_plus
++      sha256: "468c26b4254ab01979fa5e4a98cb343ea3631b9acee6f21028997419a80e1a20"
++      url: "https://pub.dev"
++    source: hosted
++    version: "9.0.1"
++  package_info_plus_platform_interface:
++    dependency: transitive
++    description:
++      name: package_info_plus_platform_interface
++      sha256: "202a487f08836a592a6bd4f901ac69b3a8f146af552bbd14407b6b41e1c3f086"
++      url: "https://pub.dev"
++    source: hosted
++    version: "3.2.1"
+   path:
+     dependency: transitive
+     description:
+@@ -1182,6 +1198,14 @@ packages:
+       url: "https://pub.dev"
+     source: hosted
+     version: "2.2.0"
++  version:
++    dependency: "direct main"
++    description:
++      name: version
++      sha256: "3d4140128e6ea10d83da32fef2fa4003fccbf6852217bb854845802f04191f94"
++      url: "https://pub.dev"
++    source: hosted
++    version: "3.0.2"
+   vm_service:
+     dependency: transitive
+     description:
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 8117010..71d451d 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -1,7 +1,6 @@
+ name: quran_recitation
+ description: Open-source Quran recitation app with multiple Imams, offline support, and bookmarking.
+ publish_to: 'none'
+-
+ version: 3.0.0+22000
+ 
+ environment:
+@@ -53,6 +52,8 @@ dependencies:
+   flutter_secure_storage: ^10.0.0
+   http: ^1.6.0
+   sqflite: ^2.4.2+1
++  package_info_plus: ^9.0.1
++  version: ^3.0.2
+ 
+ dev_dependencies:
+   flutter_test:

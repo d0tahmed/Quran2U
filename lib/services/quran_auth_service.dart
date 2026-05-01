@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:quran_recitation/secret.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -7,13 +8,7 @@ import 'package:http/http.dart' as http;
 class QuranAuthService {
   final FlutterAppAuth _appAuth = const FlutterAppAuth();
   
-  // 👇 FIX: Force Android to use the modern, stable encryption standard
-  final FlutterSecureStorage _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-      resetOnError: true,
-    ),
-  );
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   bool _storageReady = false;
 
@@ -43,7 +38,7 @@ class QuranAuthService {
       await _storage.read(key: 'x-auth-token');
       _storageReady = true;
     } catch (e) {
-      print('[QuranAuth] Secure storage corrupted, resetting: $e');
+      debugPrint('[QuranAuth] Secure storage corrupted, resetting: $e');
       try { await _storage.deleteAll(); } catch (_) {}
       _storageReady = true;
     }
@@ -54,9 +49,9 @@ class QuranAuthService {
     try {
       await _ensureStorage();
 
-      print('[QuranAuth] Starting authorizeAndExchangeCode...');
+      debugPrint('[QuranAuth] Starting authorizeAndExchangeCode...');
 
-      final AuthorizationTokenResponse? result =
+      final result =
           await _appAuth.authorizeAndExchangeCode(
         AuthorizationTokenRequest(
           _clientId,
@@ -71,9 +66,9 @@ class QuranAuthService {
         ),
       );
 
-      print('[QuranAuth] Result: ${result?.accessToken != null ? "SUCCESS" : "null"}');
+      debugPrint('[QuranAuth] Result: ${result.accessToken != null ? "SUCCESS" : "null"}');
 
-      if (result != null && result.accessToken != null) {
+      if (result.accessToken != null) {
         await _storage.write(key: 'x-auth-token', value: result.accessToken!);
         if (result.refreshToken != null) {
           await _storage.write(key: 'x-refresh-token', value: result.refreshToken!);
@@ -82,12 +77,12 @@ class QuranAuthService {
           await _storage.write(key: 'id-token', value: result.idToken!);
         }
         await _storage.delete(key: 'is_guest');
-        print('[QuranAuth] Login successful!');
+        debugPrint('[QuranAuth] Login successful!');
         return true;
       }
       return false;
     } catch (e) {
-      print('[QuranAuth] ERROR: ${e.toString()}');
+      debugPrint('[QuranAuth] ERROR: ${e.toString()}');
       throw Exception('OAuth Error: ${e.toString()}');
     }
   }
@@ -133,7 +128,7 @@ class QuranAuthService {
         ),
       ));
 
-      if (result != null && result.accessToken != null) {
+      if (result.accessToken != null) {
         await _storage.write(key: 'x-auth-token', value: result.accessToken!);
         if (result.refreshToken != null) {
           await _storage.write(key: 'x-refresh-token', value: result.refreshToken!);
@@ -142,7 +137,7 @@ class QuranAuthService {
       }
       return false;
     } catch (e) {
-      print('[QuranAuth] Failed to refresh token: $e');
+      debugPrint('[QuranAuth] Failed to refresh token: $e');
       return false;
     }
   }
@@ -208,10 +203,10 @@ class QuranAuthService {
       }
     }
 
-    print('================ CLOUD BOOKMARKS JSON ================');
-    print('Status: ${response.statusCode}');
-    print(response.body);
-    print('======================================================');
+    debugPrint('================ CLOUD BOOKMARKS JSON ================');
+    debugPrint('Status: ${response.statusCode}');
+    debugPrint(response.body);
+    debugPrint('======================================================');
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return data['data'] ?? [];

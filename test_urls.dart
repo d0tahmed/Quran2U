@@ -1,3 +1,4 @@
+// ignore_for_file: avoid_print, prefer_const_declarations, unused_local_variable, unused_import
 import 'dart:io';
 
 const _everyayahFolders = <int, String>{

@@ -10,6 +10,7 @@ import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/surah_detail_screen.dart';
 import 'package:quran_recitation/screens/qibla_screen.dart';
 import 'package:quran_recitation/screens/prayer_times_screen.dart';
+import 'package:quran_recitation/screens/duas_screen.dart';
 
 import 'package:quran_recitation/screens/daily_inspiration_screen.dart';
 import 'package:quran_recitation/screens/bookmarks_screen.dart';
@@ -55,11 +56,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: NotificationListener<UserScrollNotification>(
               onNotification: (notif) {
                 if (notif.direction == ScrollDirection.reverse) {
-                  if (ref.read(navBarVisibleProvider))
+                  if (ref.read(navBarVisibleProvider)) {
                     ref.read(navBarVisibleProvider.notifier).state = false;
+                  }
                 } else if (notif.direction == ScrollDirection.forward) {
-                  if (!ref.read(navBarVisibleProvider))
+                  if (!ref.read(navBarVisibleProvider)) {
                     ref.read(navBarVisibleProvider.notifier).state = true;
+                  }
                 }
                 return true;
               },
@@ -156,6 +159,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Full width Duas button
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: InkWell(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const DuasScreen()),
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppColorsV2.surfaceLow,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: _kGreen.withValues(alpha: 0.15),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.menu_book_rounded, color: _kGreen, size: 24),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Hisnul Muslim',
+                                          style: GoogleFonts.manrope(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Everyday Supplications',
+                                          style: GoogleFonts.manrope(
+                                            color: AppColorsV2.onSurfaceVariant,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 16),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
 

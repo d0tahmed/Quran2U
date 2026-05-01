@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:adhan/adhan.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
-import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+
 
 const _kGreen = AppColorsV2.primary;
 const _kBg = AppColorsV2.bg;
@@ -100,13 +100,22 @@ class _PrayerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: GlassPanel(
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        borderRadius: BorderRadius.circular(20),
-        tint: _kCard,
-        border: Border.all(
-          color: isHighlighted ? _kGreen.withValues(alpha: 0.22) : Colors.white.withValues(alpha: 0.06),
-          width: isHighlighted ? 1.5 : 1.0,
+        decoration: BoxDecoration(
+          color: _kCard.withValues(alpha: 0.60),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isHighlighted ? _kGreen.withValues(alpha: 0.22) : Colors.white.withValues(alpha: 0.06),
+            width: isHighlighted ? 1.5 : 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.30),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+            )
+          ],
         ),
       child: Row(
         children: [

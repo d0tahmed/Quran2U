@@ -12,6 +12,8 @@ import 'package:adhan/adhan.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:quran_recitation/services/quran_auth_service.dart';
+import 'package:quran_recitation/services/update_service.dart';
+import 'package:dio/dio.dart';
 
 // ── Core services ─────────────────────────────────────────────────────────────
 final quranApiServiceProvider = Provider((ref) => QuranApiService());
@@ -29,6 +31,13 @@ final interleavedAudioServiceProvider = Provider((ref) {
 });
 
 final downloadServiceProvider = Provider((ref) => DownloadService());
+
+final updateServiceProvider = Provider((ref) => UpdateService(Dio()));
+
+final updateCheckProvider = FutureProvider<UpdateInfo>((ref) async {
+  final service = ref.watch(updateServiceProvider);
+  return await service.checkForUpdate();
+});
 
 // ── Playback mode ─────────────────────────────────────────────────────────────
 final tarjumahModeProvider = StateProvider<bool>((ref) => false);

@@ -50,9 +50,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         setState(() => _error = 'Login was cancelled or failed. Please try again.');
       }
     } catch (e) {
-      print('================ OAUTH ERROR ================');
-      print(e.toString());
-      print('=============================================');
+      debugPrint('================ OAUTH ERROR ================');
+      debugPrint(e.toString());
+      debugPrint('=============================================');
       if (mounted) {
         setState(() => _error = e.toString());
       }

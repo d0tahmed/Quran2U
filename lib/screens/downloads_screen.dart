@@ -66,7 +66,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
             Expanded(
               child: downloadedAsync.when(
                 loading: () => const Center(
-                    child: CircularProgressIndicator(color: _kGreen)),
+                    child: const CircularProgressIndicator(color: _kGreen)),
                 error: (e, _) => Center(
                     child: Text('Error: $e',
                         style: GoogleFonts.manrope(color: Colors.white54))),
@@ -76,7 +76,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                   }
                   return surahsAsync.when(
                     loading: () => const Center(
-                        child: CircularProgressIndicator(color: _kGreen)),
+                        child: const CircularProgressIndicator(color: _kGreen)),
                     error: (e, _) => const SizedBox.shrink(),
                     data: (surahs) => ListView.builder(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),

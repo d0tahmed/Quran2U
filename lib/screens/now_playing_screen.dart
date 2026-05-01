@@ -315,7 +315,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                                         } else {
                                           await audioPlayer.pause();
                                         }
-                                        if (mounted) setState(() {});
+                                        if (mounted) { setState(() {}); }
                                         return;
                                       }
 
@@ -346,7 +346,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                                         }
                                       }
 
-                                      if (mounted) setState(() {});
+                                      if (mounted) { setState(() {}); }
                                     },
                                   ),
                                   SizedBox(width: isTight ? 8 : 14),

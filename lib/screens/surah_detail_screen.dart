@@ -30,8 +30,11 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
 
   bool _isRecDownloaded = false;
   bool _isUrduDownloaded = false;
+  // ignore: unused_field
   bool _isDownloading = false;
+  // ignore: unused_field
   double _dlProgress = 0.0;
+  // ignore: unused_field
   String _dlStatus = '';
   final _dlService = DownloadService();
 
