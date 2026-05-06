@@ -5,7 +5,7 @@ Welcome to **Quran2U**, a beautifully designed, feature-rich Islamic application
 ## ✨ Key Features
 
 *   **📖 The Holy Quran & Tafseer:** Read the Quran in a beautiful, distraction-free interface with built-in, detailed Tafseer powered by Quran.com.
-*   **🎧 Interleaved Audio Translations:** Listen to world-renowned reciters with groundbreaking English interleaved audio translation, perfectly synchronized Ayah-by-Ayah.
+*   **🎧 Interleaved Audio Translations:** Listen to world-renowned reciters with groundbreaking English & Urdu interleaved audio translation, perfectly synchronized Ayah-by-Ayah.
 *   **📚 Kutub al-Sittah (Hadith Library):** A fully offline-capable Hadith reader featuring the six major authentic collections (Sahih al-Bukhari, Sahih Muslim, Sunan Abu Dawood, Jami' at-Tirmidhi, Sunan an-Nasa'i, and Sunan Ibn Majah) with seamless multi-language support (English, Arabic, Urdu).
 *   **🤲 300+ Daily Duas (Hisnul Muslim):** A vast, categorized collection of authentic supplications from Hisnul Muslim, directly integrated into the app.
 *   **☁️ Official Quran.com Integration:** Sign in with your official Quran.com account using secure OAuth2 to instantly sync your bookmarks across all your devices and the web.
