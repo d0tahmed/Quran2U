@@ -16,7 +16,7 @@ migrate_working_dir/
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and should be ignored
+# VS Code
 .vscode/
 
 # Flutter/Dart/Pub related
@@ -29,11 +29,22 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+lcov.info
 
-# Android
+# Android — local machine-specific paths
 /android/app/debug
 /android/app/profile
 /android/app/release
+local.properties
+/android/.gradle/
+/android/captures/
+
+# Built binaries — never commit these
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+*.dSYM
 
 # iOS/Xcode
 **/Pods/
