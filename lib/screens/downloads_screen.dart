@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/services/download_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
-import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+
 
 const _kGreen = AppColorsV2.primary;
 const _kGold = AppColorsV2.tertiary;
@@ -79,7 +79,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                         child: CircularProgressIndicator(color: _kGreen)),
                     error: (e, _) => const SizedBox.shrink(),
                     data: (surahs) => ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                       itemCount: downloaded.length,
                       itemBuilder: (ctx, i) {
                         final entry = downloaded[i];
@@ -214,10 +214,23 @@ class _DownloadedTileState extends State<_DownloadedTile> {
 
   @override
   Widget build(BuildContext context) {
-    return GlassPanel(
+    return Container(
       padding: const EdgeInsets.all(16),
-      borderRadius: BorderRadius.circular(20),
-      tint: _kCard,
+      decoration: BoxDecoration(
+        color:        _kCard.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.05),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.20),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          )
+        ],
+      ),
       child: Row(
         children: [
           // Surah number badge

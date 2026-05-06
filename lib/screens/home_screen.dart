@@ -318,7 +318,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 140),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           (context, index) => _AnimatedRow(index: index, child: _SurahCardRow(surah: list[index])),
@@ -749,7 +749,7 @@ class _ShimmerListState extends State<_ShimmerList> with SingleTickerProviderSta
       builder:   (_, __) {
         final shimmer = Color.lerp(AppColorsV2.surfaceLow, AppColorsV2.surfaceHigh, _anim.value)!;
         return SliverPadding(
-          padding: const EdgeInsets.only(top: 8, bottom: 140),
+          padding: const EdgeInsets.only(top: 8, bottom: 32),
           sliver:  SliverList(
             delegate: SliverChildBuilderDelegate(
               (_, i) => Opacity(

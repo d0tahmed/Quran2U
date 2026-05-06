@@ -69,7 +69,7 @@ class ReadTabScreen extends ConsumerWidget {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                 child: _BentoActionsRow(
                   onRead: () => Navigator.push(
                     context,

@@ -6,7 +6,7 @@ import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/login_screen.dart';
 import 'package:quran_recitation/screens/surah_detail_screen.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
-import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+
 
 const _kGreen = AppColorsV2.primary;
 const _kGold  = AppColorsV2.tertiary;
@@ -148,7 +148,7 @@ class BookmarksScreen extends ConsumerWidget {
                               ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
                             return ListView.builder(
-                              padding: const EdgeInsets.only(top: 16, bottom: 120),
+                              padding: const EdgeInsets.only(top: 16, bottom: 32),
                               physics: const BouncingScrollPhysics(),
                               itemCount: sorted.length,
                               itemBuilder: (context, index) {
@@ -432,10 +432,22 @@ class _BookmarkTile extends ConsumerWidget {
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-        child: GlassPanel(
-          padding:      EdgeInsets.zero,
-          borderRadius: BorderRadius.circular(18),
-          tint:         AppColorsV2.surfaceLow,
+        child: Container(
+          decoration: BoxDecoration(
+            color:        AppColorsV2.surfaceLow.withValues(alpha: 0.8),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.05),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.20),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              )
+            ],
+          ),
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             onTap: () => Navigator.of(context).push(PageRouteBuilder(
