@@ -289,11 +289,16 @@ class _HadithCard extends StatelessWidget {
             Directionality(
               textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
               child: Text(
-                hadith.text,
+                hadith.text.trim().isEmpty 
+                    ? 'Translation not available in ${language.label}.'
+                    : hadith.text,
                 style: TextStyle(
-                  color:      Colors.white.withValues(alpha: 0.88),
+                  color:      hadith.text.trim().isEmpty 
+                                  ? Colors.white24 
+                                  : Colors.white.withValues(alpha: 0.88),
                   fontSize:   isRtl ? 15 : 13.5,
                   height:     isRtl ? 2.0 : 1.75,
+                  fontStyle:  hadith.text.trim().isEmpty ? FontStyle.italic : FontStyle.normal,
                   fontWeight: FontWeight.w500,
                   fontFamily: isRtl
                       ? GoogleFonts.amiri().fontFamily

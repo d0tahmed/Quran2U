@@ -461,7 +461,7 @@ class _BookmarkTile extends ConsumerWidget {
                     right: -4, bottom: -4,
                     child: Container(
                       width: 18, height: 18,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color:        AppColorsV2.surfaceLow,
                         shape:        BoxShape.circle,
                       ),

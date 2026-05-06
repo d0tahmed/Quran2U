@@ -4,8 +4,8 @@ import '../models/dua.dart';
 import '../data/hisnul_muslim_db.dart';
 import '../ui_v2/app_colors.dart';
 
-const _kGreen = AppColorsV2.primary;
-const _kGold  = AppColorsV2.tertiary;
+const _kGold = AppColorsV2.tertiary;
+
 class DuasScreen extends StatefulWidget {
   const DuasScreen({super.key});
 
@@ -31,11 +31,11 @@ class _DuasScreenState extends State<DuasScreen> {
 
   List<Dua> get _filteredDuas {
     List<Dua> filtered = HisnulMuslimDb.duas;
-    
+
     if (_selectedCategory != 'All') {
       filtered = filtered.where((d) => d.category == _selectedCategory).toList();
     }
-    
+
     final query = _searchController.text.toLowerCase();
     if (query.isNotEmpty) {
       filtered = filtered.where((d) {
@@ -44,7 +44,7 @@ class _DuasScreenState extends State<DuasScreen> {
                d.englishTranslation.toLowerCase().contains(query);
       }).toList();
     }
-    
+
     return filtered;
   }
 
@@ -52,9 +52,13 @@ class _DuasScreenState extends State<DuasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColorsV2.bg,
+      // Fix 2: Give AppBar a solid background so scrolled content doesn't
+      // bleed through and tint the title green.
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColorsV2.bg,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white70),
         title: Text(
@@ -68,9 +72,11 @@ class _DuasScreenState extends State<DuasScreen> {
       ),
       body: Column(
         children: [
-          // Search and Category Filter
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          // Fix 2: Wrap the sticky header in a Container with the same
+          // solid background so it never becomes see-through when scrolled.
+          Container(
+            color: AppColorsV2.bg,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Column(
               children: [
                 // Search Bar
@@ -100,8 +106,9 @@ class _DuasScreenState extends State<DuasScreen> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 0),
                   ),
                 ),
-                const SizedBox(height: 12),
-                // Category Dropdown
+                const SizedBox(height: 10),
+                // Fix 1: Category Dropdown with menuMaxHeight so the overlay
+                // list doesn't overflow the screen and bleed behind content.
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -113,7 +120,10 @@ class _DuasScreenState extends State<DuasScreen> {
                     child: DropdownButton<String>(
                       value: _selectedCategory,
                       isExpanded: true,
-                      dropdownColor: AppColorsV2.surface,
+                      // Limit the dropdown height so it fits within the screen
+                      // and does NOT bleed through background content.
+                      menuMaxHeight: MediaQuery.of(context).size.height * 0.55,
+                      dropdownColor: AppColorsV2.surfaceHigh,
                       icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
                       style: GoogleFonts.manrope(
                         color: Colors.white,
@@ -143,6 +153,10 @@ class _DuasScreenState extends State<DuasScreen> {
               ],
             ),
           ),
+
+          // Thin separator between sticky header and list
+          const Divider(height: 1, thickness: 1, color: Color(0x12FFFFFF)),
+
           // Duas List
           Expanded(
             child: _filteredDuas.isEmpty
@@ -153,7 +167,7 @@ class _DuasScreenState extends State<DuasScreen> {
                     ),
                   )
                 : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                     itemCount: _filteredDuas.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
@@ -217,7 +231,7 @@ class _DuaCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Arabic Text
           SizedBox(
             width: double.infinity,
@@ -234,7 +248,7 @@ class _DuaCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Transliteration
           Text(
             dua.transliteration,
@@ -248,7 +262,7 @@ class _DuaCard extends StatelessWidget {
           const SizedBox(height: 16),
           const Divider(color: Colors.white10),
           const SizedBox(height: 12),
-          
+
           // English Translation
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,7 +282,7 @@ class _DuaCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // Urdu Translation
           if (dua.urduTranslation.isNotEmpty) ...[
             Row(
@@ -291,7 +305,7 @@ class _DuaCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
-          
+
           // Reference
           Align(
             alignment: Alignment.bottomRight,

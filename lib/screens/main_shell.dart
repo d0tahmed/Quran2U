@@ -49,6 +49,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     });
 
     // Show the welcome dialog after the first frame has rendered.
+    // Request location permission AFTER the dialog is dismissed so the
+    // native permission dialog is never swallowed behind a Flutter modal.
     if (widget.showWelcome) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
@@ -59,24 +61,35 @@ class _MainShellState extends ConsumerState<MainShell> {
           if (seen || !mounted) return;
           await prefs.setBool('has_seen_welcome', true);
         }
-        if (mounted) _showWelcomeDialog(context, isGuest: widget.isGuestWelcome);
+        if (mounted) {
+          // Wait for user to dismiss welcome dialog, then ask for location.
+          await _showWelcomeDialog(context, isGuest: widget.isGuestWelcome);
+          await _requestLocationPermission();
+          await NotificationService.requestPermissions();
+          await NotificationService.scheduleDaily6AM();
+        }
+      });
+    } else {
+      // No welcome dialog — request permission after first frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _requestLocationPermission();
+        await NotificationService.requestPermissions();
+        await NotificationService.scheduleDaily6AM();
       });
     }
-
-    // Request location permission after a brief delay so any welcome dialog
-    // renders first. Android shows only one system dialog at a time.
-    Future.delayed(const Duration(milliseconds: 800), _requestLocationPermission);
   }
 
   /// Prompts for location permission if not yet granted, then refreshes providers.
   Future<void> _requestLocationPermission() async {
     try {
-      final enabled = await Geolocator.isLocationServiceEnabled();
-      if (!enabled) return;
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
+      
+      final enabled = await Geolocator.isLocationServiceEnabled();
+      if (!enabled) return;
+
       // Once granted, force the location + prayer providers to re-run
       // so the home card shows real coordinates instead of the fallback.
       if (perm == LocationPermission.always ||
@@ -95,8 +108,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     super.dispose();
   }
 
-  void _showWelcomeDialog(BuildContext context, {bool isGuest = false}) {
-    showDialog(
+  Future<void> _showWelcomeDialog(BuildContext context, {bool isGuest = false}) {
+    return showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (_) => Dialog(

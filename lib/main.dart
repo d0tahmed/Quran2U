@@ -37,14 +37,13 @@ Future<void> main() async {
 
   // Initialize daily notification engine
   await NotificationService.init();
-  await NotificationService.scheduleDaily6AM();
 
   // ── Home-screen widget ────────────────────────────────────────────────
   // Initialize HomeWidget with the app group for SharedPreferences.
   HomeWidget.setAppGroupId('com.quran2u.app');
 
   // Initialize WorkManager for periodic background refresh.
-  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  await Workmanager().initialize(callbackDispatcher);
   // Register a periodic task that runs every ~15 min (Android minimum).
   await Workmanager().registerPeriodicTask(
     'prayer-widget-refresh',
@@ -91,7 +90,7 @@ final authInitProvider = FutureProvider<bool>((ref) async {
         return false;
       }(),
       Future.delayed(const Duration(milliseconds: 1500), () {
-        print('[AuthGate] Storage timeout! Keystore is likely corrupted. Forcing login.');
+        debugPrint('[AuthGate] Storage timeout! Keystore is likely corrupted. Forcing login.');
         return false;
       }),
     ]);

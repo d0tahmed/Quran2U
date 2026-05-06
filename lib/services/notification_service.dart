@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 class NotificationService {
   static final _notifications = FlutterLocalNotificationsPlugin();
@@ -14,6 +15,8 @@ class NotificationService {
     // If notifications fail, it will NOT brick the app anymore!
     try {
       tz.initializeTimeZones();
+      final tzInfo = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(tzInfo.identifier));
       
       // RESTORED: Must include @mipmap/ for default Flutter apps!
       const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -28,25 +31,29 @@ class NotificationService {
         },
       );
 
-      if (Platform.isAndroid) {
-        final androidImplementation = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-        if (androidImplementation != null) {
-          await androidImplementation.requestNotificationsPermission();
-          await androidImplementation.requestExactAlarmsPermission();
-        }
-      }
       debugPrint('✅ Notification Engine Initialized Safely');
     } catch (e) {
       debugPrint('🔥 Notification Engine Boot Failed: $e');
-      // We don't throw the error, so the app continues to launch normally!
+    }
+  }
+
+  static Future<void> requestPermissions() async {
+    if (Platform.isAndroid) {
+      final androidImplementation = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImplementation != null) {
+        await androidImplementation.requestNotificationsPermission();
+        await androidImplementation.requestExactAlarmsPermission();
+      }
     }
   }
 
   static Future<void> scheduleDaily6AM() async {
     try {
       final now = tz.TZDateTime.now(tz.local);
+      
       var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, 6, 0); 
       
+      // If it's already past 6 AM today, schedule for tomorrow
       if (scheduledDate.isBefore(now)) {
         scheduledDate = scheduledDate.add(const Duration(days: 1));
       }
@@ -54,7 +61,7 @@ class NotificationService {
       await _notifications.zonedSchedule(
         0, 
         '🌅 Daily Ayah & Hadith',
-        'Wake up and start your day with the words of Allah.',
+        'Click here to see the ayah of the day',
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(

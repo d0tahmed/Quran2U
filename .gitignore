@@ -73,6 +73,7 @@ app.*.map.json
 **/key.properties
 google-services.json
 GoogleService-Info.plist
+lib/secret.dart
 
 # Downloaded Quran audio (local device cache)
 **/downloads/recitation/
@@ -81,3 +82,4 @@ GoogleService-Info.plist
 
 # Generated Offline Databases
 assets/db/*.db
+!assets/db/hadith.db

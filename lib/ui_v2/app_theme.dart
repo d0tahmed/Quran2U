@@ -24,14 +24,18 @@ class AppThemeV2 {
         displayColor: AppColorsV2.onSurface,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColorsV2.bg.withValues(alpha: 0.80),
+        // Fully opaque so scrolled content never bleeds through.
+        backgroundColor: AppColorsV2.bg,
         foregroundColor: AppColorsV2.onSurface,
         elevation: 0,
+        // Disable Material 3 scroll-under tint (prevents AppBar turning green).
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         titleTextStyle: GoogleFonts.manrope(
-          fontSize: 14,
+          fontSize: 18,
           fontWeight: FontWeight.w800,
-          letterSpacing: 1.5,
-          color: AppColorsV2.primary,
+          letterSpacing: 0,
+          color: AppColorsV2.onSurface, // white — not green
         ),
       ),
       dividerTheme: DividerThemeData(

@@ -122,6 +122,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           ),
                         ),
 
+                        const SizedBox(height: 16),
+
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Row(
@@ -376,10 +378,34 @@ class _NextPrayerCard extends ConsumerWidget {
           Expanded(
             child: prayerAsync.when(
               data: (prayerTimes) {
+                final now        = DateTime.now();
                 final nextPrayer = prayerTimes.nextPrayer();
-                final time       = prayerTimes.timeForPrayer(nextPrayer);
-                final name       = nextPrayer == Prayer.none ? 'ISHA' : nextPrayer.name.toUpperCase();
-                final timeStr    = time != null ? DateFormat.jm().format(time) : '--:--';
+
+                String name;
+                DateTime? displayTime;
+
+                if (nextPrayer == Prayer.none) {
+                  // All prayers done for today.
+                  // Show Isha until midnight, then show tomorrow's Fajr.
+                  final midnight = DateTime(now.year, now.month, now.day + 1);
+                  if (now.isBefore(midnight)) {
+                    // Still before midnight → show today's Isha time
+                    name        = 'ISHA';
+                    displayTime = prayerTimes.isha;
+                  } else {
+                    // Past midnight → show tomorrow's Fajr (approximate: today's Fajr + 24h)
+                    name        = 'FAJR';
+                    displayTime = prayerTimes.fajr.add(const Duration(days: 1));
+                  }
+                } else {
+                  name        = nextPrayer.name.toUpperCase();
+                  displayTime = prayerTimes.timeForPrayer(nextPrayer);
+                }
+
+                final timeStr = displayTime != null
+                    ? DateFormat.jm().format(displayTime)
+                    : '--:--';
+
                 return InkWell(
                   onTap: () => Navigator.push(
                     context,

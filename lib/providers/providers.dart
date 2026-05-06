@@ -322,7 +322,7 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
         syncedCount: total,
       );
     } catch (e) {
-      state = SyncState(
+      state = const SyncState(
         status:  SyncStatus.error,
         message: 'Sync failed. Check your connection.',
       );
