@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/home_screen.dart';
 import 'package:quran_recitation/screens/now_playing_screen.dart';
 import 'package:quran_recitation/screens/settings_screen.dart';
@@ -59,6 +61,31 @@ class _MainShellState extends ConsumerState<MainShell> {
         }
         if (mounted) _showWelcomeDialog(context, isGuest: widget.isGuestWelcome);
       });
+    }
+
+    // Request location permission after a brief delay so any welcome dialog
+    // renders first. Android shows only one system dialog at a time.
+    Future.delayed(const Duration(milliseconds: 800), _requestLocationPermission);
+  }
+
+  /// Prompts for location permission if not yet granted, then refreshes providers.
+  Future<void> _requestLocationPermission() async {
+    try {
+      final enabled = await Geolocator.isLocationServiceEnabled();
+      if (!enabled) return;
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      // Once granted, force the location + prayer providers to re-run
+      // so the home card shows real coordinates instead of the fallback.
+      if (perm == LocationPermission.always ||
+          perm == LocationPermission.whileInUse) {
+        ref.invalidate(locationProvider);
+        ref.invalidate(prayerTimesProvider);
+      }
+    } catch (_) {
+      // Silently ignore if location service is unavailable
     }
   }
 

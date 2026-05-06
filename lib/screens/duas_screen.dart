@@ -15,6 +15,13 @@ class DuasScreen extends StatefulWidget {
 
 class _DuasScreenState extends State<DuasScreen> {
   String _selectedCategory = 'All';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   List<String> get _categories {
     final categories = HisnulMuslimDb.duas.map((d) => d.category).toSet().toList();
@@ -23,8 +30,22 @@ class _DuasScreenState extends State<DuasScreen> {
   }
 
   List<Dua> get _filteredDuas {
-    if (_selectedCategory == 'All') return HisnulMuslimDb.duas;
-    return HisnulMuslimDb.duas.where((d) => d.category == _selectedCategory).toList();
+    List<Dua> filtered = HisnulMuslimDb.duas;
+    
+    if (_selectedCategory != 'All') {
+      filtered = filtered.where((d) => d.category == _selectedCategory).toList();
+    }
+    
+    final query = _searchController.text.toLowerCase();
+    if (query.isNotEmpty) {
+      filtered = filtered.where((d) {
+        return d.title.toLowerCase().contains(query) ||
+               d.category.toLowerCase().contains(query) ||
+               d.englishTranslation.toLowerCase().contains(query);
+      }).toList();
+    }
+    
+    return filtered;
   }
 
   @override
@@ -47,53 +68,99 @@ class _DuasScreenState extends State<DuasScreen> {
       ),
       body: Column(
         children: [
-          // Category Filter
-          SizedBox(
-            height: 50,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _categories.length,
-              itemBuilder: (context, index) {
-                final cat = _categories[index];
-                final isSelected = cat == _selectedCategory;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(
-                      cat,
-                      style: GoogleFonts.manrope(
-                        color: isSelected ? Colors.black : Colors.white70,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
+          // Search and Category Filter
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Column(
+              children: [
+                // Search Bar
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) => setState(() {}),
+                  style: GoogleFonts.manrope(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Search duas...',
+                    hintStyle: GoogleFonts.manrope(color: Colors.white54, fontSize: 14),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white54, size: 20),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.white54, size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: AppColorsV2.surfaceLow,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
-                    selected: isSelected,
-                    selectedColor: _kGreen,
-                    backgroundColor: AppColorsV2.surfaceLow,
-                    side: BorderSide.none,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() => _selectedCategory = cat);
-                      }
-                    },
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
                   ),
-                );
-              },
+                ),
+                const SizedBox(height: 12),
+                // Category Dropdown
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppColorsV2.surfaceLow,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedCategory,
+                      isExpanded: true,
+                      dropdownColor: AppColorsV2.surface,
+                      icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+                      style: GoogleFonts.manrope(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedCategory = newValue;
+                          });
+                        }
+                      },
+                      items: _categories.map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(
+                            value,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
           // Duas List
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
-              itemCount: _filteredDuas.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final dua = _filteredDuas[index];
-                return _DuaCard(dua: dua);
-              },
-            ),
+            child: _filteredDuas.isEmpty
+                ? Center(
+                    child: Text(
+                      'No duas found.',
+                      style: GoogleFonts.manrope(color: Colors.white54),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+                    itemCount: _filteredDuas.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) {
+                      final dua = _filteredDuas[index];
+                      return _DuaCard(dua: dua);
+                    },
+                  ),
           ),
         ],
       ),

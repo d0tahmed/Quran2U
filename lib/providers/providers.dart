@@ -243,25 +243,40 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
 
       // ── Step 1: Push local bookmarks to cloud ─────────────────────────
       int pushed = 0;
+      final updatedLocalBookmarks = <Bookmark>[];
       for (final bk in localBookmarks) {
         // Only sync ayah-level bookmarks (surahNumber + ayahNumber)
         // Surah-level bookmarks (ayahNumber == null) are stored locally only.
         if (bk.ayahNumber != null) {
-          final ok = await authService.syncBookmark(
-            surahId:    bk.surahNumber,
-            ayahNumber: bk.ayahNumber!,
-          );
-          if (ok) pushed++;
+          final isAlreadyCloud = bk.id.endsWith('-cloud') || bk.notes == 'cloud';
+          if (!isAlreadyCloud) {
+            final ok = await authService.syncBookmark(
+              surahId:    bk.surahNumber,
+              ayahNumber: bk.ayahNumber!,
+            );
+            if (ok) {
+              pushed++;
+              updatedLocalBookmarks.add(bk.copyWith(notes: 'cloud'));
+            } else {
+              updatedLocalBookmarks.add(bk);
+            }
+          } else {
+            updatedLocalBookmarks.add(bk);
+          }
+        } else {
+          updatedLocalBookmarks.add(bk);
         }
       }
 
       // ── Step 2: Pull cloud bookmarks and merge into local ─────────────
       final cloudBookmarks = await authService.getBookmarks();
-      final localIds = localBookmarks
+      final localIds = updatedLocalBookmarks
           .map((b) => '${b.surahNumber}-${b.ayahNumber}')
           .toSet();
 
       final newFromCloud = <Bookmark>[];
+      bool localStateChanged = pushed > 0;
+
       for (final cb in cloudBookmarks) {
         // Cloud bookmark shape (based on prelive API):
         // { "key": surahId, "verseNumber": ayahNum, "type": "ayah", ... }
@@ -271,7 +286,18 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
 
         if (surahId == null || ayahNum == null) continue;
         final mergeKey = '$surahId-$ayahNum';
-        if (localIds.contains(mergeKey)) continue;
+        
+        if (localIds.contains(mergeKey)) {
+          final index = updatedLocalBookmarks.indexWhere((b) => '${b.surahNumber}-${b.ayahNumber}' == mergeKey);
+          if (index != -1) {
+             final existing = updatedLocalBookmarks[index];
+             if (existing.notes != 'cloud' && !existing.id.endsWith('-cloud')) {
+               updatedLocalBookmarks[index] = existing.copyWith(notes: 'cloud');
+               localStateChanged = true;
+             }
+          }
+          continue;
+        }
 
         newFromCloud.add(Bookmark(
           id:          cloudId.isNotEmpty ? cloudId : '$surahId-$ayahNum-cloud',
@@ -282,8 +308,8 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
         ));
       }
 
-      if (newFromCloud.isNotEmpty) {
-        final merged = [...localBookmarks, ...newFromCloud];
+      if (localStateChanged || newFromCloud.isNotEmpty) {
+        final merged = [...updatedLocalBookmarks, ...newFromCloud];
         _ref.read(bookmarksProvider.notifier).updateBookmarks(merged);
       }
 
@@ -431,27 +457,63 @@ final bulkDownloadProvider =
         (ref) => BulkDownloadNotifier(ref));
 
 // ── Namaz & Qibla ─────────────────────────────────────────────────────────────
+
+/// Cache keys stored in SharedPreferences for instant prayer card load.
+const _kCachedLat = 'cached_lat';
+const _kCachedLon = 'cached_lon';
+
+/// Returns coordinates instantly from cache, then refreshes GPS in the
+/// background. This eliminates the loading spinner on every app open.
 final locationProvider = FutureProvider<Coordinates>((ref) async {
-  final fallback = Coordinates(24.8607, 67.0011);
-  try {
-    if (!await Geolocator.isLocationServiceEnabled()) return fallback;
-    LocationPermission perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) {
-      perm = await Geolocator.requestPermission();
-      if (perm == LocationPermission.denied) return fallback;
-    }
-    if (perm == LocationPermission.deniedForever) return fallback;
-    final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low);
-    return Coordinates(pos.latitude, pos.longitude);
-  } catch (_) {
-    return fallback;
+  final prefs = await SharedPreferences.getInstance();
+  final cachedLat = prefs.getDouble(_kCachedLat);
+  final cachedLon = prefs.getDouble(_kCachedLon);
+
+  // ── Step 1: return cached coords immediately (no GPS wait) ────────────────
+  if (cachedLat != null && cachedLon != null) {
+    // Kick off a background GPS refresh without blocking the UI.
+    _refreshLocationInBackground(prefs);
+    return Coordinates(cachedLat, cachedLon);
   }
+
+  // ── Step 2: first launch — no cache yet, get GPS (shows spinner once) ─────
+  return _fetchAndCacheLocation(prefs);
 });
 
+Future<void> _refreshLocationInBackground(SharedPreferences prefs) async {
+  try {
+    final coords = await _fetchAndCacheLocation(prefs);
+    // Save fresh coords so next open is instant again.
+    await prefs.setDouble(_kCachedLat, coords.latitude);
+    await prefs.setDouble(_kCachedLon, coords.longitude);
+  } catch (_) {}
+}
+
+Future<Coordinates> _fetchAndCacheLocation(SharedPreferences prefs) async {
+  const fallback = (lat: 24.8607, lon: 67.0011); // Karachi
+  try {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      return Coordinates(fallback.lat, fallback.lon);
+    }
+    final perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) {
+      return Coordinates(fallback.lat, fallback.lon);
+    }
+    final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low);
+    await prefs.setDouble(_kCachedLat, pos.latitude);
+    await prefs.setDouble(_kCachedLon, pos.longitude);
+    return Coordinates(pos.latitude, pos.longitude);
+  } catch (_) {
+    return Coordinates(fallback.lat, fallback.lon);
+  }
+}
+
+/// Prayer times — computed from cached coordinates so it resolves instantly.
 final prayerTimesProvider = FutureProvider<PrayerTimes>((ref) async {
   final coords = await ref.watch(locationProvider.future);
-  final params  = CalculationMethod.karachi.getParameters()
+  final params = CalculationMethod.karachi.getParameters()
     ..madhab = Madhab.hanafi;
   return PrayerTimes.today(coords, params);
 });

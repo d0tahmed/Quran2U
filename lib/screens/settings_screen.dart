@@ -168,11 +168,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                             child: Text(
                               'CURRENT RECITER',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                               style: GoogleFonts.manrope(
                                 color: _kGreen,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: 2.0,
+                                letterSpacing: 1.5,
                               ),
                             ),
                           ),
@@ -718,13 +720,17 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Icon(icon, color: _kGreen, size: 16),
           const SizedBox(width: 8),
-          Text(
-            text.toUpperCase(),
-            style: GoogleFonts.manrope(
-              color: AppColorsV2.onSurfaceVariant,
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 2.0,
+          Flexible(
+            child: Text(
+              text.toUpperCase(),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: GoogleFonts.manrope(
+                color: AppColorsV2.onSurfaceVariant,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+              ),
             ),
           ),
         ],
@@ -881,13 +887,13 @@ class _TajweedGuideSheet extends StatelessWidget {
                   child: const Icon(Icons.palette_rounded, color: _kGold, size: 22),
                 ),
                 const SizedBox(width: 14),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Tajweed Guide',
                       style: GoogleFonts.outfit(
                           color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                   Text('Color-coded pronunciation rules',
                       style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
-                ]),
+                ])),
               ]),
             ),
             const SizedBox(height: 16),

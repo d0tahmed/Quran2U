@@ -84,20 +84,24 @@ class BookmarksScreen extends ConsumerWidget {
                             ),
                             const SizedBox(width: 10),
                             // Item count badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color:         _kGreen.withValues(alpha: 0.1),
-                                borderRadius:  BorderRadius.circular(12),
-                                border:        Border.all(color: _kGreen.withValues(alpha: 0.2)),
-                              ),
-                              child: Text(
-                                '${bookmarks.length} ITEMS',
-                                style: GoogleFonts.manrope(
-                                  color:      _kGreen,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize:   11,
-                                  letterSpacing: 2.0,
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color:         _kGreen.withValues(alpha: 0.1),
+                                  borderRadius:  BorderRadius.circular(12),
+                                  border:        Border.all(color: _kGreen.withValues(alpha: 0.2)),
+                                ),
+                                child: Text(
+                                  '${bookmarks.length} ITEMS',
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                  style: GoogleFonts.manrope(
+                                    color:      _kGreen,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize:   10,
+                                    letterSpacing: 1.2,
+                                  ),
                                 ),
                               ),
                             ),
@@ -454,16 +458,16 @@ class _BookmarkTile extends ConsumerWidget {
                 // Cloud badge — shown if this bookmark came from cloud sync
                 if (isCloud)
                   Positioned(
-                    right: -4, top: -4,
+                    right: -4, bottom: -4,
                     child: Container(
-                      width: 16, height: 16,
+                      width: 18, height: 18,
                       decoration: BoxDecoration(
-                        color:        _kGold,
+                        color:        AppColorsV2.surfaceLow,
                         shape:        BoxShape.circle,
-                        border:       Border.all(color: AppColorsV2.bg, width: 1.5),
                       ),
-                      child: const Icon(Icons.cloud_done_rounded,
-                          color: Colors.black, size: 9),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.cloud_rounded,
+                          color: _kGold, size: 12),
                     ),
                   ),
               ],

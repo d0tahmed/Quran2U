@@ -2,12 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:workmanager/workmanager.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/login_screen.dart';
 import 'package:quran_recitation/screens/main_shell.dart';
 import 'package:quran_recitation/services/notification_service.dart';
+import 'package:quran_recitation/services/widget_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/app_theme.dart';
+
+// ── WorkManager background callback ────────────────────────────────────────
+// This runs in its own isolate when the app is closed.
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    await WidgetService.refreshWidget();
+    return Future.value(true);
+  });
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +38,25 @@ Future<void> main() async {
   // Initialize daily notification engine
   await NotificationService.init();
   await NotificationService.scheduleDaily6AM();
+
+  // ── Home-screen widget ────────────────────────────────────────────────
+  // Initialize HomeWidget with the app group for SharedPreferences.
+  HomeWidget.setAppGroupId('com.quran2u.app');
+
+  // Initialize WorkManager for periodic background refresh.
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  // Register a periodic task that runs every ~15 min (Android minimum).
+  await Workmanager().registerPeriodicTask(
+    'prayer-widget-refresh',
+    'refreshPrayerWidget',
+    frequency: const Duration(minutes: 15),
+    constraints: Constraints(
+      networkType: NetworkType.notRequired,
+    ),
+  );
+
+  // Refresh the widget immediately on app start.
+  WidgetService.refreshWidget();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

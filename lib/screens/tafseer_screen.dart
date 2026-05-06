@@ -132,12 +132,13 @@ class TafseerScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
                   children: [
                     _Pill(
                         text: '${surah.ayahCount} Verses',
                         color: AppColorsV2.tertiary),
-                    const SizedBox(width: 8),
                     _Pill(
                         text: surah.revelationType,
                         color: AppColorsV2.secondary),
@@ -365,11 +366,13 @@ class _Pill extends StatelessWidget {
       ),
       child: Text(
         text.toUpperCase(),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
         style: GoogleFonts.manrope(
           color: color,
           fontSize: 9,
           fontWeight: FontWeight.w900,
-          letterSpacing: 2.0,
+          letterSpacing: 1.2,
         ),
       ),
     );

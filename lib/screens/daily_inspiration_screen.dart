@@ -54,12 +54,15 @@ class DailyInspirationScreen extends StatelessWidget {
                               constraints: const BoxConstraints(),
                             ),
                             const SizedBox(width: 12),
-                            Text('Daily Inspiration',
-                                style: GoogleFonts.manrope(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: -0.6)),
+                            Flexible(
+                              child: Text('Daily Inspiration',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.manrope(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -0.6)),
+                            ),
                           ],
                         ),
                         Text('A daily dose of Quran & Sunnah',
@@ -71,12 +74,15 @@ class DailyInspirationScreen extends StatelessWidget {
                         Row(children: [
                           const Icon(Icons.menu_book_rounded, color: _kGold, size: 20),
                           const SizedBox(width: 8),
-                          Text('Ayah of the Day',
-                              style: GoogleFonts.manrope(
-                                  color: _kGold,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2.0)),
+                          Flexible(
+                            child: Text('Ayah of the Day',
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.manrope(
+                                    color: _kGold,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.5)),
+                          ),
                         ]),
                         const SizedBox(height: 12),
                         GlassPanel(
@@ -128,12 +134,15 @@ class DailyInspirationScreen extends StatelessWidget {
                           const Icon(Icons.chat_bubble_rounded,
                               color: _kGreen, size: 18),
                           const SizedBox(width: 8),
-                          Text('Hadith of the Day',
-                              style: GoogleFonts.manrope(
-                                  color: _kGreen,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2.0)),
+                          Flexible(
+                            child: Text('Hadith of the Day',
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.manrope(
+                                    color: _kGreen,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.5)),
+                          ),
                         ]),
                         const SizedBox(height: 12),
                         GlassPanel(

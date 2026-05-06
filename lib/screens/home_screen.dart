@@ -11,7 +11,6 @@ import 'package:quran_recitation/screens/surah_detail_screen.dart';
 import 'package:quran_recitation/screens/qibla_screen.dart';
 import 'package:quran_recitation/screens/prayer_times_screen.dart';
 import 'package:quran_recitation/screens/duas_screen.dart';
-
 import 'package:quran_recitation/screens/daily_inspiration_screen.dart';
 import 'package:quran_recitation/screens/bookmarks_screen.dart';
 import 'package:quran_recitation/screens/main_shell.dart';
@@ -395,7 +394,7 @@ class _NextPrayerCard extends ConsumerWidget {
                             color:        AppColorsV2.onSurfaceVariant,
                             fontSize:     10,
                             fontWeight:   FontWeight.w900,
-                            letterSpacing: 2.0,
+                            letterSpacing: 1.5,
                           )),
                       const SizedBox(height: 6),
                       Wrap(
@@ -441,7 +440,7 @@ class _NextPrayerCard extends ConsumerWidget {
                         color:        AppColorsV2.onSurfaceVariant,
                         fontSize:     10,
                         fontWeight:   FontWeight.w900,
-                        letterSpacing: 2.0,
+                        letterSpacing: 1.5,
                       )),
                   const SizedBox(height: 4),
                   Text('Location required',

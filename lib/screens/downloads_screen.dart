@@ -58,7 +58,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                   color: AppColorsV2.onSurfaceVariant,
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 2.2,
+                  letterSpacing: 1.5,
                 ),
               ),
             ),

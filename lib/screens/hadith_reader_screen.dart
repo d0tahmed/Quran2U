@@ -266,17 +266,20 @@ class _HadithCard extends StatelessWidget {
               isRtl ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: isRtl
-                  ? MainAxisAlignment.end
-                  : MainAxisAlignment.spaceBetween,
               children: [
                 if (!isRtl) _NumberBadge(hadith.hadithNumber),
-                Text(
-                  'Book ${hadith.bookNumber}, Hadith ${hadith.hadithInBook}',
-                  style: GoogleFonts.manrope(
-                    color: Colors.white30, fontSize: 10,
-                    fontWeight: FontWeight.w600, letterSpacing: 0.3),
+                if (!isRtl) const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Book ${hadith.bookNumber}, Hadith ${hadith.hadithInBook}',
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: isRtl ? TextAlign.end : TextAlign.start,
+                    style: GoogleFonts.manrope(
+                      color: Colors.white30, fontSize: 10,
+                      fontWeight: FontWeight.w600, letterSpacing: 0.3),
+                  ),
                 ),
+                if (isRtl) const SizedBox(width: 8),
                 if (isRtl) _NumberBadge(hadith.hadithNumber),
               ],
             ),

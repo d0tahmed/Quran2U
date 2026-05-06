@@ -30,7 +30,7 @@ class AppThemeV2 {
         titleTextStyle: GoogleFonts.manrope(
           fontSize: 14,
           fontWeight: FontWeight.w800,
-          letterSpacing: 2.4,
+          letterSpacing: 1.5,
           color: AppColorsV2.primary,
         ),
       ),

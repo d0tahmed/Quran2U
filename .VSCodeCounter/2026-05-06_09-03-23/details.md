@@ -1,0 +1,121 @@
+# Details
+
+Date : 2026-05-06 09:03:23
+
+Directory /home/ahmed/Desktop/Quran2U
+
+Total : 106 files,  24153 codes, 671 comments, 1654 blanks, all 26478 lines
+
+[Summary](results.md) / Details / [Diff Summary](diff.md) / [Diff Details](diff-details.md)
+
+## Files
+| filename | language | code | comment | blank | total |
+| :--- | :--- | ---: | ---: | ---: | ---: |
+| [README.md](/README.md) | Markdown | 32 | 0 | 8 | 40 |
+| [analysis\_options.yaml](/analysis_options.yaml) | YAML | 3 | 22 | 4 | 29 |
+| [android/app/src/debug/AndroidManifest.xml](/android/app/src/debug/AndroidManifest.xml) | XML | 3 | 4 | 1 | 8 |
+| [android/app/src/main/AndroidManifest.xml](/android/app/src/main/AndroidManifest.xml) | XML | 67 | 0 | 8 | 75 |
+| [android/app/src/main/res/drawable-v21/launch\_background.xml](/android/app/src/main/res/drawable-v21/launch_background.xml) | XML | 6 | 0 | 0 | 6 |
+| [android/app/src/main/res/drawable/launch\_background.xml](/android/app/src/main/res/drawable/launch_background.xml) | XML | 6 | 0 | 0 | 6 |
+| [android/app/src/main/res/values-night/styles.xml](/android/app/src/main/res/values-night/styles.xml) | XML | 9 | 9 | 1 | 19 |
+| [android/app/src/main/res/values/styles.xml](/android/app/src/main/res/values/styles.xml) | XML | 9 | 9 | 1 | 19 |
+| [android/app/src/profile/AndroidManifest.xml](/android/app/src/profile/AndroidManifest.xml) | XML | 3 | 4 | 1 | 8 |
+| [android/gradle.properties](/android/gradle.properties) | Properties | 2 | 0 | 1 | 3 |
+| [android/gradle/wrapper/gradle-wrapper.properties](/android/gradle/wrapper/gradle-wrapper.properties) | Properties | 5 | 0 | 1 | 6 |
+| [devtools\_options.yaml](/devtools_options.yaml) | YAML | 3 | 0 | 1 | 4 |
+| [ios/Runner/AppDelegate.swift](/ios/Runner/AppDelegate.swift) | Swift | 14 | 0 | 3 | 17 |
+| [ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json](/ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json) | JSON | 122 | 0 | 1 | 123 |
+| [ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json](/ios/Runner/Assets.xcassets/LaunchImage.imageset/Contents.json) | JSON | 23 | 0 | 1 | 24 |
+| [ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md](/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md) | Markdown | 3 | 0 | 2 | 5 |
+| [ios/Runner/Base.lproj/LaunchScreen.storyboard](/ios/Runner/Base.lproj/LaunchScreen.storyboard) | XML | 36 | 1 | 1 | 38 |
+| [ios/Runner/Base.lproj/Main.storyboard](/ios/Runner/Base.lproj/Main.storyboard) | XML | 25 | 1 | 1 | 27 |
+| [ios/Runner/Runner-Bridging-Header.h](/ios/Runner/Runner-Bridging-Header.h) | C++ | 1 | 0 | 1 | 2 |
+| [ios/Runner/SceneDelegate.swift](/ios/Runner/SceneDelegate.swift) | Swift | 4 | 0 | 3 | 7 |
+| [ios/RunnerTests/RunnerTests.swift](/ios/RunnerTests/RunnerTests.swift) | Swift | 7 | 2 | 4 | 13 |
+| [lib/data/hisnul\_muslim\_db.dart](/lib/data/hisnul_muslim_db.dart) | Dart | 2,675 | 0 | 2 | 2,677 |
+| [lib/main.dart](/lib/main.dart) | Dart | 84 | 14 | 14 | 112 |
+| [lib/models/dua.dart](/lib/models/dua.dart) | Dart | 20 | 0 | 2 | 22 |
+| [lib/models/hadith\_model.dart](/lib/models/hadith_model.dart) | Dart | 209 | 16 | 29 | 254 |
+| [lib/models/models.dart](/lib/models/models.dart) | Dart | 95 | 21 | 16 | 132 |
+| [lib/models/models.freezed.dart](/lib/models/models.freezed.dart) | Dart | 1,602 | 76 | 152 | 1,830 |
+| [lib/models/models.g.dart](/lib/models/models.g.dart) | Dart | 134 | 4 | 17 | 155 |
+| [lib/providers/hadith\_providers.dart](/lib/providers/hadith_providers.dart) | Dart | 14 | 5 | 6 | 25 |
+| [lib/providers/providers.dart](/lib/providers/providers.dart) | Dart | 419 | 28 | 71 | 518 |
+| [lib/screens/bookmarks\_screen.dart](/lib/screens/bookmarks_screen.dart) | Dart | 463 | 27 | 28 | 518 |
+| [lib/screens/daily\_inspiration\_screen.dart](/lib/screens/daily_inspiration_screen.dart) | Dart | 428 | 43 | 10 | 481 |
+| [lib/screens/downloads\_screen.dart](/lib/screens/downloads_screen.dart) | Dart | 326 | 3 | 17 | 346 |
+| [lib/screens/duas\_screen.dart](/lib/screens/duas_screen.dart) | Dart | 283 | 10 | 19 | 312 |
+| [lib/screens/hadith\_reader\_screen.dart](/lib/screens/hadith_reader_screen.dart) | Dart | 341 | 9 | 28 | 378 |
+| [lib/screens/home\_screen.dart](/lib/screens/home_screen.dart) | Dart | 707 | 1 | 50 | 758 |
+| [lib/screens/login\_screen.dart](/lib/screens/login_screen.dart) | Dart | 247 | 16 | 25 | 288 |
+| [lib/screens/main\_shell.dart](/lib/screens/main_shell.dart) | Dart | 282 | 3 | 16 | 301 |
+| [lib/screens/now\_playing\_screen.dart](/lib/screens/now_playing_screen.dart) | Dart | 634 | 6 | 40 | 680 |
+| [lib/screens/prayer\_times\_screen.dart](/lib/screens/prayer_times_screen.dart) | Dart | 144 | 0 | 11 | 155 |
+| [lib/screens/qibla\_screen.dart](/lib/screens/qibla_screen.dart) | Dart | 193 | 0 | 23 | 216 |
+| [lib/screens/read\_quran\_screen.dart](/lib/screens/read_quran_screen.dart) | Dart | 627 | 23 | 43 | 693 |
+| [lib/screens/read\_tab\_screen.dart](/lib/screens/read_tab_screen.dart) | Dart | 953 | 9 | 65 | 1,027 |
+| [lib/screens/settings\_screen.dart](/lib/screens/settings_screen.dart) | Dart | 1,575 | 4 | 75 | 1,654 |
+| [lib/screens/surah\_detail\_screen.dart](/lib/screens/surah_detail_screen.dart) | Dart | 998 | 10 | 57 | 1,065 |
+| [lib/screens/tafseer\_screen.dart](/lib/screens/tafseer_screen.dart) | Dart | 337 | 8 | 32 | 377 |
+| [lib/secret.dart](/lib/secret.dart) | Dart | 4 | 1 | 1 | 6 |
+| [lib/services/audio\_player\_service.dart](/lib/services/audio_player_service.dart) | Dart | 82 | 2 | 17 | 101 |
+| [lib/services/database\_helper.dart](/lib/services/database_helper.dart) | Dart | 31 | 6 | 10 | 47 |
+| [lib/services/download\_service.dart](/lib/services/download_service.dart) | Dart | 336 | 5 | 54 | 395 |
+| [lib/services/hadith\_service.dart](/lib/services/hadith_service.dart) | Dart | 30 | 2 | 7 | 39 |
+| [lib/services/interleaved\_audio\_service.dart](/lib/services/interleaved_audio_service.dart) | Dart | 172 | 1 | 36 | 209 |
+| [lib/services/mushaf\_api\_service.dart](/lib/services/mushaf_api_service.dart) | Dart | 70 | 2 | 13 | 85 |
+| [lib/services/notification\_service.dart](/lib/services/notification_service.dart) | Dart | 88 | 5 | 9 | 102 |
+| [lib/services/quran\_api\_service.dart](/lib/services/quran_api_service.dart) | Dart | 196 | 19 | 33 | 248 |
+| [lib/services/quran\_auth\_service.dart](/lib/services/quran_auth_service.dart) | Dart | 217 | 6 | 32 | 255 |
+| [lib/services/tafseer\_service.dart](/lib/services/tafseer_service.dart) | Dart | 103 | 6 | 14 | 123 |
+| [lib/services/update\_service.dart](/lib/services/update_service.dart) | Dart | 60 | 1 | 13 | 74 |
+| [lib/ui\_v2/app\_colors.dart](/lib/ui_v2/app_colors.dart) | Dart | 17 | 1 | 7 | 25 |
+| [lib/ui\_v2/app\_theme.dart](/lib/ui_v2/app_theme.dart) | Dart | 90 | 0 | 5 | 95 |
+| [lib/ui\_v2/widgets/calm\_light\_background.dart](/lib/ui_v2/widgets/calm_light_background.dart) | Dart | 70 | 0 | 6 | 76 |
+| [lib/ui\_v2/widgets/glass\_panel.dart](/lib/ui_v2/widgets/glass_panel.dart) | Dart | 56 | 0 | 6 | 62 |
+| [lightmode\_diff.patch](/lightmode_diff.patch) | Diff | 3,499 | 0 | 72 | 3,571 |
+| [linux/CMakeLists.txt](/linux/CMakeLists.txt) | CMake | 104 | 0 | 25 | 129 |
+| [linux/flutter/CMakeLists.txt](/linux/flutter/CMakeLists.txt) | CMake | 79 | 0 | 10 | 89 |
+| [linux/flutter/generated\_plugin\_registrant.cc](/linux/flutter/generated_plugin_registrant.cc) | C++ | 11 | 4 | 5 | 20 |
+| [linux/flutter/generated\_plugin\_registrant.h](/linux/flutter/generated_plugin_registrant.h) | C++ | 5 | 5 | 6 | 16 |
+| [linux/flutter/generated\_plugins.cmake](/linux/flutter/generated_plugins.cmake) | CMake | 20 | 0 | 6 | 26 |
+| [linux/runner/CMakeLists.txt](/linux/runner/CMakeLists.txt) | CMake | 21 | 0 | 6 | 27 |
+| [linux/runner/main.cc](/linux/runner/main.cc) | C++ | 5 | 0 | 2 | 7 |
+| [linux/runner/my\_application.cc](/linux/runner/my_application.cc) | C++ | 94 | 26 | 29 | 149 |
+| [linux/runner/my\_application.h](/linux/runner/my_application.h) | C++ | 10 | 7 | 5 | 22 |
+| [macos/Flutter/GeneratedPluginRegistrant.swift](/macos/Flutter/GeneratedPluginRegistrant.swift) | Swift | 26 | 3 | 4 | 33 |
+| [macos/Runner/AppDelegate.swift](/macos/Runner/AppDelegate.swift) | Swift | 11 | 0 | 3 | 14 |
+| [macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json](/macos/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json) | JSON | 68 | 0 | 1 | 69 |
+| [macos/Runner/Base.lproj/MainMenu.xib](/macos/Runner/Base.lproj/MainMenu.xib) | XML | 343 | 0 | 1 | 344 |
+| [macos/Runner/MainFlutterWindow.swift](/macos/Runner/MainFlutterWindow.swift) | Swift | 12 | 0 | 4 | 16 |
+| [macos/RunnerTests/RunnerTests.swift](/macos/RunnerTests/RunnerTests.swift) | Swift | 7 | 2 | 4 | 13 |
+| [parsed\_duas.json](/parsed_duas.json) | JSON | 2,672 | 0 | 0 | 2,672 |
+| [pubspec.yaml](/pubspec.yaml) | YAML | 58 | 9 | 15 | 82 |
+| [scripts/build\_hadith\_db.py](/scripts/build_hadith_db.py) | Python | 144 | 15 | 33 | 192 |
+| [scripts/build\_hisnul\_muslim\_dart.py](/scripts/build_hisnul_muslim_dart.py) | Python | 29 | 10 | 5 | 44 |
+| [scripts/parse\_hisnul\_muslim.py](/scripts/parse_hisnul_muslim.py) | Python | 88 | 20 | 19 | 127 |
+| [test\_parse.dart](/test_parse.dart) | Dart | 53 | 1 | 11 | 65 |
+| [test\_parse2.dart](/test_parse2.dart) | Dart | 20 | 1 | 6 | 27 |
+| [test\_parse\_final.dart](/test_parse_final.dart) | Dart | 32 | 1 | 6 | 39 |
+| [test\_urls.dart](/test_urls.dart) | Dart | 43 | 4 | 9 | 56 |
+| [ui\_v2/app\_colors.dart](/ui_v2/app_colors.dart) | Dart | 17 | 1 | 7 | 25 |
+| [ui\_v2/app\_theme.dart](/ui_v2/app_theme.dart) | Dart | 90 | 0 | 5 | 95 |
+| [ui\_v2/widgets/glass\_panel.dart](/ui_v2/widgets/glass_panel.dart) | Dart | 56 | 0 | 6 | 62 |
+| [web/index.html](/web/index.html) | HTML | 19 | 23 | 5 | 47 |
+| [web/manifest.json](/web/manifest.json) | JSON | 35 | 0 | 1 | 36 |
+| [windows/CMakeLists.txt](/windows/CMakeLists.txt) | CMake | 89 | 0 | 20 | 109 |
+| [windows/flutter/CMakeLists.txt](/windows/flutter/CMakeLists.txt) | CMake | 98 | 0 | 12 | 110 |
+| [windows/flutter/generated\_plugin\_registrant.cc](/windows/flutter/generated_plugin_registrant.cc) | C++ | 12 | 4 | 5 | 21 |
+| [windows/flutter/generated\_plugin\_registrant.h](/windows/flutter/generated_plugin_registrant.h) | C++ | 5 | 5 | 6 | 16 |
+| [windows/flutter/generated\_plugins.cmake](/windows/flutter/generated_plugins.cmake) | CMake | 21 | 0 | 6 | 27 |
+| [windows/runner/CMakeLists.txt](/windows/runner/CMakeLists.txt) | CMake | 34 | 0 | 7 | 41 |
+| [windows/runner/flutter\_window.cpp](/windows/runner/flutter_window.cpp) | C++ | 49 | 7 | 16 | 72 |
+| [windows/runner/flutter\_window.h](/windows/runner/flutter_window.h) | C++ | 20 | 5 | 9 | 34 |
+| [windows/runner/main.cpp](/windows/runner/main.cpp) | C++ | 30 | 4 | 10 | 44 |
+| [windows/runner/resource.h](/windows/runner/resource.h) | C++ | 9 | 6 | 2 | 17 |
+| [windows/runner/utils.cpp](/windows/runner/utils.cpp) | C++ | 54 | 2 | 10 | 66 |
+| [windows/runner/utils.h](/windows/runner/utils.h) | C++ | 8 | 6 | 6 | 20 |
+| [windows/runner/win32\_window.cpp](/windows/runner/win32_window.cpp) | C++ | 210 | 24 | 55 | 289 |
+| [windows/runner/win32\_window.h](/windows/runner/win32_window.h) | C++ | 48 | 31 | 24 | 103 |
+
+[Summary](results.md) / Details / [Diff Summary](diff.md) / [Diff Details](diff-details.md)

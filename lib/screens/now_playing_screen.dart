@@ -114,7 +114,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 110),
+              padding: const EdgeInsets.only(bottom: 86),
               child: Column(
                 children: [
                   const SizedBox(height: 12),
@@ -137,10 +137,10 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final isShort = constraints.maxHeight < 620;
+                        final isShort = constraints.maxHeight < 540;
                         final discSize = (constraints.maxWidth
-                                .clamp(240.0, 320.0))
-                            .clamp(240.0, isShort ? 260.0 : 320.0)
+                                .clamp(160.0, 240.0))
+                            .clamp(160.0, isShort ? 180.0 : 220.0)
                             .toDouble();
 
                         return Column(
@@ -161,7 +161,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                               ),
                             ),
 
-                            SizedBox(height: isShort ? 10 : 18),
+                            Flexible(child: SizedBox(height: isShort ? 6 : 14)),
                             AnimatedOpacity(
                               opacity: isPlaying ? 1.0 : 0.0,
                               duration: const Duration(milliseconds: 250),
@@ -170,7 +170,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                                 child: _EqualizerBars(isPlaying: isPlaying),
                               ),
                             ),
-                            SizedBox(height: isShort ? 10 : 18),
+                            Flexible(child: SizedBox(height: isShort ? 6 : 14)),
 
                             // Glass player card (Stitch) — compact padding/fonts on short screens
                             Padding(
@@ -371,22 +371,8 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                               );
 
                               final sideActions = Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  IconButton(
-                                    visualDensity: VisualDensity.compact,
-                                    constraints: const BoxConstraints.tightFor(width: 40, height: 40),
-                                    onPressed: tarjumahMode
-                                        ? null
-                                        : () {
-                                            // "shuffle" icon in Stitch; keeping as placeholder for future playlist.
-                                          },
-                                    icon: Icon(
-                                      Icons.shuffle_rounded,
-                                      size: 20,
-                                      color: Colors.white.withValues(alpha: tarjumahMode ? 0.18 : 0.55),
-                                    ),
-                                  ),
                                   Builder(builder: (ctx) {
                                     final isLoop = ref.watch(loopProvider);
                                     return IconButton(
@@ -423,14 +409,7 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                               return Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  IconButton(
-                                    onPressed: tarjumahMode
-                                        ? null
-                                        : () {
-                                            // "shuffle" icon in Stitch; keeping as placeholder for future playlist.
-                                          },
-                                    icon: Icon(Icons.shuffle_rounded, color: Colors.white.withValues(alpha: tarjumahMode ? 0.18 : 0.55)),
-                                  ),
+                                  const SizedBox(width: 40),
                                   centerControls,
                                   Builder(builder: (ctx) {
                                     final isLoop = ref.watch(loopProvider);

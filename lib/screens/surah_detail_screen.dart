@@ -228,10 +228,11 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
                         _TagPill(text: '${surah.ayahCount} Verses', color: _kGold),
-                        const SizedBox(width: 8),
                         _TagPill(text: surah.revelationType, color: AppColorsV2.secondary),
                       ],
                     )
@@ -464,11 +465,13 @@ class _TagPill extends StatelessWidget {
         ),
         child: Text(
           text.toUpperCase(),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
           style: GoogleFonts.manrope(
             color: color,
             fontSize: 10,
             fontWeight: FontWeight.w900,
-            letterSpacing: 2.0,
+            letterSpacing: 1.2,
           ),
         ),
       );
@@ -560,11 +563,13 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
                       (isBuffering && !isPlaying)
                           ? 'LOADING...'
                           : (widget.tarjumahMode ? 'TARJUMAH MODE' : 'RECITING'),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                       style: GoogleFonts.manrope(
                         color: AppColorsV2.onSurfaceVariant,
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 2.2,
+                        letterSpacing: 1.5,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -901,11 +906,14 @@ class _DownloadSheet extends StatelessWidget {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Text(surah.name,
-                      style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold)),
+                  Flexible(
+                    child: Text(surah.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
+                  ),
                   const SizedBox(width: 10),
                   Text(surah.nameArabic,
                       style: TextStyle(
