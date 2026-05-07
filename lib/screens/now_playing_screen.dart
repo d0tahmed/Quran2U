@@ -64,9 +64,10 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
         ? ref.watch(currentAyahNumberProvider).asData?.value
         : null;
         
-    final isUrdu = tarjumahMode
+    final isTranslationPlaying = tarjumahMode
         ? (ref.watch(isUrduSegmentProvider).asData?.value ?? false)
         : false;
+    final translationLangName = ref.watch(interleavedAudioServiceProvider).activeMode.name == 'english' ? 'English' : 'Urdu';
 
     final surah = surahsAsync.asData?.value
         .cast<Surah?>()
@@ -222,10 +223,10 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                                     ),
                                     child: Row(
                                       children: [
-                                        Icon(isUrdu ? Icons.translate_rounded : Icons.record_voice_over_rounded, color: _kGold, size: 13),
+                                        Icon(isTranslationPlaying ? Icons.translate_rounded : Icons.record_voice_over_rounded, color: _kGold, size: 13),
                                         const SizedBox(width: 5),
                                         Text(
-                                          isUrdu ? 'Urdu' : 'Arabic',
+                                          isTranslationPlaying ? translationLangName : 'Arabic',
                                           style: GoogleFonts.manrope(color: _kGold, fontSize: 11, fontWeight: FontWeight.w800),
                                         ),
                                       ],
