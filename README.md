@@ -32,11 +32,46 @@ Welcome to **Quran2U**, a beautifully designed, feature-rich Islamic application
    flutter run
    ```
 
+## 🔌 APIs Used & Their Purpose
+
+Quran2U is powered by several robust, official APIs to deliver an authentic and synchronized experience:
+
+### 1. Quran.com API v4 (`api.quran.com/api/v4`)
+The primary backbone for all textual and metadata content in the application.
+* **Surah & Ayah Data:** Fetches the complete list of Surahs, their names, revelation places, and Ayah counts.
+* **Tafseer:** Retrieves comprehensive, multi-language Tafseer text (e.g., Ibn Kathir, Maariful Quran) mapped precisely to individual Ayahs.
+* **Mushaf Pages:** Fetches the Arabic Uthmani Tajweed script for rendering the physical-style Mushaf reading pages.
+* **Translations:** Downloads user-selected text translations for offline or online reading.
+
+### 2. Quran Foundation OAuth2 (`oauth2.quran.foundation` & `apis.quran.foundation`)
+* **Authentication:** Provides secure OAuth2 / OpenID Connect login using official Quran.com accounts.
+* **Cloud Sync:** Synchronizes user collections, bookmarks, and reading progress directly to the Quran.com ecosystem, ensuring data is unified across the web and the Quran2U app.
+
+### 3. EveryAyah API (`everyayah.com`)
+* **Audio Recitations:** Streams and downloads high-quality MP3 recitations from world-renowned Imams (e.g., Mishary Alafasy, Abdul Rahman Al-Sudais).
+* **Interleaved Audio:** Used to fetch segmented Arabic and Translation audio files for the synchronized "Tarjumah Mode" playback.
+
+## 🔐 Environment Setup (Secrets)
+
+To run the app locally with full cloud-sync support, you must configure your OAuth2 credentials. The project uses a Git-ignored `secret.dart` file to prevent leaking credentials.
+
+1. Create a file named `secret.dart` inside the `lib/` directory.
+2. Add your Quran Foundation OAuth2 client credentials:
+   ```dart
+   // lib/secret.dart
+   class Secrets {
+     static const String clientId = 'YOUR_QURAN_FOUNDATION_CLIENT_ID';
+     static const String clientSecret = 'YOUR_QURAN_FOUNDATION_CLIENT_SECRET';
+   }
+   ```
+*(Note: `lib/secret.dart` and `.env` files are already excluded in `.gitignore`)*
+
 ## 📁 Project Structure
 
 ```text
 lib/
 ├── main.dart             # Application entry point and initialization
+├── secret.dart           # (You must create this) OAuth2 environment variables
 ├── models/               # Freezed data models (Surah, Ayah, Bookmark, Hadith, etc.)
 ├── providers/            # Riverpod state management and providers
 ├── screens/              # UI screens (Home, Read Tab, Hadith Reader, etc.)
