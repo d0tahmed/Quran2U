@@ -82,4 +82,4 @@ lib/secret.dart
 
 # Generated Offline Databases
 assets/db/*.db
-!assets/db/hadith.db
+!assets/db/hadith_v2.db

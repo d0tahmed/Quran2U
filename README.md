@@ -6,7 +6,7 @@ Welcome to **Quran2U**, a beautifully designed, feature-rich Islamic application
 
 *   **📖 The Holy Quran & Tafseer:** Read the Quran in a beautiful, distraction-free interface with built-in, detailed Tafseer powered by Quran.com.
 *   **🎧 Interleaved Audio Translations:** Listen to world-renowned reciters with groundbreaking English & Urdu interleaved audio translation, perfectly synchronized Ayah-by-Ayah.
-*   **📚 Kutub al-Sittah (Hadith Library):** A fully offline-capable Hadith reader featuring the six major authentic collections (Sahih al-Bukhari, Sahih Muslim, Sunan Abu Dawood, Jami' at-Tirmidhi, Sunan an-Nasa'i, and Sunan Ibn Majah) with seamless multi-language support (English, Arabic, Urdu).
+*   **📚 Kutub al-Sittah (Hadith Library):** A fully offline-capable Hadith reader featuring the six major authentic collections (Sahih al-Bukhari, Sahih Muslim, Sunan Abu Dawood, Jami' at-Tirmidhi, Sunan an-Nasa'i, and Sunan Ibn Majah) with seamless multi-language support (English, Arabic, Urdu). search hadith numbers inside chapters
 *   **🤲 300+ Daily Duas (Hisnul Muslim):** A vast, categorized collection of authentic supplications from Hisnul Muslim, directly integrated into the app.
 *   **☁️ Official Quran.com Integration:** Sign in with your official Quran.com account using secure OAuth2 to instantly sync your bookmarks across all your devices and the web.
 *   **🌅 Daily Inspirations:** Wake up to daily Ayah and Hadith notifications triggered precisely at 6:00 AM local time.
@@ -17,8 +17,8 @@ Welcome to **Quran2U**, a beautifully designed, feature-rich Islamic application
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/d0tahmed/quran-recitation.git
-   cd quran-recitation
+   git clone https://github.com/d0tahmed/Quran2U.git
+   cd Quran2U
    ```
 2. Fetch dependencies:
    ```bash
