@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/screens/main_shell.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 
@@ -47,25 +48,30 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isActive = ref.watch(shellIndexProvider) == 1;
+
     final audioPlayer = ref.watch(audioPlayerServiceProvider);
     final interleavedSvc = ref.watch(interleavedAudioServiceProvider);
     final tarjumahMode = ref.watch(tarjumahModeProvider);
     final selectedImam = ref.watch(selectedImamProvider);
     final surahNumber = ref.watch(currentSurahProvider);
     final surahsAsync = ref.watch(surahsProvider);
-    final posAsync = ref.watch(positionProvider);
-    final durAsync = ref.watch(durationProvider);
+    
+    // 👇 FIX: Only watch fast-updating streams when this tab is active.
+    // When inactive, use ref.read to freeze the last state and stop 60fps rebuilds.
+    final posAsync = isActive ? ref.watch(positionProvider) : ref.read(positionProvider);
+    final durAsync = isActive ? ref.watch(durationProvider) : ref.read(durationProvider);
     
     final isPlaying = tarjumahMode
         ? interleavedSvc.player.playing
         : audioPlayer.player.playing;
         
     final currentAyah = tarjumahMode
-        ? ref.watch(currentAyahNumberProvider).asData?.value
+        ? (isActive ? ref.watch(currentAyahNumberProvider).asData?.value : ref.read(currentAyahNumberProvider).asData?.value)
         : null;
         
     final isTranslationPlaying = tarjumahMode
-        ? (ref.watch(isUrduSegmentProvider).asData?.value ?? false)
+        ? (isActive ? (ref.watch(isUrduSegmentProvider).asData?.value ?? false) : (ref.read(isUrduSegmentProvider).asData?.value ?? false))
         : false;
     final translationLangName = ref.watch(interleavedAudioServiceProvider).activeMode.name == 'english' ? 'English' : 'Urdu';
 
@@ -113,10 +119,8 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
             ),
           ),
           SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 86),
-              child: Column(
+            bottom: true, // Automatically accounts for the nav bar height from main_shell.dart
+            child: Column(
                 children: [
                   const SizedBox(height: 12),
                   Padding(
@@ -138,15 +142,16 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final isShort = constraints.maxHeight < 540;
+                        final isShort = constraints.maxHeight < 560;
                         final discSize = (constraints.maxWidth
                                 .clamp(160.0, 240.0))
-                            .clamp(160.0, isShort ? 180.0 : 220.0)
+                            .clamp(160.0, isShort ? 160.0 : 200.0) // Reduced disc size slightly
                             .toDouble();
 
                         return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            const Spacer(flex: 1), // Push disc down slightly
+                            
                             // Big disc / circular progress (auto compact on short screens)
                             AnimatedBuilder(
                               animation: _pulseAnim,
@@ -162,7 +167,8 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                               ),
                             ),
 
-                            Flexible(child: SizedBox(height: isShort ? 6 : 14)),
+                            SizedBox(height: isShort ? 16 : 24),
+                            
                             AnimatedOpacity(
                               opacity: isPlaying ? 1.0 : 0.0,
                               duration: const Duration(milliseconds: 250),
@@ -171,7 +177,8 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                                 child: _EqualizerBars(isPlaying: isPlaying),
                               ),
                             ),
-                            Flexible(child: SizedBox(height: isShort ? 6 : 14)),
+                            
+                            const Spacer(flex: 2), // Pushes the player card down near the nav bar
 
                             // Glass player card (Stitch) — compact padding/fonts on short screens
                             Padding(
@@ -179,8 +186,8 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                               child: GlassPanel(
                                 borderRadius: BorderRadius.circular(40),
                                 padding: isShort
-                                    ? const EdgeInsets.fromLTRB(18, 14, 18, 14)
-                                    : const EdgeInsets.fromLTRB(22, 18, 22, 18),
+                                    ? const EdgeInsets.fromLTRB(16, 12, 16, 12)
+                                    : const EdgeInsets.fromLTRB(20, 16, 20, 16),
                                 tint: _kSlate,
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -191,20 +198,20 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                               textDirection: TextDirection.rtl,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: isShort ? 34 : 40,
+                                fontSize: isShort ? 32 : 36, // Reduced font sizes
                                 color: AppColorsV2.onSurface,
                                 height: 1.35,
                                 fontFamily: GoogleFonts.amiri().fontFamily,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2), // Tighter spacing
                             Text(
                               surah.name,
                               textAlign: TextAlign.center,
                               style: GoogleFonts.manrope(
                                 color: _kGreen,
-                                fontSize: isShort ? 18 : 22,
+                                fontSize: isShort ? 16 : 20,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: -0.2,
                               ),
@@ -440,7 +447,6 @@ class _NowPlayingScreenState extends ConsumerState<NowPlayingScreen>
                   ),
                 ],
               ),
-            ),
           ),
         ],
       ),

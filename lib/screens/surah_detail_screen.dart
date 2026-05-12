@@ -84,7 +84,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
   Widget build(BuildContext context) {
     final globalSurah = ref.watch(currentSurahProvider);
     final surahNumber = globalSurah ?? widget.surah.number;
-    final translationId = ref.watch(selectedTranslationProvider);
+    final translationId = ref.watch(selectedTranslationProvider).id;
     final ayahsAsync = ref.watch(surahAyahsProvider((surahNumber, translationId)));
     final bookmarks = ref.watch(bookmarksProvider);
     final audioPlayer = ref.watch(audioPlayerServiceProvider);
@@ -339,15 +339,10 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
   }
 
   void _toggleAyahBookmark(Ayah ayah, bool isBookmarked, Surah surah) {
-    final bks = ref.read(bookmarksProvider);
     if (isBookmarked) {
-      ref.read(bookmarksProvider.notifier).updateBookmarks(bks
-          .where((b) => !(b.surahNumber == surah.number &&
-              b.ayahNumber == ayah.numberInSurah))
-          .toList());
+      ref.read(bookmarksProvider.notifier).removeBookmark(surah.number, ayah.numberInSurah);
     } else {
-      ref.read(bookmarksProvider.notifier).updateBookmarks([
-        ...bks,
+      ref.read(bookmarksProvider.notifier).addBookmark(
         Bookmark(
           id: const Uuid().v4(),
           surahNumber: surah.number,
@@ -355,7 +350,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
           title: '${surah.name} – Ayah ${ayah.numberInSurah}',
           createdAt: DateTime.now(),
         ),
-      ]);
+      );
     }
   }
 

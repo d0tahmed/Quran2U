@@ -25,6 +25,15 @@ class HadithReaderScreen extends ConsumerStatefulWidget {
 }
 
 class _HadithReaderScreenState extends ConsumerState<HadithReaderScreen> {
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
   // ── Language switch ─────────────────────────────────────────────────────────
   void _switchLanguage(HadithLanguage lang) {
     ref.read(hadithLanguageProvider.notifier).state = lang;
@@ -45,11 +54,62 @@ class _HadithReaderScreenState extends ConsumerState<HadithReaderScreen> {
             pinned: true,
             backgroundColor: AppColorsV2.bg,
             elevation: 0,
+            title: _isSearching
+                ? Container(
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Center(
+                      child: TextField(
+                        controller: _searchController,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.search,
+                        style: const TextStyle(color: Colors.white, fontSize: 15),
+                        decoration: const InputDecoration(
+                          hintText: 'Enter hadith number...',
+                          hintStyle: TextStyle(color: Colors.white38),
+                          border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          filled: false,
+                          isDense: true,
+                        ),
+                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        onSubmitted: (val) => setState(() => _isSearching = false),
+                        autofocus: true,
+                      ),
+                    ),
+                  )
+                : null,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded,
                   color: Colors.white70, size: 20),
               onPressed: () => Navigator.pop(context),
             ),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  (_isSearching || _searchQuery.isNotEmpty)
+                      ? Icons.close_rounded
+                      : Icons.search_rounded,
+                  color: Colors.white70,
+                ),
+                onPressed: () {
+                  setState(() {
+                    if (_isSearching || _searchQuery.isNotEmpty) {
+                      _isSearching = false;
+                      _searchQuery = '';
+                      _searchController.clear();
+                    } else {
+                      _isSearching = true;
+                    }
+                  });
+                },
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
               background: Container(
@@ -176,11 +236,20 @@ class _HadithReaderScreenState extends ConsumerState<HadithReaderScreen> {
               child: Center(child: Text('Error loading hadiths.', style: GoogleFonts.manrope(color: Colors.white38))),
             ),
             data: (hadiths) {
-              if (hadiths.isEmpty) {
+              var filtered = hadiths;
+              if (_searchQuery.isNotEmpty) {
+                filtered = hadiths
+                    .where((h) => h.hadithNumber.toString().contains(_searchQuery))
+                    .toList();
+              }
+
+              if (filtered.isEmpty) {
                 return SliverFillRemaining(
                   child: Center(
                     child: Text(
-                      'No hadiths found for this section.',
+                      _searchQuery.isNotEmpty 
+                          ? 'No hadith found matching "#$_searchQuery"'
+                          : 'No hadiths found for this section.',
                       style: GoogleFonts.manrope(color: Colors.white38, fontSize: 14),
                     ),
                   ),
@@ -191,12 +260,12 @@ class _HadithReaderScreenState extends ConsumerState<HadithReaderScreen> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _HadithCard(
-                      hadith:   hadiths[index],
+                      hadith:   filtered[index],
                       language: currentLang,
                       isFirst:  index == 0,
-                      isLast:   index == hadiths.length - 1,
+                      isLast:   index == filtered.length - 1,
                     ),
-                    childCount: hadiths.length,
+                    childCount: filtered.length,
                   ),
                 ),
               );

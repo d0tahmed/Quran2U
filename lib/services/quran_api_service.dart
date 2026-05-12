@@ -245,4 +245,19 @@ class QuranApiService {
       throw Exception('Error fetching Qaris: $e');
     }
   }
+
+  // =========================================================================
+  // FETCH ALL AVAILABLE TRANSLATIONS FROM API
+  // =========================================================================
+  Future<List<Map<String, dynamic>>> fetchAvailableTranslations() async {
+    try {
+      final response = await _dio.get('/resources/translations');
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(response.data['translations']);
+      }
+      throw Exception('Failed to fetch translations');
+    } catch (e) {
+      throw Exception('Error fetching translations: $e');
+    }
+  }
 }

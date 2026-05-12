@@ -185,6 +185,26 @@ class QuranAuthService {
     return response.statusCode == 200 || response.statusCode == 201;
   }
 
+  Future<bool> deleteBookmark(int cloudId) async {
+    var headers = await _getHeaders();
+    var response = await http.delete(
+      Uri.parse('$_apiBaseUrl/auth/v1/bookmarks/$cloudId'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 401) {
+      final refreshed = await refreshToken();
+      if (refreshed) {
+        headers = await _getHeaders();
+        response = await http.delete(
+          Uri.parse('$_apiBaseUrl/auth/v1/bookmarks/$cloudId'),
+          headers: headers,
+        );
+      }
+    }
+    return response.statusCode == 200 || response.statusCode == 204;
+  }
+
   Future<List<dynamic>> getBookmarks() async {
     var headers = await _getHeaders();
     var response = await http.get(

@@ -646,6 +646,8 @@ class _SurahCardRow extends ConsumerWidget {
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(surah.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.manrope(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
               const SizedBox(height: 3),
               Text('${surah.nameTranslation} • ${surah.ayahCount} Verses',
@@ -654,39 +656,47 @@ class _SurahCardRow extends ConsumerWidget {
                     fontSize:   11,
                     fontWeight: FontWeight.w600,
                   ),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis),
             ])),
-            const SizedBox(width: 10),
-            Text(
-              surah.nameArabic,
-              textDirection: TextDirection.rtl,
-              style: TextStyle(
-                fontSize:   22,
-                color:      _kGreen.withValues(alpha: 0.90),
-                fontFamily: GoogleFonts.amiri().fontFamily,
-                fontWeight: FontWeight.w700,
+            const SizedBox(width: 8),
+            // Fixed-width container keeps Arabic name from competing with the
+            // English name for space — no more row height jitter
+            SizedBox(
+              width: 100,
+              child: Text(
+                surah.nameArabic,
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize:   20,
+                  color:      _kGreen.withValues(alpha: 0.90),
+                  fontFamily: GoogleFonts.amiri().fontFamily,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-            const SizedBox(width: 10),
+            // Tightened bookmark button — removes the default 48×48 ghost padding
             IconButton(
               onPressed: () {
-                final bks = ref.read(bookmarksProvider);
                 if (isBookmarked) {
-                  ref.read(bookmarksProvider.notifier).updateBookmarks(
-                    bks.where((b) => !(b.surahNumber == surah.number && b.ayahNumber == null)).toList(),
-                  );
+                  ref.read(bookmarksProvider.notifier).removeBookmark(surah.number, null);
                 } else {
-                  ref.read(bookmarksProvider.notifier).updateBookmarks([
-                    ...bks,
+                  ref.read(bookmarksProvider.notifier).addBookmark(
                     Bookmark(
                       id:          DateTime.now().millisecondsSinceEpoch.toString(),
                       surahNumber: surah.number,
                       title:       surah.name,
                       createdAt:   DateTime.now(),
                     ),
-                  ]);
+                  );
                 }
               },
+              visualDensity: VisualDensity.compact,
+              padding:     EdgeInsets.zero,
+              constraints: const BoxConstraints(),
               icon: Icon(
                 isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
                 color: isBookmarked ? _kGreen : Colors.white24,

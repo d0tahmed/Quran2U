@@ -71,6 +71,9 @@ class Bookmark with _$Bookmark {
     required String title,
     required DateTime createdAt,
     @Default('') String notes,
+    @Default(false) bool isSynced,
+    @Default(false) bool isDeleted,
+    int? cloudId,
   }) = _Bookmark;
 
   factory Bookmark.fromJson(Map<String, dynamic> json) =>

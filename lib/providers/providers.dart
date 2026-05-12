@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/services/quran_api_service.dart';
@@ -70,7 +72,35 @@ final surahsProvider = FutureProvider<List<Surah>>((ref) async {
 });
 
 // ── Translation ───────────────────────────────────────────────────────────────
-final selectedTranslationProvider = StateProvider<int>((ref) => 0);
+typedef TranslationOption = ({int id, String name});
+
+class SelectedTranslationNotifier extends StateNotifier<TranslationOption> {
+  SelectedTranslationNotifier() : super((id: 0, name: 'Off')) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getInt('selected_text_translation') ?? 0;
+    final name = prefs.getString('selected_text_translation_name') ?? 'Off';
+    state = (id: id, name: name);
+  }
+
+  Future<void> setTranslation(int id, String name) async {
+    state = (id: id, name: name);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('selected_text_translation', id);
+    await prefs.setString('selected_text_translation_name', name);
+  }
+}
+
+final selectedTranslationProvider = StateNotifierProvider<SelectedTranslationNotifier, TranslationOption>((ref) {
+  return SelectedTranslationNotifier();
+});
+
+final availableTranslationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return ref.watch(quranApiServiceProvider).fetchAvailableTranslations();
+});
 
 final surahAyahsProvider =
     FutureProvider.family<List<Ayah>, (int, int)>((ref, params) async {
@@ -188,6 +218,47 @@ class BookmarksNotifier extends StateNotifier<List<Bookmark>> {
     state = newList;
     _save();
   }
+
+  void addBookmark(Bookmark bookmark) {
+    state = [...state, bookmark];
+    _save();
+  }
+
+  void removeBookmark(int surahNumber, int? ayahNumber) {
+    final newList = state.map((b) {
+      if (b.surahNumber == surahNumber && b.ayahNumber == ayahNumber) {
+        if (b.isSynced) {
+          return b.copyWith(isDeleted: true);
+        } else {
+          return null;
+        }
+      }
+      return b;
+    }).where((b) => b != null).cast<Bookmark>().toList();
+    state = newList;
+    _save();
+  }
+
+  void removeBookmarkById(String id) {
+    final newList = state.map((b) {
+      if (b.id == id) {
+        if (b.isSynced) {
+          return b.copyWith(isDeleted: true);
+        } else {
+          return null;
+        }
+      }
+      return b;
+    }).where((b) => b != null).cast<Bookmark>().toList();
+    state = newList;
+    _save();
+  }
+
+  void removeDeletedBookmarks(Set<String> deletedIds) {
+    final newList = state.where((b) => !deletedIds.contains(b.id)).toList();
+    state = newList;
+    _save();
+  }
 }
 
 final bookmarksProvider =
@@ -241,22 +312,39 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
     try {
       final localBookmarks = _ref.read(bookmarksProvider);
 
-      // ── Step 1: Push local bookmarks to cloud ─────────────────────────
+      // ── Step 1: Push local bookmarks to cloud & handle deletions ─────────
       int pushed = 0;
+      int deleted = 0;
       final updatedLocalBookmarks = <Bookmark>[];
+      final idsToRemove = <String>{};
+
       for (final bk in localBookmarks) {
+        if (bk.isDeleted) {
+          if (bk.cloudId != null) {
+            final ok = await authService.deleteBookmark(bk.cloudId!);
+            if (ok) {
+              deleted++;
+              idsToRemove.add(bk.id);
+            } else {
+              updatedLocalBookmarks.add(bk);
+            }
+          } else {
+            idsToRemove.add(bk.id); // Should not happen, but clean up if it does
+          }
+          continue;
+        }
+
         // Only sync ayah-level bookmarks (surahNumber + ayahNumber)
-        // Surah-level bookmarks (ayahNumber == null) are stored locally only.
         if (bk.ayahNumber != null) {
-          final isAlreadyCloud = bk.id.endsWith('-cloud') || bk.notes == 'cloud';
-          if (!isAlreadyCloud) {
+          if (!bk.isSynced) {
             final ok = await authService.syncBookmark(
               surahId:    bk.surahNumber,
               ayahNumber: bk.ayahNumber!,
             );
             if (ok) {
               pushed++;
-              updatedLocalBookmarks.add(bk.copyWith(notes: 'cloud'));
+              // Mark as synced; we'll get the real cloudId during pull step.
+              updatedLocalBookmarks.add(bk.copyWith(notes: 'cloud', isSynced: true));
             } else {
               updatedLocalBookmarks.add(bk);
             }
@@ -268,6 +356,11 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
         }
       }
 
+      // Remove the ones that were successfully deleted from server
+      if (idsToRemove.isNotEmpty) {
+        _ref.read(bookmarksProvider.notifier).removeDeletedBookmarks(idsToRemove);
+      }
+
       // ── Step 2: Pull cloud bookmarks and merge into local ─────────────
       final cloudBookmarks = await authService.getBookmarks();
       final localIds = updatedLocalBookmarks
@@ -275,14 +368,18 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
           .toSet();
 
       final newFromCloud = <Bookmark>[];
-      bool localStateChanged = pushed > 0;
+      bool localStateChanged = pushed > 0 || deleted > 0;
 
       for (final cb in cloudBookmarks) {
-        // Cloud bookmark shape (based on prelive API):
-        // { "key": surahId, "verseNumber": ayahNum, "type": "ayah", ... }
-        final surahId   = (cb['key']         as num?)?.toInt();
-        final ayahNum   = (cb['verseNumber'] as num?)?.toInt();
-        final cloudId   = cb['id']?.toString() ?? '';
+        final rawKey = cb['key'];
+        final rawVerse = cb['verseNumber'];
+        final rawId = cb['id'];
+
+        final surahId  = rawKey  is num ? rawKey.toInt()   : int.tryParse(rawKey?.toString() ?? '');
+        final ayahNum  = rawVerse is num ? rawVerse.toInt() : int.tryParse(rawVerse?.toString() ?? '');
+        // cloudId may be int or string depending on API version
+        final cloudIdNum = rawId is num ? rawId.toInt() : int.tryParse(rawId?.toString() ?? '');
+        final cloudIdStr = rawId?.toString() ?? '';
 
         if (surahId == null || ayahNum == null) continue;
         final mergeKey = '$surahId-$ayahNum';
@@ -291,20 +388,28 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
           final index = updatedLocalBookmarks.indexWhere((b) => '${b.surahNumber}-${b.ayahNumber}' == mergeKey);
           if (index != -1) {
              final existing = updatedLocalBookmarks[index];
-             if (existing.notes != 'cloud' && !existing.id.endsWith('-cloud')) {
-               updatedLocalBookmarks[index] = existing.copyWith(notes: 'cloud');
+             if (!existing.isSynced || (cloudIdNum != null && existing.cloudId != cloudIdNum)) {
+               updatedLocalBookmarks[index] = existing.copyWith(
+                 notes: 'cloud',
+                 isSynced: true,
+                 cloudId: cloudIdNum,
+               );
                localStateChanged = true;
              }
           }
           continue;
         }
 
+        // Add missing cloud bookmarks
         newFromCloud.add(Bookmark(
-          id:          cloudId.isNotEmpty ? cloudId : '$surahId-$ayahNum-cloud',
+          id:          cloudIdStr.isNotEmpty ? cloudIdStr : const Uuid().v4(),
           surahNumber: surahId,
           ayahNumber:  ayahNum,
           title:       'Surah $surahId – Ayah $ayahNum',
           createdAt:   DateTime.now(),
+          isSynced:    true,
+          cloudId:     cloudIdNum,
+          notes:       'cloud',
         ));
       }
 
@@ -313,7 +418,7 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
         _ref.read(bookmarksProvider.notifier).updateBookmarks(merged);
       }
 
-      final total = pushed + newFromCloud.length;
+      final total = pushed + deleted + newFromCloud.length;
       state = SyncState(
         status:      SyncStatus.success,
         message:     total > 0
@@ -321,10 +426,12 @@ class BookmarkSyncNotifier extends StateNotifier<SyncState> {
             : 'Already up to date',
         syncedCount: total,
       );
-    } catch (e) {
-      state = const SyncState(
+    } catch (e, stack) {
+      debugPrint('[BookmarkSync] syncToCloud FAILED: $e');
+      debugPrint('[BookmarkSync] Stack trace: $stack');
+      state = SyncState(
         status:  SyncStatus.error,
-        message: 'Sync failed. Check your connection.',
+        message: 'Sync failed: ${e.toString().split('\n').first}',
       );
     }
   }

@@ -81,6 +81,9 @@ _$BookmarkImpl _$$BookmarkImplFromJson(Map<String, dynamic> json) =>
       title: json['title'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       notes: json['notes'] as String? ?? '',
+      isSynced: json['isSynced'] as bool? ?? false,
+      isDeleted: json['isDeleted'] as bool? ?? false,
+      cloudId: (json['cloudId'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$BookmarkImplToJson(_$BookmarkImpl instance) =>
@@ -91,6 +94,9 @@ Map<String, dynamic> _$$BookmarkImplToJson(_$BookmarkImpl instance) =>
       'title': instance.title,
       'createdAt': instance.createdAt.toIso8601String(),
       'notes': instance.notes,
+      'isSynced': instance.isSynced,
+      'isDeleted': instance.isDeleted,
+      'cloudId': instance.cloudId,
     };
 
 _$PlaybackStateImpl _$$PlaybackStateImplFromJson(Map<String, dynamic> json) =>

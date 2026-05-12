@@ -17,7 +17,7 @@ class BookmarksScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bookmarks    = ref.watch(bookmarksProvider);
+    final bookmarks    = ref.watch(bookmarksProvider).where((b) => !b.isDeleted).toList();
     final surahsAsync  = ref.watch(surahsProvider);
     final syncState    = ref.watch(bookmarkSyncProvider);
     final loggedInAsync = ref.watch(isLoggedInProvider);
@@ -160,8 +160,7 @@ class BookmarksScreen extends ConsumerWidget {
                                 return _BookmarkTile(
                                   bookmark: bookmark,
                                   surah:    surah,
-                                  isCloud:  bookmark.id.endsWith('-cloud') ||
-                                            bookmark.notes == 'cloud',
+                                  isCloud:  bookmark.isSynced,
                                 );
                               },
                             );
@@ -415,10 +414,7 @@ class _BookmarkTile extends ConsumerWidget {
         child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
       ),
       onDismissed: (direction) {
-        final currentBks = ref.read(bookmarksProvider);
-        ref.read(bookmarksProvider.notifier).updateBookmarks(
-          currentBks.where((b) => b.id != bookmark.id).toList(),
-        );
+        ref.read(bookmarksProvider.notifier).removeBookmarkById(bookmark.id);
         // Clear any queued snackbars first so rapid deletions don't pile up
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -478,7 +474,7 @@ class _BookmarkTile extends ConsumerWidget {
                         shape:        BoxShape.circle,
                       ),
                       alignment: Alignment.center,
-                      child: const Icon(Icons.cloud_rounded,
+                      child: const Icon(Icons.cloud_done_rounded,
                           color: _kGold, size: 12),
                     ),
                   ),

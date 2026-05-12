@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:quran_recitation/screens/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/models/models.dart';
@@ -52,6 +54,7 @@ class ReadTabScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
+        bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -68,23 +71,37 @@ class ReadTabScreen extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                child: _BentoActionsRow(
-                  onRead: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ReadQuranScreen()),
+              child: NotificationListener<UserScrollNotification>(
+                onNotification: (notif) {
+                  if (notif.direction == ScrollDirection.reverse) {
+                    if (ref.read(navBarVisibleProvider)) {
+                      ref.read(navBarVisibleProvider.notifier).state = false;
+                    }
+                  } else if (notif.direction == ScrollDirection.forward) {
+                    if (!ref.read(navBarVisibleProvider)) {
+                      ref.read(navBarVisibleProvider.notifier).state = true;
+                    }
+                  }
+                  return true;
+                },
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                  child: _BentoActionsRow(
+                    onRead: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ReadQuranScreen()),
+                    ),
+                    onTafseer: () {
+                      if (surahList.isEmpty) return;
+                      _showTafseerSurahPicker(context, surahList);
+                    },
+                    onBukhari:  () => _showHadithSectionPicker(context, ref, HadithCollection.bukhari),
+                    onMuslim:   () => _showHadithSectionPicker(context, ref, HadithCollection.muslim),
+                    onAbuDawud: () => _showHadithSectionPicker(context, ref, HadithCollection.abuDawud),
+                    onTirmidhi: () => _showHadithSectionPicker(context, ref, HadithCollection.tirmidhi),
+                    onNasai:    () => _showHadithSectionPicker(context, ref, HadithCollection.nasai),
+                    onIbnMajah: () => _showHadithSectionPicker(context, ref, HadithCollection.ibnMajah),
                   ),
-                  onTafseer: () {
-                    if (surahList.isEmpty) return;
-                    _showTafseerSurahPicker(context, surahList);
-                  },
-                  onBukhari:  () => _showHadithSectionPicker(context, ref, HadithCollection.bukhari),
-                  onMuslim:   () => _showHadithSectionPicker(context, ref, HadithCollection.muslim),
-                  onAbuDawud: () => _showHadithSectionPicker(context, ref, HadithCollection.abuDawud),
-                  onTirmidhi: () => _showHadithSectionPicker(context, ref, HadithCollection.tirmidhi),
-                  onNasai:    () => _showHadithSectionPicker(context, ref, HadithCollection.nasai),
-                  onIbnMajah: () => _showHadithSectionPicker(context, ref, HadithCollection.ibnMajah),
                 ),
               ),
             ),
@@ -159,13 +176,16 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
                   child: const Icon(Icons.menu_book_rounded, color: _kAmber, size: 22),
                 ),
                 const SizedBox(width: 14),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Tafseer',
-                      style: GoogleFonts.manrope(
-                          color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                  Text('Choose a Surah to explore',
-                      style: GoogleFonts.manrope(color: Colors.white38, fontSize: 12)),
-                ]),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Tafseer',
+                        style: GoogleFonts.manrope(
+                            color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                    Text('Choose a Surah to explore',
+                        style: GoogleFonts.manrope(color: Colors.white38, fontSize: 12),
+                        overflow: TextOverflow.ellipsis),
+                  ]),
+                ),
               ]),
             ),
             const SizedBox(height: 14),

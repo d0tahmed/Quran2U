@@ -49,9 +49,14 @@ class NotificationService {
 
   static Future<void> scheduleDaily6AM() async {
     try {
+      // Cancel any existing scheduled notification with id 0 first.
+      // This ensures a clean reschedule and prevents Android from
+      // replacing a recurring alarm with a one-shot one on app restart.
+      await _notifications.cancel(0);
+
       final now = tz.TZDateTime.now(tz.local);
       
-      var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, 6, 0); 
+      var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day, 6, 0);
       
       // If it's already past 6 AM today, schedule for tomorrow
       if (scheduledDate.isBefore(now)) {
@@ -59,9 +64,9 @@ class NotificationService {
       }
       
       await _notifications.zonedSchedule(
-        0, 
+        0, // Notification ID
         '🌅 Daily Ayah & Hadith',
-        'Click here to see the ayah of the day',
+        'Tap to read today\'s Ayah of the Day',
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -70,17 +75,21 @@ class NotificationService {
             channelDescription: 'Reminders for daily Ayah and Hadith',
             importance: Importance.max,
             priority: Priority.high,
-            icon: '@mipmap/ic_launcher', // RESTORED
+            icon: '@mipmap/ic_launcher',
           ),
         ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle, 
+        // ✅ KEY FIX: Use exactAllowWhileIdle so Android fires at the
+        // EXACT scheduled time, even when the device is in Doze mode.
+        // 'inexact' allows Android to delay by hours to save battery.
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time, 
+        // This makes it repeat daily at the same time automatically.
+        matchDateTimeComponents: DateTimeComponents.time,
         payload: 'daily_tab',
       );
-      debugPrint('✅ 6:00 AM Daily Notification Successfully Scheduled!');
+      debugPrint('✅ Daily 6:00 AM notification scheduled for: $scheduledDate');
     } catch (e) {
-      debugPrint('🔥 Scheduling Failed: $e');
+      debugPrint('🔥 Daily Notification Scheduling Failed: $e');
     }
   }
 

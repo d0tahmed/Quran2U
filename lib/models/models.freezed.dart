@@ -885,6 +885,9 @@ mixin _$Bookmark {
   String get title => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   String get notes => throw _privateConstructorUsedError;
+  bool get isSynced => throw _privateConstructorUsedError;
+  bool get isDeleted => throw _privateConstructorUsedError;
+  int? get cloudId => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -903,7 +906,10 @@ abstract class $BookmarkCopyWith<$Res> {
       int? ayahNumber,
       String title,
       DateTime createdAt,
-      String notes});
+      String notes,
+      bool isSynced,
+      bool isDeleted,
+      int? cloudId});
 }
 
 /// @nodoc
@@ -925,6 +931,9 @@ class _$BookmarkCopyWithImpl<$Res, $Val extends Bookmark>
     Object? title = null,
     Object? createdAt = null,
     Object? notes = null,
+    Object? isSynced = null,
+    Object? isDeleted = null,
+    Object? cloudId = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -951,6 +960,18 @@ class _$BookmarkCopyWithImpl<$Res, $Val extends Bookmark>
           ? _value.notes
           : notes // ignore: cast_nullable_to_non_nullable
               as String,
+      isSynced: null == isSynced
+          ? _value.isSynced
+          : isSynced // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isDeleted: null == isDeleted
+          ? _value.isDeleted
+          : isDeleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+      cloudId: freezed == cloudId
+          ? _value.cloudId
+          : cloudId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -969,7 +990,10 @@ abstract class _$$BookmarkImplCopyWith<$Res>
       int? ayahNumber,
       String title,
       DateTime createdAt,
-      String notes});
+      String notes,
+      bool isSynced,
+      bool isDeleted,
+      int? cloudId});
 }
 
 /// @nodoc
@@ -989,6 +1013,9 @@ class __$$BookmarkImplCopyWithImpl<$Res>
     Object? title = null,
     Object? createdAt = null,
     Object? notes = null,
+    Object? isSynced = null,
+    Object? isDeleted = null,
+    Object? cloudId = freezed,
   }) {
     return _then(_$BookmarkImpl(
       id: null == id
@@ -1015,6 +1042,18 @@ class __$$BookmarkImplCopyWithImpl<$Res>
           ? _value.notes
           : notes // ignore: cast_nullable_to_non_nullable
               as String,
+      isSynced: null == isSynced
+          ? _value.isSynced
+          : isSynced // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isDeleted: null == isDeleted
+          ? _value.isDeleted
+          : isDeleted // ignore: cast_nullable_to_non_nullable
+              as bool,
+      cloudId: freezed == cloudId
+          ? _value.cloudId
+          : cloudId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -1028,7 +1067,10 @@ class _$BookmarkImpl implements _Bookmark {
       this.ayahNumber,
       required this.title,
       required this.createdAt,
-      this.notes = ''});
+      this.notes = '',
+      this.isSynced = false,
+      this.isDeleted = false,
+      this.cloudId});
 
   factory _$BookmarkImpl.fromJson(Map<String, dynamic> json) =>
       _$$BookmarkImplFromJson(json);
@@ -1048,10 +1090,18 @@ class _$BookmarkImpl implements _Bookmark {
   @override
   @JsonKey()
   final String notes;
+  @override
+  @JsonKey()
+  final bool isSynced;
+  @override
+  @JsonKey()
+  final bool isDeleted;
+  @override
+  final int? cloudId;
 
   @override
   String toString() {
-    return 'Bookmark(id: $id, surahNumber: $surahNumber, ayahNumber: $ayahNumber, title: $title, createdAt: $createdAt, notes: $notes)';
+    return 'Bookmark(id: $id, surahNumber: $surahNumber, ayahNumber: $ayahNumber, title: $title, createdAt: $createdAt, notes: $notes, isSynced: $isSynced, isDeleted: $isDeleted, cloudId: $cloudId)';
   }
 
   @override
@@ -1067,13 +1117,18 @@ class _$BookmarkImpl implements _Bookmark {
             (identical(other.title, title) || other.title == title) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
-            (identical(other.notes, notes) || other.notes == notes));
+            (identical(other.notes, notes) || other.notes == notes) &&
+            (identical(other.isSynced, isSynced) ||
+                other.isSynced == isSynced) &&
+            (identical(other.isDeleted, isDeleted) ||
+                other.isDeleted == isDeleted) &&
+            (identical(other.cloudId, cloudId) || other.cloudId == cloudId));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, surahNumber, ayahNumber, title, createdAt, notes);
+  int get hashCode => Object.hash(runtimeType, id, surahNumber, ayahNumber,
+      title, createdAt, notes, isSynced, isDeleted, cloudId);
 
   @JsonKey(ignore: true)
   @override
@@ -1096,7 +1151,10 @@ abstract class _Bookmark implements Bookmark {
       final int? ayahNumber,
       required final String title,
       required final DateTime createdAt,
-      final String notes}) = _$BookmarkImpl;
+      final String notes,
+      final bool isSynced,
+      final bool isDeleted,
+      final int? cloudId}) = _$BookmarkImpl;
 
   factory _Bookmark.fromJson(Map<String, dynamic> json) =
       _$BookmarkImpl.fromJson;
@@ -1113,6 +1171,12 @@ abstract class _Bookmark implements Bookmark {
   DateTime get createdAt;
   @override
   String get notes;
+  @override
+  bool get isSynced;
+  @override
+  bool get isDeleted;
+  @override
+  int? get cloudId;
   @override
   @JsonKey(ignore: true)
   _$$BookmarkImplCopyWith<_$BookmarkImpl> get copyWith =>

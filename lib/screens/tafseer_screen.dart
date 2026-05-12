@@ -227,7 +227,7 @@ class _TafseerCardState extends State<_TafseerCard> {
     final isLong = text.length > 400;
     final displayText =
         (!_expanded && isLong) ? '${text.substring(0, 400)}…' : text;
-    final isRtl = widget.isUrdu;
+
 
     return GlassPanel(
       padding: const EdgeInsets.all(16),
@@ -273,17 +273,14 @@ class _TafseerCardState extends State<_TafseerCard> {
           ),
           const SizedBox(height: 12),
 
-          // Tafseer text
-          Directionality(
-            textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
-            child: Text(
-              displayText,
-              style: GoogleFonts.manrope(
-                color: AppColorsV2.onSurfaceVariant,
-                fontSize: 13.5,
-                height: 1.75,
-                fontWeight: FontWeight.w500,
-              ),
+          // Tafseer text — both Ibn Kathir and Maariful are served in English (LTR)
+          Text(
+            displayText,
+            style: GoogleFonts.manrope(
+              color: AppColorsV2.onSurfaceVariant,
+              fontSize: 13.5,
+              height: 1.75,
+              fontWeight: FontWeight.w500,
             ),
           ),
 

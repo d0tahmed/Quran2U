@@ -74,7 +74,7 @@
         android:background="#15FFFFFF"
         android:layout_marginBottom="5dp" />
 
-    <!-- ── Row 1: Fajr | Dhuhr | Maghrib ────────────────────── -->
+    <!-- ── Row 1: Fajr | Dhuhr | Asr | Maghrib | Isha ── -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -91,7 +91,7 @@
             android:orientation="vertical"
             android:gravity="center"
             android:background="#1AFFFFFF"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="3dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp">
 
@@ -100,8 +100,8 @@
                 android:layout_height="wrap_content"
                 android:text="FAJR"
                 android:textColor="#66FFFFFF"
-                android:textSize="8sp"
-                android:letterSpacing="0.1" />
+                android:textSize="7sp"
+                android:letterSpacing="0.08" />
 
             <TextView
                 android:id="@+id/tv_fajr"
@@ -109,7 +109,7 @@
                 android:layout_height="wrap_content"
                 android:text="--:--"
                 android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:textSize="9sp"
                 android:textStyle="bold"
                 android:layout_marginTop="1dp" />
         </LinearLayout>
@@ -123,7 +123,7 @@
             android:orientation="vertical"
             android:gravity="center"
             android:background="#1AFFFFFF"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="3dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp">
 
@@ -132,8 +132,8 @@
                 android:layout_height="wrap_content"
                 android:text="DHUHR"
                 android:textColor="#66FFFFFF"
-                android:textSize="8sp"
-                android:letterSpacing="0.1" />
+                android:textSize="7sp"
+                android:letterSpacing="0.08" />
 
             <TextView
                 android:id="@+id/tv_dhuhr"
@@ -141,78 +141,7 @@
                 android:layout_height="wrap_content"
                 android:text="--:--"
                 android:textColor="#FFFFFF"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:layout_marginTop="1dp" />
-        </LinearLayout>
-
-        <!-- Maghrib -->
-        <LinearLayout
-            android:id="@+id/row_maghrib"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="#1AFFFFFF"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="MAGHRIB"
-                android:textColor="#66FFFFFF"
-                android:textSize="8sp"
-                android:letterSpacing="0.1" />
-
-            <TextView
-                android:id="@+id/tv_maghrib"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--:--"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:layout_marginTop="1dp" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- ── Row 2: Sunrise | Asr | Isha ──────────────────────── -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal">
-
-        <!-- Sunrise -->
-        <LinearLayout
-            android:id="@+id/row_sunrise"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="#1AFFFFFF"
-            android:layout_marginEnd="4dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="SUNRISE"
-                android:textColor="#66FFFFFF"
-                android:textSize="8sp"
-                android:letterSpacing="0.1" />
-
-            <TextView
-                android:id="@+id/tv_sunrise"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--:--"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:textSize="9sp"
                 android:textStyle="bold"
                 android:layout_marginTop="1dp" />
         </LinearLayout>
@@ -226,7 +155,7 @@
             android:orientation="vertical"
             android:gravity="center"
             android:background="#1AFFFFFF"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="3dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp">
 
@@ -235,8 +164,8 @@
                 android:layout_height="wrap_content"
                 android:text="ASR"
                 android:textColor="#66FFFFFF"
-                android:textSize="8sp"
-                android:letterSpacing="0.1" />
+                android:textSize="7sp"
+                android:letterSpacing="0.08" />
 
             <TextView
                 android:id="@+id/tv_asr"
@@ -244,7 +173,39 @@
                 android:layout_height="wrap_content"
                 android:text="--:--"
                 android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:layout_marginTop="1dp" />
+        </LinearLayout>
+
+        <!-- Maghrib -->
+        <LinearLayout
+            android:id="@+id/row_maghrib"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="#1AFFFFFF"
+            android:layout_marginEnd="3dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MAGHRIB"
+                android:textColor="#66FFFFFF"
+                android:textSize="7sp"
+                android:letterSpacing="0.08" />
+
+            <TextView
+                android:id="@+id/tv_maghrib"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--:--"
+                android:textColor="#FFFFFF"
+                android:textSize="9sp"
                 android:textStyle="bold"
                 android:layout_marginTop="1dp" />
         </LinearLayout>
@@ -266,11 +227,49 @@
                 android:layout_height="wrap_content"
                 android:text="ISHA"
                 android:textColor="#66FFFFFF"
+                android:textSize="7sp"
+                android:letterSpacing="0.08" />
+
+            <TextView
+                android:id="@+id/tv_isha"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--:--"
+                android:textColor="#FFFFFF"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:layout_marginTop="1dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ── Row 2: Sunrise (standalone, kept as is) ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/row_sunrise"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="#1AFFFFFF"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SUNRISE"
+                android:textColor="#66FFFFFF"
                 android:textSize="8sp"
                 android:letterSpacing="0.1" />
 
             <TextView
-                android:id="@+id/tv_isha"
+                android:id="@+id/tv_sunrise"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="--:--"

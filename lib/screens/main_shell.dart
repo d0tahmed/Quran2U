@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/home_screen.dart';
 import 'package:quran_recitation/screens/now_playing_screen.dart';
@@ -256,6 +258,42 @@ class _MainShellState extends ConsumerState<MainShell> {
         ref.read(shellIndexProvider.notifier).state = index;
       });
     }
+
+    // Auto-advance to the next Surah when playback finishes (unless looping)
+    ref.listen<AsyncValue<PlayerState>>(currentPlayerStateProvider, (previous, next) {
+      final state = next.value;
+      if (state != null && state.processingState == ProcessingState.completed) {
+        final loop = ref.read(loopProvider);
+        if (!loop) {
+          final currentSurah = ref.read(currentSurahProvider);
+          if (currentSurah != null && currentSurah < 114) {
+            final nextSurah = currentSurah + 1;
+            final imam = ref.read(selectedImamProvider);
+            if (imam != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ref.read(currentSurahProvider.notifier).state = nextSurah;
+                
+                final tarjumahMode = ref.read(tarjumahModeProvider);
+                if (tarjumahMode) {
+                  final allSurahs = ref.read(surahsProvider).asData?.value ?? [];
+                  final s = allSurahs.cast<Surah?>().firstWhere((s) => s?.number == nextSurah, orElse: () => null);
+                  if (s != null) {
+                    ref.read(interleavedAudioServiceProvider).buildAndPlay(
+                      surahNumber: nextSurah,
+                      ayahCount: s.ayahCount,
+                      imamId: imam.id,
+                    );
+                  }
+                } else {
+                  final url = ref.read(audioUrlProvider((nextSurah, imam.id)));
+                  ref.read(audioPlayerServiceProvider).loadAndPlay(url, surahNumber: nextSurah, imamId: imam.id);
+                }
+              });
+            }
+          }
+        }
+      }
+    });
 
    return Scaffold(
       backgroundColor: Colors.transparent, 
