@@ -76,7 +76,7 @@ flutter:
 
   assets:
     - assets/images/read_quran_bg.png
-    - assets/db/
+    - assets/db/hadith_v2.db.gz
 
 # GMS
 dependency_overrides:

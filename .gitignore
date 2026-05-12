@@ -80,6 +80,6 @@ lib/secret.dart
 **/downloads/arabic/
 **/downloads/urdu/
 
-# Generated Offline Databases
+# Offline Databases — only the compressed version is committed
 assets/db/*.db
-!assets/db/hadith_v2.db
+assets/db/*.tmp
