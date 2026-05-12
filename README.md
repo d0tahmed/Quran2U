@@ -11,6 +11,7 @@ Welcome to **Quran2U**, a beautifully designed, feature-rich Islamic application
 *   **☁️ Official Quran.com Integration:** Sign in with your official Quran.com account using secure OAuth2 to instantly sync your bookmarks across all your devices and the web.
 *   **🌅 Daily Inspirations:** Wake up to daily Ayah and Hadith notifications triggered precisely at 6:00 AM local time.
 *   **📱 Home Screen Prayer Widget:** Keep track of your daily Salah times right from your Android home screen with a sleek, natively updating widget.
+*   **📚 Upto 100 Languages+ Text Translations of Quran:** By Using Quran.com API v4, THIS UPDATE NOW SUPPORTS OVER 100 languages+ text translation of Quran
 *   **⚙️ UPDATE BUTTON IN THE APP:** Now you can click on "UPDATE" button at the top right corner of the app's homepage which then will redirect user to the github releases which the user can download the new release if there is new version available.
 ## 🚀 Setup Instructions
 
