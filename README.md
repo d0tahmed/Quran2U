@@ -73,15 +73,6 @@ advertising or tracking, and is released under the GPLv3.
 
 ---
 
-## Screenshots
-
-> _Add screenshots to `docs/screenshots/` and reference them here._
-
-| Home | Mushaf | Word Study | Widget |
-|:---:|:---:|:---:|:---:|
-| — | — | — | — |
-
----
 
 ## Getting started
 
