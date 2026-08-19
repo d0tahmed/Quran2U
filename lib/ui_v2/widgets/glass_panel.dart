@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 
+/// Frosted surface. API unchanged — only the resting look is retuned for
+/// the Sakina palette (slightly denser tint, single hairline, softer shadow).
 class GlassPanel extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
@@ -32,19 +34,15 @@ class GlassPanel extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: (tint ?? AppColorsV2.surface).withValues(alpha: 0.60),
+              color: (tint ?? AppColorsV2.surface).withValues(alpha: 0.62),
               borderRadius: borderRadius,
-              border: border ??
-                  Border.all(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    width: 1,
-                  ),
+              border: border ?? Border.all(color: AppColorsV2.hairline),
               boxShadow: boxShadow ??
                   [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.30),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
+                      color: Colors.black.withValues(alpha: 0.32),
+                      blurRadius: 26,
+                      offset: const Offset(0, 12),
                     )
                   ],
             ),
@@ -58,4 +56,3 @@ class GlassPanel extends StatelessWidget {
     );
   }
 }
-

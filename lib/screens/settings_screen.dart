@@ -689,7 +689,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ref.read(navBarVisibleProvider.notifier).state = false;
     await showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0E1421),
+      backgroundColor: AppColorsV2.surfaceLow,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
@@ -816,7 +816,7 @@ extension on _QuranDownloadTile {
     ref.read(navBarVisibleProvider.notifier).state = false;
     await showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0E1421),
+      backgroundColor: AppColorsV2.surfaceLow,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -856,7 +856,7 @@ class _TajweedGuideSheet extends StatelessWidget {
       expand: false,
       builder: (ctx, scrollCtrl) => Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF0E1421),
+          color: AppColorsV2.surfaceLow,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -1077,7 +1077,7 @@ class _QuranDownloadTile extends ConsumerWidget {
     ref.read(navBarVisibleProvider.notifier).state = false;
     await showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0E1421),
+      backgroundColor: AppColorsV2.surfaceLow,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
@@ -1112,7 +1112,7 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
       expand: false,
       builder: (ctx, scrollCtrl) => Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF0E1421),
+          color: AppColorsV2.surfaceLow,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -1596,7 +1596,7 @@ void _showTranslationSheet(BuildContext context, WidgetRef ref) async {
   ref.read(navBarVisibleProvider.notifier).state = false;
   await showModalBottomSheet(
     context: context,
-    backgroundColor: const Color(0xFF0E1421),
+    backgroundColor: AppColorsV2.surfaceLow,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24))),

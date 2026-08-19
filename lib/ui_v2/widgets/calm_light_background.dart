@@ -2,7 +2,19 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/widgets/q_kit.dart';
 
+/// Sakina backdrop.
+///
+/// Three quiet layers under the app:
+///  1. the obsidian base colour,
+///  2. two very slow drifting glows (jade top-right, gold bottom-left),
+///  3. a static, near-invisible eight-point-star lattice across the top —
+///     the geometric signature of the design language.
+///
+/// Perf notes preserved from the previous implementation: the base colour
+/// never repaints, the animated blobs live in their own RepaintBoundary,
+/// and the blur is a single static pass.
 class CalmLightBackground extends StatefulWidget {
   final Widget child;
   const CalmLightBackground({super.key, required this.child});
@@ -18,11 +30,9 @@ class _CalmLightBackgroundState extends State<CalmLightBackground>
   @override
   void initState() {
     super.initState();
-    // Very slow drift — 18 s period keeps the animation virtually imperceptible
-    // while still being "alive". A longer duration = fewer frame-budget
-    // misses because Tween interpolation is cheaper at low velocities.
+    // 24 s period — alive, never noticeable.
     _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 18))
+        AnimationController(vsync: this, duration: const Duration(seconds: 24))
           ..repeat(reverse: true);
   }
 
@@ -34,17 +44,14 @@ class _CalmLightBackgroundState extends State<CalmLightBackground>
 
   @override
   Widget build(BuildContext context) {
-    // Read screen height ONCE here, outside AnimatedBuilder, so the
-    // builder closure never triggers a layout-read on every tick.
     final screenHeight = MediaQuery.sizeOf(context).height;
 
     return Stack(
       children: [
-        // Static background colour — never repaints.
+        // 1 — static base. Never repaints.
         const ColoredBox(color: AppColorsV2.bg, child: SizedBox.expand()),
 
-        // Animated blobs isolated in their own RepaintBoundary so only
-        // this layer is rasterised each frame, not the whole app.
+        // 2 — drifting glows, isolated.
         RepaintBoundary(
           child: AnimatedBuilder(
             animation: _controller,
@@ -53,29 +60,26 @@ class _CalmLightBackgroundState extends State<CalmLightBackground>
               return Stack(
                 children: [
                   Positioned(
-                    top: screenHeight * 0.05 + math.sin(t * math.pi) * 40,
-                    right: -50 + math.cos(t * math.pi) * 30,
+                    top: screenHeight * 0.02 + math.sin(t * math.pi) * 30,
+                    right: -70 + math.cos(t * math.pi) * 24,
                     child: Container(
-                      width: 250,
-                      height: 250,
+                      width: 280,
+                      height: 280,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        // Opacity baked into the color constant — avoids an
-                        // extra Opacity widget in the raster thread.
-                        color: Color(0x2600C853), // primary ~15% opacity
+                        color: Color(0x1474C6A4), // jade ~8%
                       ),
                     ),
                   ),
                   Positioned(
-                    bottom:
-                        screenHeight * 0.15 - math.cos(t * math.pi) * 40,
-                    left: -80 + math.sin(t * math.pi) * 50,
+                    bottom: screenHeight * 0.12 - math.cos(t * math.pi) * 30,
+                    left: -90 + math.sin(t * math.pi) * 36,
                     child: Container(
                       width: 300,
                       height: 300,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.tealAccent.withValues(alpha: 0.08),
+                        color: Color(0x0FD8B36E), // gold ~6%
                       ),
                     ),
                   ),
@@ -85,15 +89,70 @@ class _CalmLightBackgroundState extends State<CalmLightBackground>
           ),
         ),
 
-        // Backdrop blur is a separate static pass — it only re-renders
-        // when its *own* content changes, not every animation frame.
+        // Blur pass over the glows only — static.
         BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+          filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
           child: const SizedBox.expand(),
+        ),
+
+        // 3 — static geometric lattice, top third of the screen.
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: screenHeight * 0.34,
+          child: IgnorePointer(
+            child: RepaintBoundary(
+              child: ShaderMask(
+                shaderCallback: (rect) => const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.white, Colors.transparent],
+                ).createShader(rect),
+                blendMode: BlendMode.dstIn,
+                child: const CustomPaint(
+                  painter: _StarLatticePainter(),
+                  size: Size.infinite,
+                ),
+              ),
+            ),
+          ),
         ),
 
         widget.child,
       ],
     );
   }
+}
+
+/// Sparse grid of tiny eight-point stars at ~3% ivory. Painted once.
+class _StarLatticePainter extends CustomPainter {
+  const _StarLatticePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const spacing = 64.0;
+    const starSize = 9.0;
+    const painter = EightPointStarPainter(
+      color: Color(0x08ECEFE9),
+      strokeWidth: 0.9,
+    );
+
+    final cols = (size.width / spacing).ceil() + 1;
+    final rows = (size.height / spacing).ceil() + 1;
+
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        final dx = c * spacing + (r.isOdd ? spacing / 2 : 0) - spacing / 2;
+        final dy = r * spacing;
+        canvas.save();
+        canvas.translate(dx, dy);
+        painter.paint(canvas, const Size.square(starSize));
+        canvas.restore();
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

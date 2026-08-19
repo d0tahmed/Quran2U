@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Legacy alias kept so any older RemoteViews reference still resolves. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#1A00C853" />
-    <corners android:radius="10dp" />
+    <solid android:color="#2874C6A4" />
+    <corners android:radius="14dp" />
 </shape>

@@ -148,7 +148,7 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
       expand:           false,
       builder: (ctx, scrollCtrl) => Container(
         decoration: const BoxDecoration(
-          color:         Color(0xFF0E1421),
+          color:         AppColorsV2.surfaceLow,
           borderRadius:  BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -813,7 +813,7 @@ class _HadithSectionPickerSheetState
       expand: false,
       builder: (ctx, scrollCtrl) => Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF0E1421),
+          color: AppColorsV2.surfaceLow,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(

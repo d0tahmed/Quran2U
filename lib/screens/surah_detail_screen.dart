@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/providers/reading_progress_provider.dart';
+import 'package:quran_recitation/screens/ayah_word_picker.dart';
 import 'package:quran_recitation/services/download_service.dart';
 import 'package:quran_recitation/services/interleaved_audio_service.dart'; // Added to access TranslationMode
 import 'package:quran_recitation/ui_v2/app_colors.dart';
@@ -53,6 +55,37 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
     }
   }
 
+  /// Stores where the reader is, so Home can offer "Continue reading".
+  void _recordProgress(int ayahNumber) {
+    final s = widget.surah;
+    ref.read(readingProgressProvider.notifier).recordSurah(
+          surahNumber: s.number,
+          surahName: s.name,
+          surahNameArabic: s.nameArabic,
+          ayahNumber: ayahNumber,
+          ayahCount: s.ayahCount,
+        );
+  }
+
+  /// Finds the top-most ayah currently on screen and records it.
+  void _recordVisibleAyah() {
+    if (!mounted) return;
+    int? best;
+    var bestDy = double.infinity;
+    _ayahKeys.forEach((ayahNumber, key) {
+      final ctx = key.currentContext;
+      if (ctx == null) return;
+      final box = ctx.findRenderObject();
+      if (box is! RenderBox || !box.hasSize) return;
+      final dy = box.localToGlobal(Offset.zero).dy;
+      if (dy >= 0 && dy < bestDy) {
+        bestDy = dy;
+        best = ayahNumber;
+      }
+    });
+    if (best != null) _recordProgress(best!);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +95,12 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(currentSurahProvider.notifier).state = widget.surah.number;
       _checkDownloadStatus();
+      // Only reset to ayah 1 when arriving at a different surah, so returning
+      // to the one you were reading keeps your place.
+      final existing = ref.read(readingProgressProvider);
+      if (existing == null || existing.surahNumber != widget.surah.number) {
+        _recordProgress(1);
+      }
     });
   }
 
@@ -274,7 +313,12 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
     final showBismillah = surah.number != 1 && surah.number != 9;
     final headerCount = showBismillah ? 1 : 0;
 
-    return ListView.builder(
+    return NotificationListener<ScrollEndNotification>(
+      onNotification: (_) {
+        _recordVisibleAyah();
+        return false;
+      },
+      child: ListView.builder(
       controller: _scrollCtrl,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
       itemCount: ayahs.length + headerCount,
@@ -326,6 +370,8 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
           key: _keyFor(ayah.numberInSurah),
           child: _VerseCard(
             ayah: ayah,
+            surahName: surah.name,
+            revelationType: surah.revelationType,
             isBookmarked: isBookmarked,
             isActive: isCurrentAyah,
             // Pass the dynamic states down to the verse card
@@ -335,6 +381,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
           ),
         );
       },
+      ),
     );
   }
 
@@ -342,6 +389,8 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
     if (isBookmarked) {
       ref.read(bookmarksProvider.notifier).removeBookmark(surah.number, ayah.numberInSurah);
     } else {
+      // Bookmarking an ayah also marks it as where to continue from.
+      _recordProgress(ayah.numberInSurah);
       ref.read(bookmarksProvider.notifier).addBookmark(
         Bookmark(
           id: const Uuid().v4(),
@@ -359,7 +408,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF0E1421),
+      backgroundColor: AppColorsV2.surfaceLow,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => _DownloadSheet(
@@ -687,6 +736,8 @@ class _VerseCard extends StatelessWidget {
   final bool isTranslationSegment;
   final bool isEnglishAudio;
   final VoidCallback onBookmarkToggle;
+  final String surahName;
+  final String revelationType;
 
   const _VerseCard({
     required this.ayah,
@@ -695,7 +746,21 @@ class _VerseCard extends StatelessWidget {
     this.isTranslationSegment = false,
     this.isEnglishAudio = false,
     required this.onBookmarkToggle,
+    this.surahName = '',
+    this.revelationType = '',
   });
+
+  /// Opens the word-by-word picker for this ayah.
+  void _openWordPicker(BuildContext context) {
+    showAyahWordPicker(
+      context,
+      ayahText: ayah.text,
+      surahNumber: ayah.surahNumber,
+      ayahNumber: ayah.numberInSurah,
+      surahName: surahName,
+      revelationType: revelationType,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -721,24 +786,29 @@ class _VerseCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
+                Expanded(
+                  child: Row(
                   children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColorsV2.outlineVariant.withValues(alpha: 0.35),
+                    GestureDetector(
+                      onTap: () => _openWordPicker(context),
+                      onLongPress: () => _openWordPicker(context),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColorsV2.outlineVariant.withValues(alpha: 0.35),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        '${ayah.numberInSurah}',
-                        style: GoogleFonts.manrope(
-                          color: _kGold,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
+                        child: Text(
+                          '${ayah.numberInSurah}',
+                          style: GoogleFonts.manrope(
+                            color: _kGold,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ),
@@ -770,9 +840,10 @@ class _VerseCard extends StatelessWidget {
                             const SizedBox(width: 5),
                             // 👇 Dynamic label based on Audio selection! 👇
                             Text(
-                              isTranslationSegment 
-                                  ? (isEnglishAudio ? 'ENGLISH' : 'اردو') 
+                              isTranslationSegment
+                                  ? (isEnglishAudio ? 'ENGLISH' : 'اردو')
                                   : 'عربی',
+                              maxLines: 1,
                               style: GoogleFonts.manrope(
                                 color: _kGold,
                                 fontSize: 10,
@@ -784,9 +855,21 @@ class _VerseCard extends StatelessWidget {
                       )
                     ],
                   ],
+                  ),
                 ),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    IconButton(
+                      tooltip: 'Word by word',
+                      onPressed: () => _openWordPicker(context),
+                      icon: const Icon(
+                        Icons.spellcheck_rounded,
+                        color: AppColorsV2.onSurfaceVariant,
+                        size: 20,
+                      ),
+                      splashRadius: 20,
+                    ),
                     IconButton(
                       onPressed: onBookmarkToggle,
                       icon: Icon(
@@ -805,10 +888,13 @@ class _VerseCard extends StatelessWidget {
           const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text(
-              ayah.text,
-              textDirection: TextDirection.rtl,
-              textAlign: TextAlign.right,
+            // Hold any word for ~1.5s to open its full word study.
+            child: AyahWordText(
+              text: ayah.text,
+              surahNumber: ayah.surahNumber,
+              ayahNumber: ayah.numberInSurah,
+              surahName: surahName,
+              revelationType: revelationType,
               style: TextStyle(
                 fontSize: 34,
                 height: 2.3,

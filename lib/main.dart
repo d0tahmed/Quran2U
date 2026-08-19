@@ -61,7 +61,7 @@ Future<void> main() async {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF0C0F1A),
+      systemNavigationBarColor: Color(0xFF0B100E), // Sakina obsidian
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
@@ -127,8 +127,37 @@ class AuthGate extends ConsumerWidget {
   }
 }
 
-class QuranRecitationApp extends StatelessWidget {
+class QuranRecitationApp extends StatefulWidget {
   const QuranRecitationApp({super.key});
+
+  @override
+  State<QuranRecitationApp> createState() => _QuranRecitationAppState();
+}
+
+class _QuranRecitationAppState extends State<QuranRecitationApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Opening the app is the one moment we are guaranteed to be allowed to
+    // run. Push fresh prayer data to the home-screen widget then, so it can
+    // never sit on stale times even if the OS throttles our WorkManager job.
+    if (state == AppLifecycleState.resumed) {
+      WidgetService.refreshWidget();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -136,6 +165,19 @@ class QuranRecitationApp extends StatelessWidget {
       title: 'Quran2U',
       debugShowCheckedModeBanner: false,
       theme: AppThemeV2.dark(),
+      // Devices shipped with a large system font scale (very common on
+      // Infinix/Tecno/Xiaomi) blow every tight row past its bounds and produce
+      // the yellow "RenderFlex overflowed" stripes. Honour the user's setting
+      // up to 1.2x, then stop — beyond that the layout, not the text, breaks.
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: media.textScaler.clamp(maxScaleFactor: 1.2),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       // 👇 The app now boots to the Gatekeeper instead of the MainShell! 👇
       home: const AuthGate(),
     );

@@ -1,21 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sakina prayer-times widget.
+
+  Each cell stacks LABEL / 4:48 / AM on three single-line rows so a 12-hour
+  time can never wrap ("12:37 P M" was the old failure). Every TextView is
+  singleLine with ellipsize="none" — at these widths the text must fit, and
+  splitting the meridiem off is what makes it fit.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0D1117"
+    android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="14dp">
 
-    <!-- ── Header ───────────────────────────────────── -->
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="5dp">
+        android:baselineAligned="false"
+        android:gravity="center_vertical">
 
-        <!-- Brand -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -26,63 +33,86 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="QURAN2U"
-                android:textColor="#00E676"
-                android:textSize="11sp"
+                android:textColor="#D8B36E"
+                android:textSize="10sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.12" />
+                android:letterSpacing="0.22"
+                android:singleLine="true" />
 
             <TextView
+                android:id="@+id/tv_hijri_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Prayer Times"
-                android:textColor="#44FFFFFF"
-                android:textSize="9sp" />
+                android:layout_marginTop="3dp"
+                android:text=""
+                android:textColor="#ECEFE9"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tv_greg_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:text=""
+                android:textColor="#A2AFA6"
+                android:textSize="9sp"
+                android:singleLine="true"
+                android:ellipsize="end" />
         </LinearLayout>
 
-        <!-- Next prayer pill -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="end"
-            android:background="#1A00E676"
-            android:padding="6dp">
+            android:background="@drawable/widget_pill"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp">
 
             <TextView
                 android:id="@+id/tv_next_prayer_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Next: --"
-                android:textColor="#00E676"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:text="Next"
+                android:textColor="#74C6A4"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:singleLine="true" />
 
             <TextView
                 android:id="@+id/tv_countdown"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="-- remaining"
-                android:textColor="#88FFFFFF"
-                android:textSize="9sp" />
+                android:layout_marginTop="1dp"
+                android:text=""
+                android:textColor="#A2AFA6"
+                android:textSize="9sp"
+                android:singleLine="true" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Divider -->
+    <!-- Hairline -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#15FFFFFF"
-        android:layout_marginBottom="5dp" />
+        android:background="#1FECEFE9"
+        android:layout_marginTop="11dp"
+        android:layout_marginBottom="10dp" />
 
-    <!-- ── Row 1: Fajr | Dhuhr | Asr | Maghrib | Isha ── -->
+    <!-- Six prayer cells -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="horizontal"
-        android:layout_marginBottom="5dp">
+        android:baselineAligned="false">
 
-        <!-- Fajr -->
+        <!-- FAJR -->
         <LinearLayout
             android:id="@+id/row_fajr"
             android:layout_width="0dp"
@@ -90,165 +120,50 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="#1AFFFFFF"
-            android:layout_marginEnd="3dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:background="@drawable/widget_cell_normal"
+            android:layout_marginEnd="4dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/lbl_fajr"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:text="FAJR"
-                android:textColor="#66FFFFFF"
+                android:textColor="#A2AFA6"
                 android:textSize="7sp"
-                android:letterSpacing="0.08" />
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
 
             <TextView
                 android:id="@+id/tv_fajr"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="3dp"
                 android:text="--:--"
-                android:textColor="#FFFFFF"
-                android:textSize="9sp"
+                android:textColor="#ECEFE9"
+                android:textSize="13sp"
                 android:textStyle="bold"
-                android:layout_marginTop="1dp" />
-        </LinearLayout>
-
-        <!-- Dhuhr -->
-        <LinearLayout
-            android:id="@+id/row_dhuhr"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="#1AFFFFFF"
-            android:layout_marginEnd="3dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
+                android:singleLine="true"
+                android:ellipsize="none" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/mer_fajr"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="DHUHR"
-                android:textColor="#66FFFFFF"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#A2AFA6"
                 android:textSize="7sp"
-                android:letterSpacing="0.08" />
-
-            <TextView
-                android:id="@+id/tv_dhuhr"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--:--"
-                android:textColor="#FFFFFF"
-                android:textSize="9sp"
-                android:textStyle="bold"
-                android:layout_marginTop="1dp" />
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
         </LinearLayout>
 
-        <!-- Asr -->
-        <LinearLayout
-            android:id="@+id/row_asr"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="#1AFFFFFF"
-            android:layout_marginEnd="3dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ASR"
-                android:textColor="#66FFFFFF"
-                android:textSize="7sp"
-                android:letterSpacing="0.08" />
-
-            <TextView
-                android:id="@+id/tv_asr"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--:--"
-                android:textColor="#FFFFFF"
-                android:textSize="9sp"
-                android:textStyle="bold"
-                android:layout_marginTop="1dp" />
-        </LinearLayout>
-
-        <!-- Maghrib -->
-        <LinearLayout
-            android:id="@+id/row_maghrib"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="#1AFFFFFF"
-            android:layout_marginEnd="3dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="MAGHRIB"
-                android:textColor="#66FFFFFF"
-                android:textSize="7sp"
-                android:letterSpacing="0.08" />
-
-            <TextView
-                android:id="@+id/tv_maghrib"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--:--"
-                android:textColor="#FFFFFF"
-                android:textSize="9sp"
-                android:textStyle="bold"
-                android:layout_marginTop="1dp" />
-        </LinearLayout>
-
-        <!-- Isha -->
-        <LinearLayout
-            android:id="@+id/row_isha"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="#1AFFFFFF"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ISHA"
-                android:textColor="#66FFFFFF"
-                android:textSize="7sp"
-                android:letterSpacing="0.08" />
-
-            <TextView
-                android:id="@+id/tv_isha"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--:--"
-                android:textColor="#FFFFFF"
-                android:textSize="9sp"
-                android:textStyle="bold"
-                android:layout_marginTop="1dp" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- ── Row 2: Sunrise (standalone, kept as is) ── -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal">
-
+        <!-- SHURUQ -->
         <LinearLayout
             android:id="@+id/row_sunrise"
             android:layout_width="0dp"
@@ -256,27 +171,250 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:background="#1AFFFFFF"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp">
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:background="@drawable/widget_cell_normal"
+            android:layout_marginEnd="4dp">
 
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/lbl_sunrise"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="SUNRISE"
-                android:textColor="#66FFFFFF"
-                android:textSize="8sp"
-                android:letterSpacing="0.1" />
+                android:gravity="center"
+                android:text="SHURUQ"
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
 
             <TextView
                 android:id="@+id/tv_sunrise"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="3dp"
                 android:text="--:--"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:textColor="#ECEFE9"
+                android:textSize="13sp"
                 android:textStyle="bold"
-                android:layout_marginTop="1dp" />
+                android:singleLine="true"
+                android:ellipsize="none" />
+
+            <TextView
+                android:id="@+id/mer_sunrise"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
+        </LinearLayout>
+
+        <!-- DHUHR -->
+        <LinearLayout
+            android:id="@+id/row_dhuhr"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:background="@drawable/widget_cell_normal"
+            android:layout_marginEnd="4dp">
+
+            <TextView
+                android:id="@+id/lbl_dhuhr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="DHUHR"
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
+
+            <TextView
+                android:id="@+id/tv_dhuhr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="3dp"
+                android:text="--:--"
+                android:textColor="#ECEFE9"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="none" />
+
+            <TextView
+                android:id="@+id/mer_dhuhr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
+        </LinearLayout>
+
+        <!-- ASR -->
+        <LinearLayout
+            android:id="@+id/row_asr"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:background="@drawable/widget_cell_normal"
+            android:layout_marginEnd="4dp">
+
+            <TextView
+                android:id="@+id/lbl_asr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="ASR"
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
+
+            <TextView
+                android:id="@+id/tv_asr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="3dp"
+                android:text="--:--"
+                android:textColor="#ECEFE9"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="none" />
+
+            <TextView
+                android:id="@+id/mer_asr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
+        </LinearLayout>
+
+        <!-- MAGHRIB -->
+        <LinearLayout
+            android:id="@+id/row_maghrib"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:background="@drawable/widget_cell_normal"
+            android:layout_marginEnd="4dp">
+
+            <TextView
+                android:id="@+id/lbl_maghrib"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="MAGHRIB"
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
+
+            <TextView
+                android:id="@+id/tv_maghrib"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="3dp"
+                android:text="--:--"
+                android:textColor="#ECEFE9"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="none" />
+
+            <TextView
+                android:id="@+id/mer_maghrib"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
+        </LinearLayout>
+
+        <!-- ISHA -->
+        <LinearLayout
+            android:id="@+id/row_isha"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:background="@drawable/widget_cell_normal">
+
+            <TextView
+                android:id="@+id/lbl_isha"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="ISHA"
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
+
+            <TextView
+                android:id="@+id/tv_isha"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="3dp"
+                android:text="--:--"
+                android:textColor="#ECEFE9"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="none" />
+
+            <TextView
+                android:id="@+id/mer_isha"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text=""
+                android:textColor="#A2AFA6"
+                android:textSize="7sp"
+                android:letterSpacing="0.06"
+                android:singleLine="true"
+                android:ellipsize="none" />
         </LinearLayout>
     </LinearLayout>
 

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:adhan/adhan.dart';
 import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/services/time_format.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 
 
@@ -138,7 +139,7 @@ class _PrayerRow extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Text(
-              DateFormat.jm().format(time),
+              TimeFormat.clock(time),
               textAlign: TextAlign.right,
               style: GoogleFonts.manrope(
                 color: isHighlighted ? Colors.white : Colors.white70,

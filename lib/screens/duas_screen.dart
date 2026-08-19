@@ -267,7 +267,8 @@ class _DuaCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.g_translate_rounded, color: Colors.white30, size: 14),
+              const Icon(Icons.g_translate_rounded,
+                  color: Colors.white30, size: 14),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -288,7 +289,8 @@ class _DuaCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.translate_rounded, color: Colors.white30, size: 14),
+                const Icon(Icons.translate_rounded,
+                    color: Colors.white30, size: 14),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

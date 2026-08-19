@@ -2,9 +2,18 @@ import 'package:geolocator/geolocator.dart';
 import 'package:adhan/adhan.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:quran_recitation/services/hijri_date.dart';
+import 'package:quran_recitation/services/time_format.dart';
 
 /// Service that computes prayer times and pushes them to the native
 /// Android home-screen widget via [HomeWidget] (SharedPreferences bridge).
+///
+/// IMPORTANT — division of labour with the native side:
+/// this service publishes *facts* (each prayer's time, and its minutes since
+/// midnight). It does NOT decide which prayer is "next" for the widget.
+/// PrayerTimesWidgetProvider recomputes that from the system clock every time
+/// it draws, so the widget can never get stuck on a stale prayer when Android
+/// throttles our background work.
 class WidgetService {
   WidgetService._();
 
@@ -27,76 +36,51 @@ class WidgetService {
       final prayerTimes = PrayerTimes.today(coords, params);
 
       final now = DateTime.now();
-      final fmt = DateFormat.jm(); // e.g. "5:23 AM"
 
-      // ── 3. Determine next prayer ─────────────────────────────────────
-      final nextPrayer = prayerTimes.nextPrayer();
-      final highlight = nextPrayer == Prayer.none ? Prayer.fajr : nextPrayer;
+      // Order MUST match the cell order in prayer_times_widget.xml and the
+      // ROW_IDS array in PrayerTimesWidgetProvider.kt.
+      final schedule = <String, DateTime>{
+        'fajr': prayerTimes.fajr,
+        'sunrise': prayerTimes.sunrise,
+        'dhuhr': prayerTimes.dhuhr,
+        'asr': prayerTimes.asr,
+        'maghrib': prayerTimes.maghrib,
+        'isha': prayerTimes.isha,
+      };
 
-      DateTime nextTime;
-      String nextName;
-      switch (highlight) {
-        case Prayer.fajr:
-          nextTime = prayerTimes.fajr;
-          nextName = 'Fajr';
-        case Prayer.sunrise:
-          nextTime = prayerTimes.sunrise;
-          nextName = 'Sunrise';
-        case Prayer.dhuhr:
-          nextTime = prayerTimes.dhuhr;
-          nextName = 'Dhuhr';
-        case Prayer.asr:
-          nextTime = prayerTimes.asr;
-          nextName = 'Asr';
-        case Prayer.maghrib:
-          nextTime = prayerTimes.maghrib;
-          nextName = 'Maghrib';
-        case Prayer.isha:
-          nextTime = prayerTimes.isha;
-          nextName = 'Isha';
-        default:
-          nextTime = prayerTimes.fajr;
-          nextName = 'Fajr';
+      // ── 3. Publish each prayer three ways ────────────────────────────
+      //   *_time -> "4:48 AM"  (full, for accessibility / legacy readers)
+      //   *_hm   -> "4:48"     (numerals only — the widget's big line)
+      //   *_mer  -> "AM"       (meridiem on its own line, so nothing wraps)
+      //   *_min  -> 288        (minutes since midnight — the native clock math)
+      for (final entry in schedule.entries) {
+        final key = entry.key;
+        final time = entry.value;
+        await HomeWidget.saveWidgetData<String>(
+            '${key}_time', TimeFormat.clock(time));
+        await HomeWidget.saveWidgetData<String>(
+            '${key}_hm', TimeFormat.hourMinute(time));
+        await HomeWidget.saveWidgetData<String>(
+            '${key}_mer', TimeFormat.meridiem(time));
+        await HomeWidget.saveWidgetData<int>(
+            '${key}_min', TimeFormat.minutesSinceMidnight(time));
       }
 
-      // If the next prayer is actually tomorrow's Fajr (all prayers passed)
-      if (nextPrayer == Prayer.none) {
-        final tomorrow = now.add(const Duration(days: 1));
-        final tomorrowCoords = coords;
-        final tomorrowTimes = PrayerTimes(
-          tomorrowCoords,
-          DateComponents(tomorrow.year, tomorrow.month, tomorrow.day),
-          params,
-        );
-        nextTime = tomorrowTimes.fajr;
-      }
+      // ── 4. Dual calendar for the widget header ───────────────────────
+      final hijri = HijriDate.fromDate(now);
+      await HomeWidget.saveWidgetData<String>('hijri_date', hijri.short);
+      await HomeWidget.saveWidgetData<String>(
+          'greg_date', DateFormat('EEEE, d MMMM yyyy').format(now));
 
-      final remaining = nextTime.difference(now);
-      final hours = remaining.inHours;
-      final minutes = remaining.inMinutes % 60;
-      final remainingStr = hours > 0
-          ? '${hours}h ${minutes}m remaining'
-          : '${minutes}m remaining';
-
-      // ── 4. Save to SharedPreferences ─────────────────────────────────
-      await HomeWidget.saveWidgetData<String>('fajr_time', fmt.format(prayerTimes.fajr));
-      await HomeWidget.saveWidgetData<String>('sunrise_time', fmt.format(prayerTimes.sunrise));
-      await HomeWidget.saveWidgetData<String>('dhuhr_time', fmt.format(prayerTimes.dhuhr));
-      await HomeWidget.saveWidgetData<String>('asr_time', fmt.format(prayerTimes.asr));
-      await HomeWidget.saveWidgetData<String>('maghrib_time', fmt.format(prayerTimes.maghrib));
-      await HomeWidget.saveWidgetData<String>('isha_time', fmt.format(prayerTimes.isha));
-
-      await HomeWidget.saveWidgetData<String>('next_prayer_name', nextName);
-      await HomeWidget.saveWidgetData<String>('next_prayer_time', fmt.format(nextTime));
-      await HomeWidget.saveWidgetData<String>('next_prayer_remaining', remainingStr);
-
-      // Which row index (0-5) to highlight: fajr=0, sunrise=1, ..., isha=5
-      final highlightIndex = _prayerIndex(highlight);
-      await HomeWidget.saveWidgetData<int>('highlight_index', highlightIndex);
+      // Stamp the day these times belong to. The native side uses it only to
+      // know whether the data is from today; the highlight itself is always
+      // derived from the live clock.
+      await HomeWidget.saveWidgetData<String>(
+          'data_date', DateFormat('yyyy-MM-dd').format(now));
 
       await HomeWidget.saveWidgetData<String>(
         'last_updated',
-        DateFormat('hh:mm a').format(now),
+        TimeFormat.clock(now),
       );
 
       // ── 5. Tell Android to redraw the widget ─────────────────────────
@@ -134,18 +118,6 @@ class WidgetService {
       return Coordinates(pos.latitude, pos.longitude);
     } catch (_) {
       return fallback;
-    }
-  }
-
-  static int _prayerIndex(Prayer p) {
-    switch (p) {
-      case Prayer.fajr:    return 0;
-      case Prayer.sunrise: return 1;
-      case Prayer.dhuhr:   return 2;
-      case Prayer.asr:     return 3;
-      case Prayer.maghrib: return 4;
-      case Prayer.isha:    return 5;
-      default:             return 0;
     }
   }
 }

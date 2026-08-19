@@ -126,7 +126,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.download_for_offline_outlined,
+          const Icon(Icons.download_for_offline_outlined,
               color: Colors.white12, size: 64),
           const SizedBox(height: 16),
           Text('No downloads yet',

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/providers/reading_progress_provider.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 
 const _kGreen = AppColorsV2.primary;
@@ -47,7 +48,17 @@ const Map<String, Color> _tajweedColors = {
 };
 
 class ReadQuranScreen extends ConsumerStatefulWidget {
-  const ReadQuranScreen({super.key});
+  /// Mushaf page to open at (1..604). 0 starts at page 1.
+  final int initialPage;
+
+  /// Script tab to open: 0 Uthmani, 1 Indo-Pak, 2 Tajweed.
+  final int initialTab;
+
+  const ReadQuranScreen({
+    super.key,
+    this.initialPage = 0,
+    this.initialTab = 0,
+  });
 
   @override
   ConsumerState<ReadQuranScreen> createState() => _ReadQuranScreenState();
@@ -62,16 +73,67 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
   
   bool _isImmersive = false;
 
+  /// 1-based mushaf page currently on screen.
+  int _currentPage = 1;
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _uthmaniController = PageController(initialPage: 0);
-    _indoPakController = PageController(initialPage: 0);
-    _tajweedController = PageController(initialPage: 0);
+    final startIndex =
+        (widget.initialPage > 0 ? widget.initialPage - 1 : 0).clamp(0, 603);
+    _currentPage = startIndex + 1;
+
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTab.clamp(0, 2),
+    );
+    _uthmaniController = PageController(initialPage: startIndex);
+    _indoPakController = PageController(initialPage: startIndex);
+    _tajweedController = PageController(initialPage: startIndex);
     _sheetAnimController = BottomSheet.createAnimationController(this)
       ..duration = const Duration(milliseconds: 420)
       ..reverseDuration = const Duration(milliseconds: 320);
+  }
+
+  /// Saves the page the reader is on so Home can resume exactly here.
+  void _recordPage(int pageNum) {
+    if (!mounted) return;
+    if (_currentPage != pageNum) setState(() => _currentPage = pageNum);
+    ref.read(readingProgressProvider.notifier).recordPage(
+          page: pageNum,
+          scriptTab: _tabController.index,
+        );
+  }
+
+  /// Long-press anywhere on a page → bookmark it as the resume point.
+  void _bookmarkPage(int pageNum) {
+    HapticFeedback.mediumImpact();
+    _recordPage(pageNum);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColorsV2.surfaceHigh,
+        duration: const Duration(seconds: 2),
+        content: Row(
+          children: [
+            const Icon(Icons.bookmark_added_rounded, color: _kGreen, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Page $pageNum saved — Home continues from here',
+                style: GoogleFonts.manrope(
+                  color: AppColorsV2.onSurface,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _toggleImmersiveMode() {
@@ -309,6 +371,13 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
 
       if (!controller.hasClients) return;
       controller.jumpToPage(targetIndex);
+      ref.read(readingProgressProvider.notifier).recordPage(
+            page: targetIndex + 1,
+            scriptTab: _tabController.index,
+            surahNumber: surah.number,
+            surahName: surah.name,
+            surahNameArabic: surah.nameArabic,
+          );
     } catch (_) {
       // If anything fails, we do nothing (reading still works).
     }
@@ -380,6 +449,24 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                               ),
                             ),
                             const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: _kGreen.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                    color: _kGreen.withValues(alpha: 0.22)),
+                              ),
+                              child: Text(
+                                'Page $_currentPage',
+                                style: GoogleFonts.manrope(
+                                  color: _kGreen,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
                             IconButton(
                               tooltip: 'Surah list',
                               onPressed: _openSurahIndexSheet,
@@ -416,11 +503,13 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
 
   Widget _buildMushafEngine(String scriptType, PageController controller) {
     return GestureDetector(
-      onTap: _toggleImmersiveMode, 
+      onTap: _toggleImmersiveMode,
+      onLongPress: () => _bookmarkPage(_currentPage),
       child: PageView.builder(
         controller: controller,
-        reverse: true, 
+        reverse: true,
         itemCount: 604,
+        onPageChanged: (index) => _recordPage(index + 1),
         itemBuilder: (context, index) {
           final pageNum = index + 1;
           final asyncPage = ref.watch(mushafPageProvider((pageNum, scriptType)));
@@ -455,10 +544,12 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
   Widget _buildTajweedEngine() {
     return GestureDetector(
       onTap: _toggleImmersiveMode,
+      onLongPress: () => _bookmarkPage(_currentPage),
       child: PageView.builder(
         controller: _tajweedController,
         reverse: true,
         itemCount: 604,
+        onPageChanged: (index) => _recordPage(index + 1),
         itemBuilder: (context, index) {
           final pageNum = index + 1;
           final asyncPage = ref.watch(tajweedPageProvider(pageNum));
