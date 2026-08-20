@@ -19,6 +19,8 @@ import 'package:quran_recitation/models/word_insight.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/providers/word_insight_providers.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/glass.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 const _kGreen = AppColorsV2.primary;
 const _kGold = AppColorsV2.tertiary;
@@ -191,21 +193,15 @@ class _HeroWordCard extends StatelessWidget {
         ? 'Ayah $surahNumber:$ayahNumber'
         : '$surahName · $surahNumber:$ayahNumber';
 
-    return Container(
-      width: double.infinity,
+    return FrostedCard(
+      radius: 28,
       padding: const EdgeInsets.fromLTRB(20, 26, 20, 22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _kGreen.withValues(alpha: 0.16),
-            AppColorsV2.surfaceLow,
-          ],
-        ),
-        border: Border.all(color: _kGreen.withValues(alpha: 0.22)),
-      ),
+      tint: AppColorsV2.surfaceLow,
+      accent: _kGreen,
+      edgeColor: _kGreen,
+      edgeIntensity: 0.44,
+      glow: _kGreen,
+      elevated: true,
       child: Column(
         children: [
           FittedBox(
@@ -219,7 +215,7 @@ class _HeroWordCard extends StatelessWidget {
                 fontSize: 46,
                 height: 1.9,
                 color: Colors.white,
-                fontFamily: GoogleFonts.amiri().fontFamily,
+                fontFamily: AppTypeV2.amiriFamily,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -318,7 +314,7 @@ class _RootCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 26,
                       color: _kGreen,
-                      fontFamily: GoogleFonts.amiri().fontFamily,
+                      fontFamily: AppTypeV2.amiriFamily,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -415,7 +411,7 @@ class _RootCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 18,
                               color: AppColorsV2.onSurface,
-                              fontFamily: GoogleFonts.amiri().fontFamily,
+                              fontFamily: AppTypeV2.amiriFamily,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -700,7 +696,7 @@ class _OccurrenceTile extends StatelessWidget {
                 fontSize: 21,
                 height: 1.95,
                 color: Colors.white.withValues(alpha: 0.92),
-                fontFamily: GoogleFonts.amiri().fontFamily,
+                fontFamily: AppTypeV2.amiriFamily,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -851,14 +847,13 @@ class _Shell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return FrostedCard(
+      radius: 24,
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-      decoration: BoxDecoration(
-        color: AppColorsV2.surfaceLow,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
+      tint: AppColorsV2.surfaceLow,
+      accent: tint,
+      edgeColor: tint,
+      edgeIntensity: 0.30,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -867,8 +862,16 @@ class _Shell extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: tint.withValues(alpha: 0.13),
                   borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      tint.withValues(alpha: 0.26),
+                      tint.withValues(alpha: 0.08),
+                    ],
+                  ),
+                  border: Border.all(color: tint.withValues(alpha: 0.24)),
                 ),
                 child: Icon(icon, color: tint, size: 17),
               ),

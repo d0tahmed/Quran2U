@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/dua.dart';
 import '../data/hisnul_muslim_db.dart';
 import '../ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 const _kGold = AppColorsV2.tertiary;
 
@@ -239,7 +240,7 @@ class _DuaCard extends StatelessWidget {
               dua.arabic,
               textAlign: TextAlign.right,
               style: TextStyle(
-                fontFamily: GoogleFonts.amiri().fontFamily,
+                fontFamily: AppTypeV2.amiriFamily,
                 color: Colors.white,
                 fontSize: 26,
                 height: 1.8,

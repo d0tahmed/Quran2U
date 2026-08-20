@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/services/download_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 
 const _kGreen = AppColorsV2.primary;
@@ -275,7 +276,7 @@ class _DownloadedTileState extends State<_DownloadedTile> {
                               fontSize: 14,
                               color: _kGold,
                               fontFamily:
-                                  GoogleFonts.amiri().fontFamily)),
+                                  AppTypeV2.amiriFamily)),
                     ),
                   ],
                 ),

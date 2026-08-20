@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/app_typography.dart';
+import 'package:quran_recitation/ui_v2/glass.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Sakina component kit — the small set of shared pieces the redesigned
@@ -35,8 +36,11 @@ class EightPointStarPainter extends CustomPainter {
     final c = Offset(size.width / 2, size.height / 2);
     final half = math.min(size.width, size.height) / 2 - strokeWidth;
 
-    Path square(double rotation) {
-      final path = Path();
+    // PERF: both squares go into ONE Path and one draw call. This painter runs
+    // for every surah medallion in a 114-row list, so two Path allocations and
+    // two draws per row was worth collapsing.
+    final path = Path();
+    for (final rotation in const [0.0, math.pi / 4]) {
       for (var i = 0; i < 4; i++) {
         final a = rotation + i * math.pi / 2;
         final p = Offset(c.dx + half * math.cos(a), c.dy + half * math.sin(a));
@@ -47,11 +51,9 @@ class EightPointStarPainter extends CustomPainter {
         }
       }
       path.close();
-      return path;
     }
 
-    canvas.drawPath(square(0), paint);
-    canvas.drawPath(square(math.pi / 4), paint);
+    canvas.drawPath(path, paint);
   }
 
   @override
@@ -161,38 +163,54 @@ class QSectionHeader extends StatelessWidget {
 
 // ── Card ─────────────────────────────────────────────────────────────────────
 
+/// The workhorse card. Frosted, not blurred — safe to use inside lists.
+///
+/// API is unchanged; it now renders with the tint gradient, sheen and
+/// specular rim of the glass system instead of a flat fill plus a 1px border.
 class QCard extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final Color color;
   final double radius;
+
+  /// Lights the top-left corner with a colour — for cards that lead a screen.
+  final Color? accent;
+
+  /// Drop shadow. Leave off for repeated rows.
+  final bool elevated;
+
+  /// Coloured bloom beneath the card. At most one per screen.
+  final Color? glow;
 
   const QCard({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(18),
     this.onTap,
+    this.onLongPress,
     this.color = AppColorsV2.surfaceLow,
     this.radius = 26,
+    this.accent,
+    this.elevated = false,
+    this.glow,
   });
 
   @override
   Widget build(BuildContext context) {
-    final card = Container(
+    return FrostedCard(
+      radius: radius,
       padding: padding,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: AppColorsV2.hairline),
-      ),
-      child: child,
-    );
-    if (onTap == null) return card;
-    return InkWell(
+      tint: color,
+      accent: accent,
+      elevated: elevated,
+      glow: glow,
+      edgeColor: accent,
+      edgeIntensity: accent == null ? 0.20 : 0.34,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(radius),
-      child: card,
+      onLongPress: onLongPress,
+      child: child,
     );
   }
 }
@@ -215,36 +233,26 @@ class QChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    // A selected chip is a lit pane of jade glass rather than a flat fill:
+    // gradient body, bright rim, soft bloom underneath.
+    return GlassPill(
+      selected: selected,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? AppColorsV2.primary : AppColorsV2.surfaceLow,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: selected ? AppColorsV2.primary : AppColorsV2.hairline,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (leading != null) ...[leading!, const SizedBox(width: 8)],
-            Text(
-              label,
-              style: AppTypeV2.caption(
-                size: 12,
-                color: selected
-                    ? AppColorsV2.onPrimary
-                    : AppColorsV2.onSurfaceVariant,
-                weight: selected ? FontWeight.w800 : FontWeight.w700,
-              ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (leading != null) ...[leading!, const SizedBox(width: 8)],
+          Text(
+            label,
+            style: AppTypeV2.caption(
+              size: 12,
+              color:
+                  selected ? AppColorsV2.onSurface : AppColorsV2.onSurfaceVariant,
+              weight: selected ? FontWeight.w800 : FontWeight.w700,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

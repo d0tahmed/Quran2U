@@ -12,6 +12,18 @@ import 'package:quran_recitation/ui_v2/app_colors.dart';
 class AppTypeV2 {
   AppTypeV2._();
 
+  // ── Cached font families ──────────────────────────────────────────────────
+  //
+  // PERF: `GoogleFonts.amiri()` is not free — it hashes the variant, checks the
+  // loaded-font registry and allocates a TextStyle just so a caller can read
+  // `.fontFamily` off it. The reader calls that once per ayah, so on a busy
+  // mushaf page it ran hundreds of times per build for a value that never
+  // changes. Resolve each family once, at first use, and reuse the string.
+  static final String? amiriFamily = GoogleFonts.amiri().fontFamily;
+  static final String? manropeFamily = GoogleFonts.manrope().fontFamily;
+  static final String? playfairFamily =
+      GoogleFonts.playfairDisplay().fontFamily;
+
   // ── Display (serif) ───────────────────────────────────────────────────────
   static TextStyle display({
     double size = 30,
@@ -87,7 +99,7 @@ class AppTypeV2 {
         fontSize: size,
         color: color,
         height: height,
-        fontFamily: GoogleFonts.amiri().fontFamily,
+        fontFamily: amiriFamily,
         fontWeight: weight,
       );
 }

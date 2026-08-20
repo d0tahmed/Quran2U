@@ -5,6 +5,7 @@ import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/services/tafseer_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 // ── Providers ────────────────────────────────────────────────────────────────
 
@@ -152,7 +153,7 @@ class TafseerScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: 28,
               color: AppColorsV2.primary,
-              fontFamily: GoogleFonts.amiri().fontFamily,
+              fontFamily: AppTypeV2.amiriFamily,
               fontWeight: FontWeight.w700,
             ),
           ),

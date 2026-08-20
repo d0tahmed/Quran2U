@@ -11,7 +11,9 @@ import 'package:quran_recitation/screens/downloads_screen.dart';
 import 'package:quran_recitation/screens/login_screen.dart';
 import 'package:quran_recitation/services/interleaved_audio_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/glass.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 const _kGreen = AppColorsV2.primary;
 const _kGold = AppColorsV2.tertiary;
@@ -764,25 +766,34 @@ class _TileButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) => FrostedCard(
+        radius: 28,
+        padding: const EdgeInsets.all(16),
+        tint: background,
+        accent: iconColor,
+        edgeColor: borderColor == null
+            ? iconColor
+            : borderColor!.withValues(alpha: 1.0),
+        edgeIntensity: borderColor == null ? 0.32 : 0.46,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: borderColor ?? Colors.white.withValues(alpha: 0.06)),
-          ),
-          child: Column(
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(18),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      iconColor.withValues(alpha: 0.26),
+                      iconColor.withValues(alpha: 0.08),
+                    ],
+                  ),
+                  border:
+                      Border.all(color: iconColor.withValues(alpha: 0.22)),
                 ),
                 child: Icon(icon, color: iconColor),
               ),
@@ -807,7 +818,6 @@ class _TileButton extends StatelessWidget {
               ),
             ],
           ),
-        ),
       );
 }
 
@@ -934,7 +944,7 @@ class _TajweedGuideSheet extends StatelessWidget {
                                   style: TextStyle(
                                       color: rule.color,
                                       fontSize: 13,
-                                      fontFamily: GoogleFonts.amiri().fontFamily)),
+                                      fontFamily: AppTypeV2.amiriFamily)),
                               const SizedBox(height: 2),
                               Text(rule.description,
                                   style: GoogleFonts.outfit(
@@ -959,7 +969,7 @@ class _TajweedGuideSheet extends StatelessWidget {
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 16,
-                              fontFamily: GoogleFonts.amiri().fontFamily,
+                              fontFamily: AppTypeV2.amiriFamily,
                             ),
                           ),
                         ),
@@ -1328,13 +1338,13 @@ class _GlassCard extends StatelessWidget {
   const _GlassCard({required this.child, this.accentColor});
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => FrostedCard(
+        radius: 14,
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _kCard,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: accentColor ?? Colors.white.withValues(alpha: 0.07)),
-        ),
+        tint: _kCard,
+        accent: accentColor,
+        edgeColor: accentColor,
+        edgeIntensity: accentColor == null ? 0.18 : 0.36,
         child: child,
       );
 }
@@ -1384,8 +1394,16 @@ class _IconBox extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(9),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withValues(alpha: 0.26),
+              color.withValues(alpha: 0.08),
+            ],
+          ),
+          border: Border.all(color: color.withValues(alpha: 0.22)),
         ),
         child: Icon(icon, color: color, size: 18),
       );

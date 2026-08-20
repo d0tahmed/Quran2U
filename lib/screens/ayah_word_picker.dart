@@ -17,6 +17,8 @@ import 'package:quran_recitation/providers/word_insight_providers.dart';
 import 'package:quran_recitation/screens/word_insight_screen.dart';
 import 'package:quran_recitation/services/arabic_text_utils.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/glass.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 /// How long a word must be held before the study page opens.
 /// Tune here — 1500 ms feels deliberate without being sluggish; raise to
@@ -272,26 +274,21 @@ class _AyahWordPickerSheet extends ConsumerWidget {
       maxChildSize: 0.94,
       expand: false,
       builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColorsV2.bg,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
-          ),
+        // A real sheet floats over the reader, so this is one of the few
+        // places a backdrop blur is worth its cost.
+        return GlassSurface(
+          tier: GlassTier.sheet,
+          borderRadius: kGlassSheetRadius,
+          padding: EdgeInsets.zero,
+          tint: AppColorsV2.bg,
+          edgeColor: _kGreen,
+          edgeIntensity: 0.34,
           child: SafeArea(
             top: false,
             child: Column(
               children: [
                 const SizedBox(height: 10),
-                Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
+                const GlassGrabber(),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
                   child: Row(
@@ -299,8 +296,17 @@ class _AyahWordPickerSheet extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(9),
                         decoration: BoxDecoration(
-                          color: _kGreen.withValues(alpha: 0.13),
                           borderRadius: BorderRadius.circular(12),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              _kGreen.withValues(alpha: 0.26),
+                              _kGreen.withValues(alpha: 0.08),
+                            ],
+                          ),
+                          border:
+                              Border.all(color: _kGreen.withValues(alpha: 0.24)),
                         ),
                         child: const Icon(Icons.spellcheck_rounded,
                             color: _kGreen, size: 18),
@@ -459,8 +465,12 @@ class _AyahWordPickerSheet extends ConsumerWidget {
             spacing: 10,
             runSpacing: 10,
             children: List<Widget>.generate(words.length, (i) {
-              return InkWell(
-                borderRadius: BorderRadius.circular(14),
+              return FrostedCard(
+                radius: 14,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                edgeColor: _kGold,
+                edgeIntensity: 0.22,
                 onTap: () {
                   if (ArabicText.isOrnament(words[i])) return;
                   final navigator = Navigator.of(context);
@@ -475,25 +485,14 @@ class _AyahWordPickerSheet extends ConsumerWidget {
                   navigator.pop();
                   navigator.push(route);
                 },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColorsV2.surfaceLow,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppColorsV2.outlineVariant.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Text(
-                    words[i],
-                    style: TextStyle(
-                      fontSize: 24,
-                      height: 1.8,
-                      color: Colors.white,
-                      fontFamily: GoogleFonts.amiri().fontFamily,
-                      fontWeight: FontWeight.w700,
-                    ),
+                child: Text(
+                  words[i],
+                  style: TextStyle(
+                    fontSize: 24,
+                    height: 1.8,
+                    color: Colors.white,
+                    fontFamily: AppTypeV2.amiriFamily,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               );
@@ -513,17 +512,13 @@ class _WordRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
+    return FrostedCard(
+      radius: 16,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      edgeColor: _kGold,
+      edgeIntensity: 0.20,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        decoration: BoxDecoration(
-          color: AppColorsV2.surfaceLow,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        ),
-        child: Row(
+      child: Row(
           children: [
             Container(
               width: 26,
@@ -590,7 +585,7 @@ class _WordRow extends StatelessWidget {
                     fontSize: 24,
                     height: 1.9,
                     color: Colors.white,
-                    fontFamily: GoogleFonts.amiri().fontFamily,
+                    fontFamily: AppTypeV2.amiriFamily,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -601,7 +596,6 @@ class _WordRow extends StatelessWidget {
                 size: 18, color: AppColorsV2.onSurfaceVariant),
           ],
         ),
-      ),
     );
   }
 }

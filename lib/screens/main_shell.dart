@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -13,6 +12,7 @@ import 'package:quran_recitation/screens/daily_inspiration_screen.dart';
 import 'package:quran_recitation/services/notification_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/app_typography.dart';
+import 'package:quran_recitation/ui_v2/glass.dart';
 import 'package:quran_recitation/ui_v2/widgets/calm_light_background.dart';
 import 'package:quran_recitation/ui_v2/widgets/q_kit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -119,20 +119,20 @@ class _MainShellState extends ConsumerState<MainShell> {
       builder: (_) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 28),
-        child: Container(
+        child: GlassSurface(
+          tier: GlassTier.sheet,
+          radius: 32,
           padding: const EdgeInsets.fromLTRB(28, 34, 28, 26),
-          decoration: BoxDecoration(
-            color: AppColorsV2.surface,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: AppColorsV2.goldHairline),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.45),
-                blurRadius: 48,
-                offset: const Offset(0, 18),
-              ),
-            ],
-          ),
+          edgeColor: AppColorsV2.tertiary,
+          edgeIntensity: 0.45,
+          accent: AppColorsV2.tertiary,
+          shadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.55),
+              blurRadius: 56,
+              offset: const Offset(0, 22),
+            ),
+          ],
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -217,6 +217,7 @@ class _MainShellState extends ConsumerState<MainShell> {
   Widget build(BuildContext context) {
     final rawIndex = ref.watch(shellIndexProvider);
     final index = rawIndex.clamp(0, _screens.length - 1);
+    final navVisible = ref.watch(navBarVisibleProvider);
 
     if (rawIndex != index) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -270,17 +271,27 @@ class _MainShellState extends ConsumerState<MainShell> {
       body: CalmLightBackground(
         child: Stack(
           children: List.generate(_screens.length, (i) {
+            final active = i == index;
             return AnimatedOpacity(
-              opacity: i == index ? 1.0 : 0.0,
+              opacity: active ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeInOut,
               child: AnimatedScale(
-                scale: i == index ? 1.0 : 0.98,
+                scale: active ? 1.0 : 0.98,
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeInOut,
                 child: IgnorePointer(
-                  ignoring: i != index,
-                  child: _screens[i],
+                  ignoring: !active,
+                  // PERF: all four tabs stay alive so their scroll positions
+                  // and state survive a switch — but a hidden tab has no
+                  // business burning frames. TickerMode freezes every ticker
+                  // below it (shimmer loaders, the prayer countdown, the
+                  // now-playing animations), and RepaintBoundary keeps a
+                  // repaint in one tab from dirtying the others.
+                  child: TickerMode(
+                    enabled: active,
+                    child: RepaintBoundary(child: _screens[i]),
+                  ),
                 ),
               ),
             );
@@ -289,14 +300,9 @@ class _MainShellState extends ConsumerState<MainShell> {
       ),
       bottomNavigationBar: SafeArea(
         child: AnimatedSlide(
-          offset: ref.watch(navBarVisibleProvider)
-              ? Offset.zero
-              : const Offset(0, 1.6),
-          duration: Duration(
-              milliseconds: ref.watch(navBarVisibleProvider) ? 380 : 280),
-          curve: ref.watch(navBarVisibleProvider)
-              ? Curves.easeOutCubic
-              : Curves.easeInOut,
+          offset: navVisible ? Offset.zero : const Offset(0, 1.6),
+          duration: Duration(milliseconds: navVisible ? 380 : 280),
+          curve: navVisible ? Curves.easeOutCubic : Curves.easeInOut,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 14),
             child: _SakinaNavBar(
@@ -337,45 +343,77 @@ class _SakinaNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-        child: Container(
-          height: 68,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColorsV2.surface.withValues(alpha: 0.58),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: AppColorsV2.hairline),
+    // The dock is the one place a real BackdropFilter always earns its cost:
+    // it is pinned above scrolling content, so the blur is what sells it.
+    return SizedBox(
+      height: 68,
+      child: GlassSurface(
+        tier: GlassTier.overlay,
+        radius: 30,
+        padding: const EdgeInsets.all(8),
+        edgeIntensity: 0.34,
+        shadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.42),
+            blurRadius: 30,
+            offset: const Offset(0, 12),
           ),
-          child: Row(
-            children: List.generate(_items.length, (i) {
-              final item = _items[i];
-              final selected = i == index;
-              return Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onSelect(i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 240),
-                    curve: Curves.easeOutCubic,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: BoxDecoration(
+          BoxShadow(
+            color: AppColorsV2.primary.withValues(alpha: 0.07),
+            blurRadius: 26,
+            spreadRadius: -8,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        child: Row(
+          children: List.generate(_items.length, (i) {
+            final item = _items[i];
+            final selected = i == index;
+            return Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onSelect(i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutCubic,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                    gradient: selected
+                        ? LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppColorsV2.primary.withValues(alpha: 0.22),
+                              AppColorsV2.primary.withValues(alpha: 0.07),
+                            ],
+                          )
+                        : null,
+                    border: Border.all(
                       color: selected
-                          ? AppColorsV2.primary.withValues(alpha: 0.13)
+                          ? AppColorsV2.primary.withValues(alpha: 0.34)
                           : Colors.transparent,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: selected
-                            ? AppColorsV2.primary.withValues(alpha: 0.22)
-                            : Colors.transparent,
-                      ),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
+                    boxShadow: selected
+                        ? [
+                            BoxShadow(
+                              color:
+                                  AppColorsV2.primary.withValues(alpha: 0.22),
+                              blurRadius: 16,
+                              spreadRadius: -5,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedScale(
+                        scale: selected ? 1.06 : 1.0,
+                        duration: const Duration(milliseconds: 260),
+                        curve: Curves.easeOutBack,
+                        child: Icon(
                           selected ? item.activeIcon : item.icon,
                           size: 22,
                           color: selected
@@ -383,30 +421,30 @@ class _SakinaNavBar extends StatelessWidget {
                               : AppColorsV2.onSurfaceVariant
                                   .withValues(alpha: 0.85),
                         ),
-                        AnimatedSize(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutCubic,
-                          child: selected
-                              ? Padding(
-                                  padding: const EdgeInsets.only(top: 3),
-                                  child: Text(
-                                    item.label,
-                                    style: AppTypeV2.caption(
-                                      size: 10,
-                                      color: AppColorsV2.primary,
-                                      weight: FontWeight.w800,
-                                    ),
+                      ),
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        child: selected
+                            ? Padding(
+                                padding: const EdgeInsets.only(top: 3),
+                                child: Text(
+                                  item.label,
+                                  style: AppTypeV2.caption(
+                                    size: 10,
+                                    color: AppColorsV2.primary,
+                                    weight: FontWeight.w800,
                                   ),
-                                )
-                              : const SizedBox(height: 0, width: 0),
-                        ),
-                      ],
-                    ),
+                                ),
+                              )
+                            : const SizedBox(height: 0, width: 0),
+                      ),
+                    ],
                   ),
                 ),
-              );
-            }),
-          ),
+              ),
+            );
+          }),
         ),
       ),
     );

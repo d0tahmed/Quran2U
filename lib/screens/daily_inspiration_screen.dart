@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/screens/share_ayah_screen.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 const _kGreen = AppColorsV2.primary;
 const _kGold = AppColorsV2.tertiary;
@@ -83,6 +85,25 @@ class DailyInspirationScreen extends StatelessWidget {
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1.5)),
                           ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            tooltip: 'Share as image',
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ShareAyahScreen(
+                                  arabic: todayData.arabicAyah,
+                                  translation: todayData.translationAyah,
+                                  referenceOverride: todayData.referenceAyah,
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(Icons.ios_share_rounded,
+                                color: _kGold, size: 17),
+                            visualDensity: VisualDensity.compact,
+                            constraints: const BoxConstraints.tightFor(
+                                width: 32, height: 32),
+                            padding: EdgeInsets.zero,
+                          ),
                         ]),
                         const SizedBox(height: 12),
                         GlassPanel(
@@ -101,7 +122,7 @@ class DailyInspirationScreen extends StatelessWidget {
                                   color: Colors.white,
                                   fontSize: 24,
                                   height: 1.9,
-                                  fontFamily: GoogleFonts.amiri().fontFamily),
+                                  fontFamily: AppTypeV2.amiriFamily),
                             ),
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),

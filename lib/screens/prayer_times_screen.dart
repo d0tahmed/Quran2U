@@ -6,6 +6,7 @@ import 'package:adhan/adhan.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/services/time_format.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/glass.dart';
 
 
 const _kGreen = AppColorsV2.primary;
@@ -101,24 +102,16 @@ class _PrayerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
+      child: FrostedCard(
+        radius: 20,
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        decoration: BoxDecoration(
-          color: _kCard.withValues(alpha: 0.60),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isHighlighted ? _kGreen.withValues(alpha: 0.22) : Colors.white.withValues(alpha: 0.06),
-            width: isHighlighted ? 1.5 : 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.30),
-              blurRadius: 24,
-              offset: const Offset(0, 10),
-            )
-          ],
-        ),
-      child: Row(
+        tint: _kCard,
+        elevated: true,
+        accent: isHighlighted ? _kGreen : null,
+        glow: isHighlighted ? _kGreen : null,
+        edgeColor: isHighlighted ? _kGreen : null,
+        edgeIntensity: isHighlighted ? 0.44 : 0.16,
+        child: Row(
         children: [
           Expanded(
             flex: 2,

@@ -8,10 +8,13 @@ import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/models/hadith_model.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/providers/hadith_providers.dart';
+import 'package:quran_recitation/screens/quran_search_screen.dart';
 import 'package:quran_recitation/screens/read_quran_screen.dart';
 import 'package:quran_recitation/screens/hadith_reader_screen.dart';
 import 'package:quran_recitation/screens/tafseer_screen.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/glass.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 const _kGreen = AppColorsV2.primary;
 const _kAmber = Color(0xFFD4A843);
@@ -59,7 +62,7 @@ class ReadTabScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
               child: Text(
                 'Read & Explore',
                 style: GoogleFonts.outfit(
@@ -67,6 +70,64 @@ class ReadTabScreen extends ConsumerWidget {
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -1.0,
+                ),
+              ),
+            ),
+
+            // Ask the Quran — meaning-based search entry point.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const QuranSearchScreen()),
+                ),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                  decoration: BoxDecoration(
+                    color: AppColorsV2.surfaceLow,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: AppColorsV2.primary.withValues(alpha: 0.20)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.auto_awesome_rounded,
+                          color: AppColorsV2.primary, size: 19),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ask the Quran',
+                              style: GoogleFonts.manrope(
+                                color: AppColorsV2.onSurface,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Search by meaning, not just words',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.manrope(
+                                color: AppColorsV2.onSurfaceVariant,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: AppColorsV2.onSurfaceVariant, size: 20),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -146,23 +207,17 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
       minChildSize:     0.5,
       maxChildSize:     0.96,
       expand:           false,
-      builder: (ctx, scrollCtrl) => Container(
-        decoration: const BoxDecoration(
-          color:         AppColorsV2.surfaceLow,
-          borderRadius:  BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      builder: (ctx, scrollCtrl) => GlassSurface(
+        tier: GlassTier.sheet,
+        borderRadius: kGlassSheetRadius,
+        padding: EdgeInsets.zero,
+        tint: AppColorsV2.bg,
+        edgeColor: _kAmber,
+        edgeIntensity: 0.32,
         child: Column(
           children: [
             const SizedBox(height: 12),
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color:         Colors.white12,
-                  borderRadius:  BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const Center(child: GlassGrabber()),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -170,8 +225,16 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
                 Container(
                   padding:    const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color:         _kAmber.withValues(alpha: 0.12),
                     borderRadius:  BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _kAmber.withValues(alpha: 0.26),
+                        _kAmber.withValues(alpha: 0.08),
+                      ],
+                    ),
+                    border: Border.all(color: _kAmber.withValues(alpha: 0.24)),
                   ),
                   child: const Icon(Icons.menu_book_rounded, color: _kAmber, size: 22),
                 ),
@@ -267,7 +330,7 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
                             style: TextStyle(
                               fontSize:   18,
                               color:      _kAmber.withValues(alpha: 0.85),
-                              fontFamily: GoogleFonts.amiri().fontFamily,
+                              fontFamily: AppTypeV2.amiriFamily,
                               fontWeight: FontWeight.w700,
                             )),
                       ]),
@@ -811,24 +874,17 @@ class _HadithSectionPickerSheetState
       minChildSize: 0.5,
       maxChildSize: 0.96,
       expand: false,
-      builder: (ctx, scrollCtrl) => Container(
-        decoration: const BoxDecoration(
-          color: AppColorsV2.surfaceLow,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      builder: (ctx, scrollCtrl) => GlassSurface(
+        tier: GlassTier.sheet,
+        borderRadius: kGlassSheetRadius,
+        padding: EdgeInsets.zero,
+        tint: AppColorsV2.bg,
+        edgeColor: _kAmber,
+        edgeIntensity: 0.32,
         child: Column(
           children: [
             const SizedBox(height: 12),
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white12,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+            const Center(child: GlassGrabber()),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -836,8 +892,16 @@ class _HadithSectionPickerSheetState
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: _kAmber.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        _kAmber.withValues(alpha: 0.26),
+                        _kAmber.withValues(alpha: 0.08),
+                      ],
+                    ),
+                    border: Border.all(color: _kAmber.withValues(alpha: 0.24)),
                   ),
                   child: const Icon(Icons.format_quote_rounded,
                       color: _kAmber, size: 22),

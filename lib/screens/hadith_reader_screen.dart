@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/models/hadith_model.dart';
 import 'package:quran_recitation/providers/hadith_providers.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 const _kGold = Color(0xFFD4A843);
 
@@ -370,7 +371,7 @@ class _HadithCard extends StatelessWidget {
                   fontStyle:  hadith.text.trim().isEmpty ? FontStyle.italic : FontStyle.normal,
                   fontWeight: FontWeight.w500,
                   fontFamily: isRtl
-                      ? GoogleFonts.amiri().fontFamily
+                      ? AppTypeV2.amiriFamily
                       : GoogleFonts.manrope().fontFamily,
                   letterSpacing: isRtl ? 0.2 : 0,
                 ),

@@ -6,11 +6,13 @@ import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/providers/reading_progress_provider.dart';
 import 'package:quran_recitation/screens/ayah_word_picker.dart';
+import 'package:quran_recitation/screens/share_ayah_screen.dart';
 import 'package:quran_recitation/services/download_service.dart';
 import 'package:quran_recitation/services/interleaved_audio_service.dart'; // Added to access TranslationMode
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 import 'package:uuid/uuid.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 const _kGreen = AppColorsV2.primary;
 const _kGold = AppColorsV2.tertiary;
@@ -284,7 +286,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
                 style: TextStyle(
                   fontSize: 24,
                   color: _kGreen,
-                  fontFamily: GoogleFonts.amiri().fontFamily,
+                  fontFamily: AppTypeV2.amiriFamily,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -336,7 +338,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
                     fontSize: 26,
                     height: 2.2,
                     color: AppColorsV2.onSurfaceVariant.withValues(alpha: 0.9),
-                    fontFamily: GoogleFonts.amiri().fontFamily,
+                    fontFamily: AppTypeV2.amiriFamily,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -750,6 +752,19 @@ class _VerseCard extends StatelessWidget {
     this.revelationType = '',
   });
 
+  /// Opens the share-card composer for this ayah.
+  void _openShareCard(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ShareAyahScreen(
+        arabic: ayah.text,
+        translation: ayah.translation,
+        surahName: surahName,
+        surahNumber: ayah.surahNumber,
+        ayahNumber: ayah.numberInSurah,
+      ),
+    ));
+  }
+
   /// Opens the word-by-word picker for this ayah.
   void _openWordPicker(BuildContext context) {
     showAyahWordPicker(
@@ -863,22 +878,39 @@ class _VerseCard extends StatelessWidget {
                     IconButton(
                       tooltip: 'Word by word',
                       onPressed: () => _openWordPicker(context),
-                      icon: const Icon(
-                        Icons.spellcheck_rounded,
-                        color: AppColorsV2.onSurfaceVariant,
-                        size: 20,
-                      ),
-                      splashRadius: 20,
+                      icon: const Icon(Icons.spellcheck_rounded,
+                          color: AppColorsV2.onSurfaceVariant, size: 19),
+                      visualDensity: VisualDensity.compact,
+                      constraints:
+                          const BoxConstraints.tightFor(width: 36, height: 36),
+                      padding: EdgeInsets.zero,
                     ),
                     IconButton(
+                      tooltip: 'Share as image',
+                      onPressed: () => _openShareCard(context),
+                      icon: const Icon(Icons.ios_share_rounded,
+                          color: AppColorsV2.onSurfaceVariant, size: 18),
+                      visualDensity: VisualDensity.compact,
+                      constraints:
+                          const BoxConstraints.tightFor(width: 36, height: 36),
+                      padding: EdgeInsets.zero,
+                    ),
+                    IconButton(
+                      tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark',
                       onPressed: onBookmarkToggle,
                       icon: Icon(
                         isBookmarked
                             ? Icons.bookmark_rounded
                             : Icons.bookmark_border_rounded,
-                        color: AppColorsV2.onSurfaceVariant,
+                        color: isBookmarked
+                            ? AppColorsV2.primary
+                            : AppColorsV2.onSurfaceVariant,
+                        size: 19,
                       ),
-                      splashRadius: 20,
+                      visualDensity: VisualDensity.compact,
+                      constraints:
+                          const BoxConstraints.tightFor(width: 36, height: 36),
+                      padding: EdgeInsets.zero,
                     ),
                   ],
                 ),
@@ -899,7 +931,7 @@ class _VerseCard extends StatelessWidget {
                 fontSize: 34,
                 height: 2.3,
                 color: Colors.white,
-                fontFamily: GoogleFonts.amiri().fontFamily,
+                fontFamily: AppTypeV2.amiriFamily,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
               ),
@@ -1000,7 +1032,7 @@ class _DownloadSheet extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 18,
                           color: _kGold,
-                          fontFamily: GoogleFonts.amiri().fontFamily)),
+                          fontFamily: AppTypeV2.amiriFamily)),
                 ],
               ),
               const SizedBox(height: 4),

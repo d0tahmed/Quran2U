@@ -7,6 +7,7 @@ import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/providers/reading_progress_provider.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 
 const _kGreen = AppColorsV2.primary;
 const _kGold = AppColorsV2.tertiary;
@@ -336,7 +337,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                                       style: TextStyle(
                                         color: Colors.white.withValues(alpha: 0.85),
                                         fontSize: 18,
-                                        fontFamily: GoogleFonts.amiri().fontFamily,
+                                        fontFamily: AppTypeV2.amiriFamily,
                                       ),
                                     ),
                                   );
@@ -512,26 +513,43 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
         onPageChanged: (index) => _recordPage(index + 1),
         itemBuilder: (context, index) {
           final pageNum = index + 1;
-          final asyncPage = ref.watch(mushafPageProvider((pageNum, scriptType)));
 
-          return asyncPage.when(
-            loading: () => const Center(child: CircularProgressIndicator(color: _kGreen)),
-            error: (e, _) => _buildErrorState(e.toString()),
-            data: (pageText) {
-              if (pageText.startsWith('Offline') || pageText.startsWith('Error')) {
-                return _buildErrorState(pageText);
-              }
+          // PERF: watch through a Consumer, not the screen's own `ref`.
+          // Watching here would register page N's provider on the SCREEN
+          // element, so the moment any one page finished loading the whole
+          // PageView rebuilt — including the two neighbours PageView keeps
+          // alive, re-running their layout for nothing. Scoped to a Consumer,
+          // a finished fetch repaints exactly one page.
+          return Consumer(
+            builder: (context, ref, _) {
+              final asyncPage =
+                  ref.watch(mushafPageProvider((pageNum, scriptType)));
 
-              return Container(
-                width: double.infinity,
-                height: double.infinity,
-                color: Colors.transparent,
-                padding: EdgeInsets.fromLTRB(16, _isImmersive ? 40 : 140, 16, 40),
-                child: _buildOrnamentalFrame(
-                  scriptType: scriptType,
-                  text: pageText,
-                  pageNum: pageNum,
-                ),
+              return asyncPage.when(
+                loading: () => const Center(
+                    child: CircularProgressIndicator(color: _kGreen)),
+                error: (e, _) => _buildErrorState(e.toString()),
+                data: (pageText) {
+                  if (pageText.startsWith('Offline') ||
+                      pageText.startsWith('Error')) {
+                    return _buildErrorState(pageText);
+                  }
+
+                  return RepaintBoundary(
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.transparent,
+                      padding: EdgeInsets.fromLTRB(
+                          16, _isImmersive ? 40 : 140, 16, 40),
+                      child: _buildOrnamentalFrame(
+                        scriptType: scriptType,
+                        text: pageText,
+                        pageNum: pageNum,
+                      ),
+                    ),
+                  );
+                },
               );
             },
           );
@@ -552,22 +570,34 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
         onPageChanged: (index) => _recordPage(index + 1),
         itemBuilder: (context, index) {
           final pageNum = index + 1;
-          final asyncPage = ref.watch(tajweedPageProvider(pageNum));
 
-          return asyncPage.when(
-            loading: () => const Center(child: CircularProgressIndicator(color: _kGreen)),
-            error: (e, _) => _buildErrorState(e.toString()),
-            data: (verses) {
-              if (verses.isEmpty) {
-                return _buildErrorState('No data for this page.');
-              }
+          // Same scoping as the mushaf engine — and it matters more here,
+          // because every rebuild re-parsed the tajweed HTML of the page into
+          // coloured spans from scratch.
+          return Consumer(
+            builder: (context, ref, _) {
+              final asyncPage = ref.watch(tajweedPageProvider(pageNum));
 
-              return Container(
-                width: double.infinity,
-                height: double.infinity,
-                color: Colors.transparent,
-                padding: EdgeInsets.fromLTRB(16, _isImmersive ? 40 : 140, 16, 40),
-                child: _buildTajweedFrame(verses, pageNum),
+              return asyncPage.when(
+                loading: () => const Center(
+                    child: CircularProgressIndicator(color: _kGreen)),
+                error: (e, _) => _buildErrorState(e.toString()),
+                data: (verses) {
+                  if (verses.isEmpty) {
+                    return _buildErrorState('No data for this page.');
+                  }
+
+                  return RepaintBoundary(
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.transparent,
+                      padding: EdgeInsets.fromLTRB(
+                          16, _isImmersive ? 40 : 140, 16, 40),
+                      child: _buildTajweedFrame(verses, pageNum),
+                    ),
+                  );
+                },
               );
             },
           );
@@ -594,7 +624,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
         style: TextStyle(
           color: _kGold.withValues(alpha: 0.7),
           fontSize: 20,
-          fontFamily: GoogleFonts.amiri().fontFamily,
+          fontFamily: AppTypeV2.amiriFamily,
         ),
       ));
 
@@ -641,7 +671,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                     color: Colors.white.withValues(alpha: 0.95),
                     fontSize: 26,
                     height: 2.2,
-                    fontFamily: GoogleFonts.amiri().fontFamily,
+                    fontFamily: AppTypeV2.amiriFamily,
                   ),
                   children: allSpans,
                 ),
@@ -737,7 +767,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                   color: Colors.white.withValues(alpha: 0.95),
                   fontSize: scriptType == 'indopak' ? 24 : 28, 
                   height: 2.2, 
-                  fontFamily: GoogleFonts.amiri().fontFamily,
+                  fontFamily: AppTypeV2.amiriFamily,
                 ),
               ),
             ),

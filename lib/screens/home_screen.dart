@@ -20,6 +20,7 @@ import 'package:quran_recitation/services/hijri_date.dart';
 import 'package:quran_recitation/services/time_format.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/app_typography.dart';
+import 'package:quran_recitation/ui_v2/glass.dart';
 import 'package:quran_recitation/ui_v2/widgets/q_kit.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -360,13 +361,13 @@ class _Masthead extends StatelessWidget {
           const SizedBox(height: 20),
 
           // ── Dual calendar ────────────────────────────────────────────
-          Container(
+          FrostedCard(
+            radius: 20,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColorsV2.surfaceLow,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColorsV2.hairline),
-            ),
+            tint: AppColorsV2.surfaceLow,
+            accent: AppColorsV2.tertiary,
+            edgeColor: AppColorsV2.tertiary,
+            edgeIntensity: 0.26,
             child: Row(
               children: [
                 Expanded(
@@ -375,12 +376,17 @@ class _Masthead extends StatelessWidget {
                     children: [
                       Text('TODAY', style: AppTypeV2.overline(size: 9)),
                       const SizedBox(height: 5),
-                      Text(
-                        DateFormat('EEEE, d MMMM yyyy').format(now),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypeV2.title(
-                            size: 13.5, weight: FontWeight.w700),
+                      // Shrink instead of truncating — "Thursday, 20 Au…"
+                      // is worse than the same line one point smaller.
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          DateFormat('EEEE, d MMMM yyyy').format(now),
+                          maxLines: 1,
+                          style: AppTypeV2.title(
+                              size: 13.5, weight: FontWeight.w700),
+                        ),
                       ),
                     ],
                   ),
@@ -455,8 +461,16 @@ class _ContinueReadingCard extends ConsumerWidget {
         children: [
           const QSectionHeader(label: 'Continue reading'),
           const SizedBox(height: 12),
-          InkWell(
-            borderRadius: BorderRadius.circular(26),
+          // The one hero card on Home: lit from the top-left, jade rim, and
+          // the only coloured bloom on the screen.
+          FrostedCard(
+            radius: 26,
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            tint: AppColorsV2.surfaceLow,
+            accent: AppColorsV2.primary,
+            edgeColor: AppColorsV2.primary,
+            edgeIntensity: 0.42,
+            glow: AppColorsV2.primary,
             onTap: () {
               // Resume in the same reader the Read tab opens: Read & Explore →
               // Read Quran. Switching the shell index first means backing out
@@ -487,111 +501,93 @@ class _ContinueReadingCard extends ConsumerWidget {
                 builder: (_) => SurahDetailScreen(surah: match),
               ));
             },
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(
-                    color: AppColorsV2.primary.withValues(alpha: 0.22)),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColorsV2.primary.withValues(alpha: 0.13),
-                    AppColorsV2.surfaceLow,
-                  ],
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      QStarMedallion(
-                        size: 46,
-                        color: AppColorsV2.primary.withValues(alpha: 0.4),
-                        child: Text(
-                          progress.hasPage
-                              ? '${progress.page}'
-                              : '${progress.surahNumber}',
-                          style: AppTypeV2.caption(
-                              size: 12,
-                              color: AppColorsV2.primary,
-                              weight: FontWeight.w800),
-                        ),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    QStarMedallion(
+                      size: 46,
+                      color: AppColorsV2.primary.withValues(alpha: 0.4),
+                      child: Text(
+                        progress.hasPage
+                            ? '${progress.page}'
+                            : '${progress.surahNumber}',
+                        style: AppTypeV2.caption(
+                            size: 12,
+                            color: AppColorsV2.primary,
+                            weight: FontWeight.w800),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                progress.surahName.isEmpty
-                                    ? 'The Holy Quran'
-                                    : progress.surahName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypeV2.display(size: 21)),
-                            const SizedBox(height: 3),
-                            Text(
-                              progress.positionLabel,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              progress.surahName.isEmpty
+                                  ? 'The Holy Quran'
+                                  : progress.surahName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypeV2.caption(
-                                  size: 11.5,
-                                  color: AppColorsV2.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      if (progress.surahNameArabic.isNotEmpty)
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 110),
-                          child: Text(
-                            progress.surahNameArabic,
-                            textDirection: TextDirection.rtl,
-                            textAlign: TextAlign.right,
+                              style: AppTypeV2.display(size: 21)),
+                          const SizedBox(height: 3),
+                          Text(
+                            progress.positionLabel,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTypeV2.arabic(
-                              size: 22,
-                              color:
-                                  AppColorsV2.tertiary.withValues(alpha: 0.85),
-                              height: 1.3,
-                            ),
+                            style: AppTypeV2.caption(
+                                size: 11.5,
+                                color: AppColorsV2.onSurfaceVariant),
                           ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
-                          child: LinearProgressIndicator(
-                            value: progress.fraction,
-                            minHeight: 4,
-                            backgroundColor: AppColorsV2.surfaceHighest,
-                            valueColor:
-                                const AlwaysStoppedAnimation<Color>(
-                                    AppColorsV2.primary),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    if (progress.surahNameArabic.isNotEmpty)
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 110),
+                        child: Text(
+                          progress.surahNameArabic,
+                          textDirection: TextDirection.rtl,
+                          textAlign: TextAlign.right,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypeV2.arabic(
+                            size: 22,
+                            color: AppColorsV2.tertiary.withValues(alpha: 0.85),
+                            height: 1.3,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Text('${progress.percent}%',
-                          maxLines: 1,
-                          style: AppTypeV2.caption(
-                              size: 11, color: AppColorsV2.primary)),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.play_circle_fill_rounded,
-                          color: AppColorsV2.primary, size: 26),
-                    ],
-                  ),
-                ],
-              ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: progress.fraction,
+                          minHeight: 4,
+                          backgroundColor: AppColorsV2.surfaceHighest,
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              AppColorsV2.primary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text('${progress.percent}%',
+                        maxLines: 1,
+                        style: AppTypeV2.caption(
+                            size: 11, color: AppColorsV2.primary)),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.play_circle_fill_rounded,
+                        color: AppColorsV2.primary, size: 26),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -667,29 +663,26 @@ class _PrayerStripState extends ConsumerState<_PrayerStrip> {
           ),
           const SizedBox(height: 12),
           prayerAsync.when(
-            loading: () => Container(
-              height: 92,
-              decoration: BoxDecoration(
-                color: AppColorsV2.surfaceLow,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppColorsV2.hairline),
-              ),
-              child: const Center(
-                child: SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: AppColorsV2.primary),
+            loading: () => const FrostedCard(
+              radius: 24,
+              padding: EdgeInsets.zero,
+              child: SizedBox(
+                height: 92,
+                child: Center(
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColorsV2.primary),
+                  ),
                 ),
               ),
             ),
-            error: (_, __) => Container(
+            error: (_, __) => FrostedCard(
+              radius: 24,
               padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AppColorsV2.surfaceLow,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppColorsV2.hairline),
-              ),
+              edgeColor: AppColorsV2.danger,
+              edgeIntensity: 0.30,
               child: Row(
                 children: [
                   const Icon(Icons.location_off_rounded,
@@ -726,29 +719,30 @@ class _PrayerStripState extends ConsumerState<_PrayerStrip> {
                   : _remaining(
                       active.time.add(const Duration(days: 1)), now);
 
-              return InkWell(
-                borderRadius: BorderRadius.circular(24),
+              return FrostedCard(
+                radius: 24,
+                padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const PrayerTimesScreen()),
                 ),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(12, 14, 12, 12),
-                  decoration: BoxDecoration(
-                    color: AppColorsV2.surfaceLow,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppColorsV2.hairline),
-                  ),
-                  child: Column(
+                child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        // Right inset matches the prayer cells below
+                        // (card padding 12 + cell margin 2) so the countdown
+                        // pill lines up with the edge of the Isha column.
+                        padding: const EdgeInsets.fromLTRB(6, 0, 2, 0),
                         child: Row(
                           children: [
                             Text('NEXT',
                                 style: AppTypeV2.overline(size: 9)),
                             const SizedBox(width: 8),
-                            Flexible(
+                            // Expanded, not Flexible + Spacer: a loose
+                            // Flexible next to a Spacer leaves the unclaimed
+                            // half of the free space stranded AFTER the last
+                            // child, which is what pushed the pill inwards.
+                            Expanded(
                               child: Text(
                                 active.name,
                                 maxLines: 1,
@@ -757,15 +751,23 @@ class _PrayerStripState extends ConsumerState<_PrayerStrip> {
                                     size: 14, weight: FontWeight.w800),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 8),
                             if (countdown.isNotEmpty)
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColorsV2.primary
-                                      .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(999),
+                                  gradient: LinearGradient(colors: [
+                                    AppColorsV2.primary
+                                        .withValues(alpha: 0.22),
+                                    AppColorsV2.primary
+                                        .withValues(alpha: 0.08),
+                                  ]),
+                                  border: Border.all(
+                                    color: AppColorsV2.primary
+                                        .withValues(alpha: 0.30),
+                                  ),
                                 ),
                                 child: Text('in $countdown',
                                     style: AppTypeV2.caption(
@@ -781,22 +783,43 @@ class _PrayerStripState extends ConsumerState<_PrayerStrip> {
                           final e = entries[i];
                           final isActive = i == activeIndex;
                           return Expanded(
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 260),
+                              curve: Curves.easeOutCubic,
                               margin:
                                   const EdgeInsets.symmetric(horizontal: 2),
                               padding: const EdgeInsets.symmetric(vertical: 9),
                               decoration: BoxDecoration(
-                                color: isActive
-                                    ? AppColorsV2.primary
-                                        .withValues(alpha: 0.14)
-                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(14),
+                                gradient: isActive
+                                    ? LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          AppColorsV2.primary
+                                              .withValues(alpha: 0.24),
+                                          AppColorsV2.primary
+                                              .withValues(alpha: 0.07),
+                                        ],
+                                      )
+                                    : null,
                                 border: Border.all(
                                   color: isActive
                                       ? AppColorsV2.primary
-                                          .withValues(alpha: 0.28)
+                                          .withValues(alpha: 0.34)
                                       : Colors.transparent,
                                 ),
+                                boxShadow: isActive
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColorsV2.primary
+                                              .withValues(alpha: 0.20),
+                                          blurRadius: 14,
+                                          spreadRadius: -4,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : null,
                               ),
                               child: Column(
                                 children: [
@@ -866,7 +889,6 @@ class _PrayerStripState extends ConsumerState<_PrayerStrip> {
                       ),
                     ],
                   ),
-                ),
               );
             },
           ),
@@ -901,25 +923,31 @@ class _QuickTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: InkWell(
+      child: FrostedCard(
+        radius: 20,
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+        edgeColor: AppColorsV2.tertiary,
+        edgeIntensity: 0.24,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: AppColorsV2.surfaceLow,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColorsV2.hairline),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: AppColorsV2.tertiary, size: 20),
-              const SizedBox(height: 8),
-              Text(label,
-                  style: AppTypeV2.caption(
-                      size: 10.5, color: AppColorsV2.onSurfaceVariant)),
-            ],
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppColorsV2.tertiary, size: 20),
+            const SizedBox(height: 8),
+            // scaleDown rather than ellipsis: a four-tile row is tight on a
+            // small screen and a shrunken word reads better than "Offli…".
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: AppTypeV2.caption(
+                    size: 10.5, color: AppColorsV2.onSurfaceVariant),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -954,14 +982,14 @@ class _ReciterChip extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: selected
-              ? AppColorsV2.onPrimary.withValues(alpha: 0.16)
+              ? AppColorsV2.primary.withValues(alpha: 0.22)
               : AppColorsV2.tertiary.withValues(alpha: 0.12),
         ),
         child: Text(
           name.characters.first.toUpperCase(),
           style: AppTypeV2.caption(
             size: 9.5,
-            color: selected ? AppColorsV2.onPrimary : AppColorsV2.tertiary,
+            color: selected ? AppColorsV2.primary : AppColorsV2.tertiary,
             weight: FontWeight.w900,
           ),
         ),
@@ -981,9 +1009,16 @@ class _SurahRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isBookmarked = ref
-        .watch(bookmarksProvider)
-        .any((b) => b.surahNumber == surah.number && b.ayahNumber == null);
+    // PERF: `.select` collapses the whole bookmark list down to one bool for
+    // this row. Without it, bookmarking a single surah rebuilds all 114 rows;
+    // with it, only the row whose bool actually flipped rebuilds.
+    final isBookmarked = ref.watch(
+      bookmarksProvider.select(
+        (list) => list.any(
+          (b) => b.surahNumber == surah.number && b.ayahNumber == null,
+        ),
+      ),
+    );
 
     return InkWell(
       onTap: () => Navigator.of(context).push(PageRouteBuilder(
