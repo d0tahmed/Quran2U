@@ -156,6 +156,15 @@ class _QuranRecitationAppState extends State<QuranRecitationApp>
     // never sit on stale times even if the OS throttles our WorkManager job.
     if (state == AppLifecycleState.resumed) {
       WidgetService.refreshWidget();
+
+      // Re-arm the daily reminder window on every resume, not only on a cold
+      // start. Android drops every pending alarm an app owns when that app is
+      // force-stopped — and "clear all" in recents, or an OEM battery cleaner,
+      // counts as a force-stop. This is why the reminder fired only
+      // occasionally. Re-arming here means a single app open refills the
+      // fourteen-day window, so the schedule heals itself. Cheap, and it
+      // swallows its own errors.
+      NotificationService.scheduleDailyReminders();
     }
   }
 

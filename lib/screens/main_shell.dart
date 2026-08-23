@@ -69,7 +69,7 @@ class _MainShellState extends ConsumerState<MainShell> {
           await _showWelcomeDialog(context, isGuest: widget.isGuestWelcome);
           await _requestLocationPermission();
           await NotificationService.requestPermissions();
-          await NotificationService.scheduleDaily6AM();
+          await NotificationService.scheduleDailyReminders();
         }
       });
     } else {
@@ -77,7 +77,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await _requestLocationPermission();
         await NotificationService.requestPermissions();
-        await NotificationService.scheduleDaily6AM();
+        await NotificationService.scheduleDailyReminders();
       });
     }
   }
@@ -272,26 +272,40 @@ class _MainShellState extends ConsumerState<MainShell> {
         child: Stack(
           children: List.generate(_screens.length, (i) {
             final active = i == index;
-            return AnimatedOpacity(
-              opacity: active ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              child: AnimatedScale(
-                scale: active ? 1.0 : 0.98,
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeInOut,
-                child: IgnorePointer(
-                  ignoring: !active,
-                  // PERF: all four tabs stay alive so their scroll positions
-                  // and state survive a switch — but a hidden tab has no
-                  // business burning frames. TickerMode freezes every ticker
-                  // below it (shimmer loaders, the prayer countdown, the
-                  // now-playing animations), and RepaintBoundary keeps a
-                  // repaint in one tab from dirtying the others.
-                  child: TickerMode(
-                    enabled: active,
-                    child: RepaintBoundary(child: _screens[i]),
-                  ),
+
+            // PERF — why this is Offstage and not a cross-fade.
+            //
+            // The previous version wrapped every tab in AnimatedOpacity +
+            // AnimatedScale. An opacity strictly between 0 and 1 forces a
+            // saveLayer, and here that layer is the size of the whole screen.
+            // A tab switch always has two tabs mid-animation — one fading out,
+            // one fading in — so every switch paid for TWO full-screen
+            // offscreen buffers for 220 ms. Tap through the tabs quickly and
+            // three or four are animating at once. That is the stutter.
+            //
+            // AnimatedScale cost the rest: RenderTransform pushes a transform
+            // layer whether or not the matrix is the identity, so all four
+            // tabs carried one permanently.
+            //
+            // Offstage has neither. The child is not painted, not hit-tested
+            // and not in the semantics tree, while its Element and State stay
+            // alive — so scroll offsets, controllers and player state survive
+            // a switch exactly as before.
+            //
+            // The incoming tab still fades, via _TabFade, which holds a single
+            // layer for 150 ms and then settles at opacity 1.0, where Flutter
+            // drops the layer entirely. One short-lived layer per switch
+            // instead of two, and no transforms at all.
+            return Offstage(
+              offstage: !active,
+              child: _TabFade(
+                active: active,
+                child: TickerMode(
+                  // A hidden tab has no business burning frames: this freezes
+                  // every ticker below it — shimmer loaders, the prayer
+                  // countdown, the now-playing animations.
+                  enabled: active,
+                  child: RepaintBoundary(child: _screens[i]),
                 ),
               ),
             );
@@ -314,6 +328,62 @@ class _MainShellState extends ConsumerState<MainShell> {
         ),
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab entrance
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Fades a tab in when it becomes active, and holds it at full opacity.
+///
+/// It deliberately sits ABOVE the TickerMode that governs the tab's own
+/// animations: this controller has to be free to run on the very frame the tab
+/// activates, and it would be muted if it were governed by the same switch it
+/// is animating.
+///
+/// The controller only runs during the 150 ms entrance. At rest it sits at
+/// exactly 1.0, where RenderAnimatedOpacity skips the compositing layer, so an
+/// idle tab pays nothing.
+class _TabFade extends StatefulWidget {
+  final bool active;
+  final Widget child;
+
+  const _TabFade({required this.active, required this.child});
+
+  @override
+  State<_TabFade> createState() => _TabFadeState();
+}
+
+class _TabFadeState extends State<_TabFade>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 150),
+    value: widget.active ? 1.0 : 0.0,
+  );
+
+  @override
+  void didUpdateWidget(covariant _TabFade oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) {
+      _controller.forward(from: 0.0);
+    } else if (!widget.active && oldWidget.active) {
+      // Snap, don't animate out: the tab is about to go offstage, so an exit
+      // animation would be a saveLayer nobody ever sees.
+      _controller.value = 0.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(opacity: _controller, child: widget.child);
   }
 }
 

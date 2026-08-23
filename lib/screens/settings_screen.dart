@@ -9,7 +9,13 @@ import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/downloads_screen.dart';
 import 'package:quran_recitation/screens/login_screen.dart';
+// `hide TextDirection`: package:intl exports its own TextDirection class (with
+// LTR/RTL constants), which shadows the one from dart:ui that every Flutter
+// widget expects and turns `TextDirection.rtl` into a compile error further
+// down this file. home_screen.dart hides it for exactly the same reason.
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:quran_recitation/services/interleaved_audio_service.dart';
+import 'package:quran_recitation/services/notification_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/glass.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
@@ -27,9 +33,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  double _speed = 1.0;
-
-  
   TranslationMode _audioLang = TranslationMode.urdu;
 
   @override
@@ -83,9 +86,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final selectedImam       = ref.watch(selectedImamProvider);
     final selectedTranslation = ref.watch(selectedTranslationProvider);
     final tarjumahMode       = ref.watch(tarjumahModeProvider);
-    final isTarjumahSupported = ref.watch(isTarjumahSupportedProvider); 
-    final bulkState          = ref.watch(bulkDownloadProvider);
-    final updateAsync        = ref.watch(updateCheckProvider);
+    final isTarjumahSupported = ref.watch(isTarjumahSupportedProvider);
+
+    // PERF: bulkDownloadProvider and updateCheckProvider are deliberately NOT
+    // watched here. bulkDownloadProvider emits on every download progress
+    // tick, and watching it at this level rebuilt the entire settings tree —
+    // roughly a thousand widget allocations and sixty-odd Google Fonts
+    // lookups — several times a second for the whole length of a 114-surah
+    // download. Both are now watched inside a Consumer wrapping only the few
+    // widgets that actually read them, so a tick repaints a progress bar.
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -144,8 +153,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const _QuranAccountSection(),
               const SizedBox(height: 22),
 
+              // PERF: `ListView(children: [...])` evaluates its whole list on
+              // every build — every Container, Row and Text in the sections
+              // below is allocated whether or not it is on screen. Builder
+              // allocates ONE widget and defers the subtree to element
+              // inflation, which for a SliverList means "when scrolled into
+              // view". The two biggest sections on this screen are ~80 and
+              // ~200 lines of inline tree; they now cost nothing until seen.
               if (selectedImam != null)
-                Container(
+                Builder(
+                  builder: (context) => Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColorsV2.surfaceLow,
@@ -221,71 +238,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                   ),
                 ),
+                ),
 
               const SizedBox(height: 22),
 
               const _SectionHeader(icon: Icons.equalizer_rounded, text: 'Audio & Playback'),
               const SizedBox(height: 10),
 
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppColorsV2.surfaceLow,
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Playback Speed',
-                          style: GoogleFonts.manrope(
-                            color: AppColorsV2.onSurface,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: _kGreen.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Text(
-                            '${_speed.toStringAsFixed(2)}x',
-                            style: GoogleFonts.manrope(
-                              color: _kGreen,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Slider(
-                      value: _speed,
-                      min: 0.5,
-                      max: 2.0,
-                      divisions: 15,
-                      onChanged: (v) => setState(() => _speed = v),
-                      onChangeEnd: (v) => ref.read(audioPlayerServiceProvider).setPlaybackRate(v),
-                    ),
-                    const SizedBox(height: 6),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _TinyLabel('0.5X'),
-                        _TinyLabel('1.0X'),
-                        _TinyLabel('1.5X'),
-                        _TinyLabel('2.0X'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              // Extracted so that dragging the slider calls setState on a
+              // 50-line widget instead of on the whole settings screen. It
+              // used to own `_speed` on the screen's State, which meant every
+              // frame of a drag re-allocated the entire settings tree.
+              const _PlaybackSpeedCard(),
 
               const SizedBox(height: 12),
 
@@ -505,96 +469,108 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
               const _SectionHeader(icon: Icons.library_books_rounded, text: 'Library'),
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _TileButton(
-                      icon: Icons.download_for_offline_rounded,
-                      iconColor: _kGold,
-                      title: 'Manage Downloads',
-                      subtitle: 'Offline Surahs',
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DownloadsScreen())),
-                      background: AppColorsV2.surfaceLow,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _TileButton(
-                      icon: Icons.cloud_download_rounded,
-                      iconColor: _kGreen,
-                      title: 'Offline Mode',
-                      subtitle: 'Download Entire Quran',
-                      onTap: () => _QuranDownloadTile(bulkState: bulkState).show(context, ref),
-                      background: _kGreen.withValues(alpha: 0.10),
-                      borderColor: _kGreen.withValues(alpha: 0.22),
-                    ),
-                  ),
-                ],
-              ),
 
-              if (bulkState.isDownloading) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: _kGreen.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _kGreen.withValues(alpha: 0.22)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              // Everything that reads download state lives inside this one
+              // Consumer. A progress tick now rebuilds these two tiles and a
+              // progress bar, not the screen.
+              Consumer(
+                builder: (context, ref, _) {
+                  final bulkState = ref.watch(bulkDownloadProvider);
+                  return Column(
                     children: [
                       Row(
                         children: [
-                          const SizedBox(
-                            width: 14, height: 14,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: _kGreen),
-                          ),
-                          const SizedBox(width: 10),
                           Expanded(
-                            child: Text(
-                              'Surah ${bulkState.currentSurah} of 114  ·  '
-                              '${(bulkState.overallProgress * 100).toStringAsFixed(0)}%',
-                              style: GoogleFonts.manrope(
-                                  color: _kGreen,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700),
+                            child: _TileButton(
+                              icon: Icons.download_for_offline_rounded,
+                              iconColor: _kGold,
+                              title: 'Manage Downloads',
+                              subtitle: 'Offline Surahs',
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DownloadsScreen())),
+                              background: AppColorsV2.surfaceLow,
                             ),
                           ),
-                          TextButton(
-                            onPressed: () =>
-                                ref.read(bulkDownloadProvider.notifier).cancel(),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(56, 28),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _TileButton(
+                              icon: Icons.cloud_download_rounded,
+                              iconColor: _kGreen,
+                              title: 'Offline Mode',
+                              subtitle: 'Download Entire Quran',
+                              onTap: () => _QuranDownloadTile(bulkState: bulkState).show(context, ref),
+                              background: _kGreen.withValues(alpha: 0.10),
+                              borderColor: _kGreen.withValues(alpha: 0.22),
                             ),
-                            child: Text('Cancel',
-                                style: GoogleFonts.manrope(fontSize: 12)),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(bulkState.status,
-                          style: GoogleFonts.manrope(
-                              color: AppColorsV2.onSurfaceVariant, fontSize: 10),
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: bulkState.overallProgress,
-                          minHeight: 4,
-                          backgroundColor: Colors.white.withValues(alpha: 0.08),
-                          valueColor: const AlwaysStoppedAnimation(_kGreen),
+                      if (bulkState.isDownloading) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _kGreen.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: _kGreen.withValues(alpha: 0.22)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const SizedBox(
+                                    width: 14, height: 14,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: _kGreen),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Surah ${bulkState.currentSurah} of 114  ·  '
+                                      '${(bulkState.overallProgress * 100).toStringAsFixed(0)}%',
+                                      style: GoogleFonts.manrope(
+                                          color: _kGreen,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        ref.read(bulkDownloadProvider.notifier).cancel(),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: const Size(56, 28),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text('Cancel',
+                                        style: GoogleFonts.manrope(fontSize: 12)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(bulkState.status,
+                                  style: GoogleFonts.manrope(
+                                      color: AppColorsV2.onSurfaceVariant, fontSize: 10),
+                                  overflow: TextOverflow.ellipsis),
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: bulkState.overallProgress,
+                                  minHeight: 4,
+                                  backgroundColor: Colors.white.withValues(alpha: 0.08),
+                                  valueColor: const AlwaysStoppedAnimation(_kGreen),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ),
-                ),
-              ],
+                  );
+                },
+              ),
 
               const SizedBox(height: 12),
               _TileButton(
@@ -605,6 +581,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => _showTajweedGuide(context),
                 background: AppColorsV2.surfaceLow,
               ),
+
+              const SizedBox(height: 22),
+
+              const _SectionHeader(
+                  icon: Icons.notifications_active_rounded,
+                  text: 'Daily Reminder'),
+              const SizedBox(height: 10),
+              const _NotificationSection(),
 
               const SizedBox(height: 22),
 
@@ -620,7 +604,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
 
               const SizedBox(height: 22),
-              const _SectionHeader(icon: Icons.info_outline_rounded, text: 'flutte'),
+              const _SectionHeader(icon: Icons.info_outline_rounded, text: 'About'),
               const SizedBox(height: 10),
               GlassPanel(
                 padding: const EdgeInsets.all(16),
@@ -630,17 +614,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     const _InfoRow(icon: Icons.info_outline_rounded, label: 'App', value: 'Quran2U'),
                     const Divider(color: Colors.white10, height: 16),
-                    _InfoRow(
-                      icon: Icons.tag_rounded, 
-                      label: 'Version', 
-                      value: updateAsync.valueOrNull?.isUpdateAvailable == true ? 'New: ${updateAsync.valueOrNull!.latestVersion}' : (updateAsync.valueOrNull?.currentVersion ?? '2.0.0'),
-                      actionText: updateAsync.valueOrNull?.isUpdateAvailable == true ? 'Update' : null,
-                      onTap: updateAsync.valueOrNull?.isUpdateAvailable == true ? () async {
-                        final url = Uri.parse(updateAsync.valueOrNull!.releaseUrl);
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url, mode: LaunchMode.externalApplication);
-                        }
-                      } : null,
+                    // Scoped for the same reason as the download tiles: the
+                    // update check resolving must not rebuild the screen.
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final update = ref.watch(updateCheckProvider).valueOrNull;
+                        final hasUpdate = update?.isUpdateAvailable == true;
+                        return _InfoRow(
+                          icon: Icons.tag_rounded,
+                          label: 'Version',
+                          value: hasUpdate
+                              ? 'New: ${update!.latestVersion}'
+                              : (update?.currentVersion ?? '—'),
+                          actionText: hasUpdate ? 'Update' : null,
+                          onTap: hasUpdate
+                              ? () async {
+                                  final url = Uri.parse(update!.releaseUrl);
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(url,
+                                        mode: LaunchMode.externalApplication);
+                                  }
+                                }
+                              : null,
+                        );
+                      },
                     ),
                     const Divider(color: Colors.white10, height: 16),
                     const _InfoRow(icon: Icons.library_music_outlined, label: 'Audio', value: 'mp3quran.net'),
@@ -744,6 +741,192 @@ class _TinyLabel extends StatelessWidget {
           letterSpacing: 1.6,
         ),
       );
+}
+
+/// Daily reminder status and controls.
+///
+/// A scheduled notification that silently fails is the worst kind of bug: the
+/// user has no way to tell "not scheduled" from "scheduled and the OS ate it".
+/// This shows what is actually armed, lets them fire one immediately to prove
+/// the path works, and — only when the OS has withheld exact alarms — offers
+/// the one settings toggle that fixes the drift.
+class _NotificationSection extends StatefulWidget {
+  const _NotificationSection();
+
+  @override
+  State<_NotificationSection> createState() => _NotificationSectionState();
+}
+
+class _NotificationSectionState extends State<_NotificationSection> {
+  bool _loading = true;
+  bool _enabled = false;
+  int _armed = 0;
+  DateTime? _next;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final enabled = await NotificationService.areNotificationsEnabled();
+    final pending = await NotificationService.pendingReminders();
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _enabled = enabled;
+      _armed = pending.length;
+      _next = _armed > 0 ? _nextOccurrence() : null;
+    });
+  }
+
+  /// The plugin does not expose a pending request's fire time, so derive it the
+  /// same way the service does: the next reminder hour still in the future.
+  static DateTime _nextOccurrence() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day,
+        NotificationService.reminderHour, NotificationService.reminderMinute);
+    return today.isAfter(now) ? today : today.add(const Duration(days: 1));
+  }
+
+  String get _status {
+    if (_loading) return 'Checking…';
+    if (!_enabled) return 'Blocked in Android settings';
+    if (_armed == 0) return 'Not scheduled';
+    if (NotificationService.lastScheduleWasInexact) {
+      return '$_armed days armed · time may drift';
+    }
+    return '$_armed days armed';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hour = NotificationService.reminderHour.toString().padLeft(2, '0');
+    final minute = NotificationService.reminderMinute.toString().padLeft(2, '0');
+
+    return _GlassCard(
+      child: Column(
+        children: [
+          _InfoRow(
+            icon: Icons.wb_twilight_rounded,
+            label: 'Every day at $hour:$minute',
+            value: _status,
+          ),
+          const Divider(color: Colors.white10, height: 16),
+          _InfoRow(
+            icon: Icons.notifications_none_rounded,
+            label: 'Send a test now',
+            value: _next == null ? '' : 'next ${DateFormat('EEE d MMM').format(_next!)}',
+            actionText: 'Test',
+            onTap: () async {
+              await NotificationService.showInstantNotification();
+              await NotificationService.scheduleDailyReminders();
+              await _refresh();
+            },
+          ),
+          // Only shown when it is actually the problem — an unconditional
+          // "grant exact alarms" row is noise for the users who already have it.
+          if (!_loading && NotificationService.lastScheduleWasInexact) ...[
+            const Divider(color: Colors.white10, height: 16),
+            _InfoRow(
+              icon: Icons.alarm_rounded,
+              label: 'Allow exact alarms',
+              value: 'for on-time delivery',
+              actionText: 'Fix',
+              onTap: () async {
+                await NotificationService.requestExactAlarmPermission();
+                await NotificationService.scheduleDailyReminders();
+                await _refresh();
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Playback-speed card.
+///
+/// Owns its own `_speed` so a drag repaints this card and nothing else.
+/// `onChanged` fires once per pointer move — roughly sixty times a second —
+/// which is exactly the wrong thing to hang a whole-screen rebuild off.
+/// The player is only told the new rate on `onChangeEnd`.
+class _PlaybackSpeedCard extends ConsumerStatefulWidget {
+  const _PlaybackSpeedCard();
+
+  @override
+  ConsumerState<_PlaybackSpeedCard> createState() => _PlaybackSpeedCardState();
+}
+
+class _PlaybackSpeedCardState extends ConsumerState<_PlaybackSpeedCard> {
+  double _speed = 1.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColorsV2.surfaceLow,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Text(
+                'Playback Speed',
+                style: GoogleFonts.manrope(
+                  color: AppColorsV2.onSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _kGreen.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  '${_speed.toStringAsFixed(2)}x',
+                  style: GoogleFonts.manrope(
+                    color: _kGreen,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Slider(
+            value: _speed,
+            min: 0.5,
+            max: 2.0,
+            divisions: 15,
+            onChanged: (v) => setState(() => _speed = v),
+            onChangeEnd: (v) =>
+                ref.read(audioPlayerServiceProvider).setPlaybackRate(v),
+          ),
+          const SizedBox(height: 6),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _TinyLabel('0.5X'),
+              _TinyLabel('1.0X'),
+              _TinyLabel('1.5X'),
+              _TinyLabel('2.0X'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _TileButton extends StatelessWidget {

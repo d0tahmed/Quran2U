@@ -14,15 +14,32 @@ class AppTypeV2 {
 
   // ── Cached font families ──────────────────────────────────────────────────
   //
-  // PERF: `GoogleFonts.amiri()` is not free — it hashes the variant, checks the
-  // loaded-font registry and allocates a TextStyle just so a caller can read
-  // `.fontFamily` off it. The reader calls that once per ayah, so on a busy
-  // mushaf page it ran hundreds of times per build for a value that never
-  // changes. Resolve each family once, at first use, and reuse the string.
+  // PERF: a `GoogleFonts.x()` call is not free. It builds a variant key, runs a
+  // closest-match search over the family's variant map, checks the loaded-font
+  // registry, and allocates a TextStyle — every single time. These helpers are
+  // called for essentially every piece of text in the app, several hundred
+  // times per frame on a dense screen, to compute a family name that never
+  // changes.
+  //
+  // CAREFUL: google_fonts resolves a DIFFERENT family per weight — `Manrope_regular`,
+  // `Manrope_bold` and so on — so a single cached string reused across weights
+  // would silently render one real weight plus synthetic bolding for the rest.
+  // The cache is therefore keyed by FontWeight, which keeps the output byte
+  // for byte identical to calling GoogleFonts directly.
+
+  static final Map<FontWeight, String?> _manrope = <FontWeight, String?>{};
+  static final Map<FontWeight, String?> _playfair = <FontWeight, String?>{};
+
+  static String? manropeFamily(FontWeight weight) => _manrope.putIfAbsent(
+      weight, () => GoogleFonts.manrope(fontWeight: weight).fontFamily);
+
+  static String? playfairFamily(FontWeight weight) => _playfair.putIfAbsent(
+      weight, () => GoogleFonts.playfairDisplay(fontWeight: weight).fontFamily);
+
+  /// Arabic is only ever requested at the default variant, exactly as the
+  /// original `GoogleFonts.amiri().fontFamily` call sites did, so one entry is
+  /// the whole cache.
   static final String? amiriFamily = GoogleFonts.amiri().fontFamily;
-  static final String? manropeFamily = GoogleFonts.manrope().fontFamily;
-  static final String? playfairFamily =
-      GoogleFonts.playfairDisplay().fontFamily;
 
   // ── Display (serif) ───────────────────────────────────────────────────────
   static TextStyle display({
@@ -32,7 +49,8 @@ class AppTypeV2 {
     double height = 1.15,
     double letterSpacing = -0.4,
   }) =>
-      GoogleFonts.playfairDisplay(
+      TextStyle(
+        fontFamily: playfairFamily(weight),
         fontSize: size,
         color: color,
         fontWeight: weight,
@@ -47,7 +65,8 @@ class AppTypeV2 {
     double letterSpacing = 2.6,
     FontWeight weight = FontWeight.w800,
   }) =>
-      GoogleFonts.manrope(
+      TextStyle(
+        fontFamily: manropeFamily(weight),
         fontSize: size,
         color: color,
         fontWeight: weight,
@@ -61,7 +80,8 @@ class AppTypeV2 {
     FontWeight weight = FontWeight.w800,
     double letterSpacing = -0.2,
   }) =>
-      GoogleFonts.manrope(
+      TextStyle(
+        fontFamily: manropeFamily(weight),
         fontSize: size,
         color: color,
         fontWeight: weight,
@@ -74,7 +94,8 @@ class AppTypeV2 {
     FontWeight weight = FontWeight.w600,
     double height = 1.6,
   }) =>
-      GoogleFonts.manrope(
+      TextStyle(
+        fontFamily: manropeFamily(weight),
         fontSize: size,
         color: color,
         fontWeight: weight,
@@ -86,7 +107,12 @@ class AppTypeV2 {
     Color color = AppColorsV2.onSurfaceVariant,
     FontWeight weight = FontWeight.w700,
   }) =>
-      GoogleFonts.manrope(fontSize: size, color: color, fontWeight: weight);
+      TextStyle(
+        fontFamily: manropeFamily(weight),
+        fontSize: size,
+        color: color,
+        fontWeight: weight,
+      );
 
   // ── Arabic ────────────────────────────────────────────────────────────────
   static TextStyle arabic({

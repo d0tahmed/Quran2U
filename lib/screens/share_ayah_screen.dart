@@ -9,7 +9,8 @@
 // see is exactly what gets shared.
 
 import 'dart:io';
-import 'dart:typed_data';
+// Uint8List comes in via package:flutter/services.dart, which re-exports
+// dart:typed_data — importing it directly is flagged as unnecessary.
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -72,26 +73,51 @@ class _ShareAyahScreenState extends State<ShareAyahScreen> {
     return '${widget.surahName} · ${widget.surahNumber}:${widget.ayahNumber}';
   }
 
-  /// Rasterises the card. Returns null if the boundary is not ready.
+  /// Rasterises the card at 3× into PNG bytes. Returns null only after every
+  /// retry has failed.
+  ///
+  /// BUG HISTORY — why there is no `debugNeedsPaint` here any more.
+  ///
+  /// This method used to guard the capture with `if (boundary.debugNeedsPaint)`.
+  /// That getter is debug-only: its implementation assigns the result inside an
+  /// `assert`, and asserts are stripped from release builds, so in a release
+  /// APK reading it throws a LateInitializationError. The throw was swallowed
+  /// by the catch below, `_capture` returned null, and every single share
+  /// attempt failed with "Could not render the card" — while working perfectly
+  /// in `flutter run`. Never branch on a `debug*` member in shipping code.
+  ///
+  /// The replacement is honest about what it needs: wait for the frame to
+  /// finish so the boundary is guaranteed to have a composited layer, then
+  /// retry a couple of times, because on a cold open the first attempt can
+  /// still land before the card has painted.
   Future<Uint8List?> _capture() async {
-    try {
-      final boundary =
-          _cardKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) return null;
+    // Completes after the next frame is rasterised, and schedules one if none
+    // is pending — so this resolves even when the UI is idle.
+    await WidgetsBinding.instance.endOfFrame;
 
-      // On the very first frame the boundary may still need paint.
-      if (boundary.debugNeedsPaint) {
-        await Future<void>.delayed(const Duration(milliseconds: 40));
+    for (var attempt = 0; attempt < 3; attempt++) {
+      if (!mounted) return null;
+      try {
+        final object = _cardKey.currentContext?.findRenderObject();
+        if (object is RenderRepaintBoundary) {
+          final image = await object.toImage(pixelRatio: 3.0);
+          try {
+            final data = await image.toByteData(format: ui.ImageByteFormat.png);
+            final bytes = data?.buffer.asUint8List();
+            if (bytes != null && bytes.isNotEmpty) return bytes;
+          } finally {
+            // The original leaked this whenever toByteData threw.
+            image.dispose();
+          }
+        }
+      } catch (e) {
+        debugPrint('[ShareAyah] capture attempt ${attempt + 1} failed: $e');
       }
-
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final data = await image.toByteData(format: ui.ImageByteFormat.png);
-      image.dispose();
-      return data?.buffer.asUint8List();
-    } catch (e) {
-      debugPrint('[ShareAyah] capture failed: $e');
-      return null;
+      await Future<void>.delayed(const Duration(milliseconds: 90));
     }
+
+    debugPrint('[ShareAyah] capture gave up after 3 attempts');
+    return null;
   }
 
   Future<File?> _writeTempFile(Uint8List bytes) async {

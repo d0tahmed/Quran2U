@@ -138,7 +138,7 @@ class _QuranSearchScreenState extends ConsumerState<QuranSearchScreen> {
                     loading: () => _Searching(
                       themes: ref.watch(themeMatchesProvider(_submitted)),
                     ),
-                    error: (_, __) => _Empty(
+                    error: (_, __) => const _Empty(
                       icon: Icons.error_outline_rounded,
                       title: 'Something went wrong',
                       body: 'Try rephrasing your question.',

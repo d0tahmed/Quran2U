@@ -2,15 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/glass.dart';
 
-/// Frosted surface.
+/// Frosted surface for content cards.
 ///
-/// The public API is unchanged — every existing call site keeps working — but
-/// the implementation now delegates to [GlassSurface], so panels pick up the
-/// specular rim, the tint gradient, the sheen and the backdrop saturation for
-/// free, and honour [GlassConfig.blurEnabled] on weak devices.
+/// PERF — read this before setting [blur].
+///
+/// This used to delegate unconditionally to [GlassSurface], i.e. to a real
+/// `BackdropFilter`. That was wrong for what GlassPanel is actually used for.
+/// Every call site is a card sitting INSIDE a scroll view — the Daily
+/// Inspiration cards, the Settings "About" panel, the surah detail panel — and
+/// a backdrop blur inside a scrollable re-runs a saveLayer plus a gaussian
+/// pass on the raster thread for every frame of every scroll. Two of them on
+/// one screen is enough to visibly drop frames on a mid-range phone.
+///
+/// It now defaults to [FrostedCard]: the same tint gradient, sheen and
+/// specular rim, with no blur and no layer. On a dark canvas the difference is
+/// almost invisible; the difference in frame time is not.
+///
+/// Set [blur] only for a surface that genuinely floats above moving content
+/// and is not itself inside a scroll view.
 ///
 /// New code should prefer [GlassSurface] (floating chrome) or [FrostedCard]
-/// (anything that repeats in a list) directly.
+/// (anything in a list) directly.
 class GlassPanel extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
@@ -25,6 +37,10 @@ class GlassPanel extends StatelessWidget {
 
   final VoidCallback? onTap;
 
+  /// Opt in to a real backdrop blur. Off by default — see the class docs.
+  /// Never set this on a widget that lives inside a scroll view.
+  final bool blur;
+
   const GlassPanel({
     super.key,
     required this.child,
@@ -36,6 +52,7 @@ class GlassPanel extends StatelessWidget {
     this.blurSigma = 14,
     this.accent,
     this.onTap,
+    this.blur = false,
   });
 
   /// Maps the legacy `blurSigma` knob onto the tiered system so the two APIs
@@ -56,15 +73,29 @@ class GlassPanel extends StatelessWidget {
         ? null
         : side.color.withValues(alpha: 1.0);
 
-    return GlassSurface(
-      tier: _tier,
+    if (blur) {
+      return GlassSurface(
+        tier: _tier,
+        borderRadius: borderRadius,
+        padding: padding,
+        tint: tint ?? AppColorsV2.surface,
+        edgeColor: edge,
+        edgeIntensity: edge == null ? 0.28 : 0.55,
+        shadow: boxShadow,
+        accent: accent,
+        onTap: onTap,
+        child: child,
+      );
+    }
+
+    return FrostedCard(
       borderRadius: borderRadius,
       padding: padding,
-      tint: tint ?? AppColorsV2.surface,
+      tint: tint ?? AppColorsV2.surfaceLow,
       edgeColor: edge,
-      edgeIntensity: edge == null ? 0.28 : 0.55,
-      shadow: boxShadow,
+      edgeIntensity: edge == null ? 0.22 : 0.48,
       accent: accent,
+      elevated: boxShadow != null && boxShadow!.isNotEmpty,
       onTap: onTap,
       child: child,
     );
