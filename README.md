@@ -6,8 +6,8 @@
 
 Read, listen, search, study and reflect. Quran2U pairs the complete Mushaf with
 word-by-word linguistic analysis, interleaved audio translation, the six major
-Hadith collections, a meaning-aware search engine, and official Quran.com cloud
-sync.
+Hadith collections, a meaning-aware search engine, the call to prayer on your
+own schedule, a daily quiz, and official Quran.com cloud sync.
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart&logoColor=white)](https://dart.dev)
@@ -85,6 +85,8 @@ together, and their results are merged rather than chosen between.
 | **Hisnul Muslim** | Authentic supplications, categorised, with transliteration and references. |
 | **Prayer times & Qibla** | Computed on-device (Karachi method, Hanafi) with a live countdown and a compass-based Qibla finder. |
 | **Daily Inspiration** | A pool of 56 ayah-and-hadith pairs, one surfaced per calendar day. Every Arabic text is taken verbatim from the Quran.com API — never retyped — so the diacritics are exactly as published. |
+| **Daily Quiz** | Ten questions a day drawn from the Quran's own structure — surah names and their meanings, revelation place, order, ayah counts, themes, and the ayah of the day. Easy to hard, one quiz per calendar day, identical on every device. Each answer explains itself the moment you tap and links to the surah it came from. |
+| **Progress** | Stars per quiz, a streak that counts days attempted rather than days scored well, a twelve-week completion calendar, per-topic mastery bars and all-time accuracy. |
 
 ### Sharing
 
@@ -97,8 +99,10 @@ together, and their results are merged rather than chosen between.
 
 | | |
 |---|---|
-| **Home-screen widget** | Six prayer times at a glance with the Hijri and Gregorian date. The active prayer is recalculated from the system clock on every redraw, so it cannot drift out of sync. |
+| **Adhan** | The call to prayer at Fajr, Dhuhr, Asr, Maghrib and Isha, played through the Android alarm clock so it fires on time in Doze with the app closed. Plays on the alarm stream, so it is heard on silent and through Do Not Disturb. Each prayer is independently set to full adhan, a silent notification, or off. |
+| **Home-screen widget** | Six prayer times at a glance with the Hijri and Gregorian date. The app publishes seven days of times at once and the widget arms its own redraw for the exact minute of the next transition, so it stays correct however long the app goes unopened. |
 | **Daily reminder** | One notification each morning carrying that day's actual ayah and reference, not a generic "tap to read". Settings shows how many days are armed and can fire a test immediately. |
+| **What's new** | The full release history, bundled rather than fetched — the screen you want after an update goes wrong is the one that must not need a connection. |
 | **Quran.com sync** | Sign in with your official Quran.com account over OAuth2 / OIDC; bookmarks stay unified with the website. |
 | **In-app updates** | The app checks GitHub Releases and links you to the newest build when one is available. |
 
@@ -185,13 +189,21 @@ lib/
 ├── data/                      # Bundled datasets
 │   ├── quran_theme_index.dart      # 72 themes, 461 verse references
 │   ├── quran_root_lexicon.dart     # Trilateral roots and surface forms
-│   └── daily_inspiration_data.dart # 56 ayah + hadith pairs
+│   ├── quran_surah_data.dart       # 114 chapters: names, meanings, counts
+│   ├── daily_inspiration_data.dart # 56 ayah + hadith pairs
+│   └── changelog_data.dart         # Release history
 └── ui_v2/                     # "Sakina" design system
     ├── app_colors.dart        # Palette
     ├── app_typography.dart    # Type scale
     ├── app_theme.dart         # Material theme
     ├── glass.dart             # Glass surface system
     └── widgets/               # Shared components
+
+android/app/src/main/kotlin/com/quran2u/app/
+├── PrayerTimesWidgetProvider.kt  # Widget rendering + self-scheduled redraws
+├── AdhanScheduler.kt             # Arms the adhan alarms from the schedule
+├── AdhanReceiver.kt              # Fires playback, rearms on boot/time change
+└── AdhanService.kt               # Foreground playback on the alarm stream
 ```
 
 ### Design system
@@ -291,14 +303,38 @@ being deliberate about compositing layers. Four decisions carry most of it:
 - **Hijri dates** use a dependency-free tabular Islamic calendar implementation
   with a user-adjustable offset, matching the convention of established Islamic
   apps.
-- **The prayer widget** stores each prayer as minutes-since-midnight and lets
-  the native `AppWidgetProvider` decide which one is next at render time. The
-  highlight is therefore self-correcting even when Android throttles background
-  work.
+- **The prayer widget publishes a week, not a day.** One day of times is enough
+  right up until the app is not opened for a while, at which point the last
+  prayer passes and there is nothing left to advance to — the widget freezes on
+  a stale row and shows the wrong prayer. The app now writes seven days as
+  minutes-since-midnight, and the `AppWidgetProvider` picks today's row, decides
+  which prayer is next at render time, and rolls over to tomorrow's real Fajr
+  once the day is spent. `updatePeriodMillis` is not part of this: its floor is
+  thirty minutes and Doze ignores it entirely, so the provider instead arms a
+  `setAndAllowWhileIdle` alarm for the exact minute of the next transition.
+- **The adhan reads that same schedule**, which is the point. A widget and an
+  adhan that each computed prayer times independently would eventually disagree,
+  and the user would be told two different things by one app. Slot zero uses
+  `setAlarmClock` — the one alarm class Android will not defer — and the rest use
+  `setExactAndAllowWhileIdle`, with a plain `setAndAllowWhileIdle` fallback for
+  devices that refuse both. Playback runs in a foreground service on
+  `USAGE_ALARM`, so it is heard on silent, and holds a wake lock capped at seven
+  minutes so a stuck player cannot outlive the recitation.
+- **The quiz is seeded, not random.** `Random(dayIndex)` means every device
+  generates the same ten questions for a given date without a server, a payload
+  or a sync — and nobody can reroll into an easier quiz. Question generators
+  return `null` rather than guessing when the data is ambiguous (a tie for
+  longest surah, a verse belonging to more than one theme), so a generated
+  question is correct by construction. 40,000 generated questions were checked
+  for duplicate options, wrong answer indices and answers appearing twice.
+- **Streaks count days attempted, not days passed.** Breaking someone's streak
+  over a low score punishes exactly the person who most needs to come back
+  tomorrow.
 - **Daily content rotates by day-of-epoch**, not day-of-month. The obvious
   `(day - 1) % length` caps at 31 and silently strands every entry past index
   30 — counting whole days from a fixed UTC epoch advances the index by exactly
-  one per day and cycles the entire pool.
+  one per day and cycles the entire pool. The quiz uses the raw, unwrapped day
+  count for the same reason in reverse: wrapping it would repeat the quiz.
 - **Text scaling** is clamped application-wide to 1.2×. Arabic set alongside
   English in a fixed-width card has very little slack, and an unbounded system
   font scale is the single most common source of layout overflow.
@@ -344,16 +380,24 @@ in context.
 
 ## Roadmap
 
-- [ ] **Daily Quiz** — ten questions a day, generated deterministically from the
-      bundled datasets so every answer is correct by construction, with streaks
-      and spaced repetition of missed questions
-- [ ] Bundle surah metadata rather than fetching it, so a first launch works
-      fully offline
+Shipped in 4.0.0:
+
+- [x] **Daily Quiz** — ten questions a day, generated deterministically from the
+      bundled datasets so every answer is correct by construction, with streaks,
+      stars and per-topic mastery
+- [x] **Per-prayer adhan** — full recitation, silent notification or off, set
+      independently for each of the five
+- [x] Bundle surah metadata rather than fetching it, so the quiz and the index
+      work on a first launch with no connection
+
+Next:
+
+- [ ] Spaced repetition — feed missed questions back in at a higher rate
+- [ ] A separate, shorter adhan for Fajr
 - [ ] Expand the Word Study root lexicon beyond its current coverage
 - [ ] Grow the search theme index — it is designed to be appended to
 - [ ] Hijri date adjustment control in Settings
 - [ ] Configurable prayer calculation method and madhab
-- [ ] Per-prayer adhan notifications
 - [ ] iOS support
 
 ---
@@ -379,6 +423,14 @@ A few conventions worth knowing before sending a patch:
 - New daily entries belong in `lib/data/daily_inspiration_data.dart`. Copy the
   Arabic from the API rather than typing it, and cut excerpts only at a clause
   boundary.
+- New quiz question types belong in `lib/services/quiz_engine.dart`. A generator
+  must return `null` when the underlying data is ambiguous rather than picking a
+  plausible answer — a quiz that is occasionally wrong is worse than one that is
+  occasionally short.
+- Add a `ChangelogEntry` at the top of `lib/data/changelog_data.dart` when you
+  cut a release, and clear `unreleased` on the entry above it. Nothing else
+  needs touching; the major-version badge and the "installed" marker are both
+  derived.
 - Never branch on a `debug*` API. It compiles, passes in debug, and throws in
   release.
 

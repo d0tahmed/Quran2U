@@ -292,21 +292,28 @@ class _MainShellState extends ConsumerState<MainShell> {
             // alive — so scroll offsets, controllers and player state survive
             // a switch exactly as before.
             //
-            // The incoming tab still fades, via _TabFade, which holds a single
-            // layer for 150 ms and then settles at opacity 1.0, where Flutter
-            // drops the layer entirely. One short-lived layer per switch
-            // instead of two, and no transforms at all.
+            // And no fade either.
+            //
+            // The incoming tab used to fade in over 150 ms. The trouble is
+            // what sits behind it: the outgoing tab is already offstage, so
+            // for those 150 ms the new page is translucent over nothing but
+            // the ambient background, and the whole screen reads as a dark
+            // wash — which looks exactly like a shadow of the page you just
+            // left. A cross-fade would fix the look and cost two full-screen
+            // layers per switch, which is what this rewrite removed in the
+            // first place.
+            //
+            // So the switch is instant. No layer, no wash, no ghost, and the
+            // fastest a tab change can possibly be. Tabs are a place change,
+            // not a transition — every native shell switches them instantly.
             return Offstage(
               offstage: !active,
-              child: _TabFade(
-                active: active,
-                child: TickerMode(
-                  // A hidden tab has no business burning frames: this freezes
-                  // every ticker below it — shimmer loaders, the prayer
-                  // countdown, the now-playing animations.
-                  enabled: active,
-                  child: RepaintBoundary(child: _screens[i]),
-                ),
+              child: TickerMode(
+                // A hidden tab has no business burning frames: this freezes
+                // every ticker below it — shimmer loaders, the prayer
+                // countdown, the now-playing animations.
+                enabled: active,
+                child: RepaintBoundary(child: _screens[i]),
               ),
             );
           }),
@@ -328,62 +335,6 @@ class _MainShellState extends ConsumerState<MainShell> {
         ),
       ),
     );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab entrance
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Fades a tab in when it becomes active, and holds it at full opacity.
-///
-/// It deliberately sits ABOVE the TickerMode that governs the tab's own
-/// animations: this controller has to be free to run on the very frame the tab
-/// activates, and it would be muted if it were governed by the same switch it
-/// is animating.
-///
-/// The controller only runs during the 150 ms entrance. At rest it sits at
-/// exactly 1.0, where RenderAnimatedOpacity skips the compositing layer, so an
-/// idle tab pays nothing.
-class _TabFade extends StatefulWidget {
-  final bool active;
-  final Widget child;
-
-  const _TabFade({required this.active, required this.child});
-
-  @override
-  State<_TabFade> createState() => _TabFadeState();
-}
-
-class _TabFadeState extends State<_TabFade>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 150),
-    value: widget.active ? 1.0 : 0.0,
-  );
-
-  @override
-  void didUpdateWidget(covariant _TabFade oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.active && !oldWidget.active) {
-      _controller.forward(from: 0.0);
-    } else if (!widget.active && oldWidget.active) {
-      // Snap, don't animate out: the tab is about to go offstage, so an exit
-      // animation would be a saveLayer nobody ever sees.
-      _controller.value = 0.0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(opacity: _controller, child: widget.child);
   }
 }
 

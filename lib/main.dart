@@ -7,7 +7,9 @@ import 'package:workmanager/workmanager.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/screens/login_screen.dart';
 import 'package:quran_recitation/screens/main_shell.dart';
+import 'package:quran_recitation/services/adhan_service.dart';
 import 'package:quran_recitation/services/notification_service.dart';
+import 'package:quran_recitation/services/perf_governor.dart';
 import 'package:quran_recitation/services/widget_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/app_theme.dart';
@@ -140,6 +142,11 @@ class _QuranRecitationAppState extends State<QuranRecitationApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Start measuring after the first frame is on screen. Started any earlier
+    // it would sample the frames spent inflating the very first route, which
+    // are slow on every device and say nothing about this one.
+    WidgetsBinding.instance.addPostFrameCallback((_) => PerfGovernor.start());
   }
 
   @override
@@ -149,13 +156,26 @@ class _QuranRecitationAppState extends State<QuranRecitationApp>
   }
 
   @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    // Rotation and multi-window resize change every surface size, and the
+    // glass shader cache is keyed by size — the old entries can never be hit
+    // again, so drop them rather than let them sit until they age out.
+    PerfGovernor.onMetricsChanged();
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     // Opening the app is the one moment we are guaranteed to be allowed to
     // run. Push fresh prayer data to the home-screen widget then, so it can
     // never sit on stale times even if the OS throttles our WorkManager job.
     if (state == AppLifecycleState.resumed) {
-      WidgetService.refreshWidget();
+      // AdhanService.sync() republishes the seven-day prayer schedule — the
+      // same rows the widget draws — and then tells the native scheduler to
+      // re-arm from it. One call keeps the widget and the adhan in step,
+      // which is the whole reason they read the same data.
+      AdhanService.sync();
 
       // Re-arm the daily reminder window on every resume, not only on a cold
       // start. Android drops every pending alarm an app owns when that app is

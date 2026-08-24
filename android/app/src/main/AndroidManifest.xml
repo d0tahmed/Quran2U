@@ -83,6 +83,33 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/prayer_times_widget_info" />
         </receiver>
+
+        <!-- Adhan: the alarm receiver, and the service that plays the call.
+
+             The receiver is NOT exported. Every intent that reaches it is
+             either one of our own alarms or a system broadcast, and both are
+             delivered to an unexported receiver; exporting it would let any
+             app on the device trigger the adhan. -->
+        <receiver
+            android:name=".AdhanReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.quran2u.app.ADHAN_FIRE" />
+                <action android:name="com.quran2u.app.ADHAN_REARM" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- foregroundServiceType is required from Android 14 and must match
+             the FOREGROUND_SERVICE_MEDIA_PLAYBACK permission declared above. -->
+        <service
+            android:name=".AdhanService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
     
     <queries>

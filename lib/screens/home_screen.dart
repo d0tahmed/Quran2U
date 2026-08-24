@@ -16,7 +16,10 @@ import 'package:quran_recitation/screens/bookmarks_screen.dart';
 import 'package:quran_recitation/screens/downloads_screen.dart';
 import 'package:quran_recitation/screens/read_quran_screen.dart';
 import 'package:quran_recitation/screens/main_shell.dart';
+import 'package:quran_recitation/screens/quiz_screen.dart';
+import 'package:quran_recitation/screens/quiz_stats_screen.dart';
 import 'package:quran_recitation/services/hijri_date.dart';
+import 'package:quran_recitation/services/quiz_storage.dart';
 import 'package:quran_recitation/services/time_format.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/app_typography.dart';
@@ -123,6 +126,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
+
+              // ── Daily quiz ──────────────────────────────────────────────
+              const SliverToBoxAdapter(child: _DailyQuizCard()),
 
               // ── Reciter ─────────────────────────────────────────────────
               SliverToBoxAdapter(
@@ -258,6 +264,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           childCount: list.length,
+          // 114 rows, none of which own state worth preserving — they read
+          // everything from providers. Keeping them alive off-screen just
+          // holds elements and their render objects in memory for nothing.
+          addAutomaticKeepAlives: false,
         ),
       ),
     );
@@ -903,6 +913,186 @@ class _PrayerEntry {
   final DateTime time;
   final IconData icon;
   const _PrayerEntry(this.name, this.time, this.icon);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Daily quiz card
+//
+// Two states, and the difference matters. Before you play it is an invitation
+// with today's date on it. After you play it becomes a record — the score, the
+// stars, and the streak — because the reward for finishing is seeing what you
+// built, not being asked again.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DailyQuizCard extends StatefulWidget {
+  const _DailyQuizCard();
+
+  @override
+  State<_DailyQuizCard> createState() => _DailyQuizCardState();
+}
+
+class _DailyQuizCardState extends State<_DailyQuizCard> {
+  QuizProgress? _p;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final p = await QuizStorage.load();
+    if (mounted) setState(() => _p = p);
+  }
+
+  Future<void> _openQuiz() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const QuizScreen()),
+    );
+    // The quiz writes on its result screen, so re-read on the way back.
+    if (mounted) _load();
+  }
+
+  Future<void> _openStats() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => const QuizStatsScreen()),
+    );
+    if (mounted) _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = _p;
+
+    // Reserve the height before the read resolves so the list below does not
+    // jump when it does.
+    if (p == null) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(18, 14, 18, 0),
+        child: SizedBox(height: 92),
+      );
+    }
+
+    final done = p.playedToday;
+    final stars = p.todayStars ?? 0;
+    final accent = done ? AppColorsV2.tertiary : AppColorsV2.primary;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+      child: FrostedCard(
+        radius: 26,
+        padding: const EdgeInsets.fromLTRB(16, 15, 14, 15),
+        accent: accent,
+        edgeColor: accent,
+        edgeIntensity: 0.34,
+        glow: !done ? AppColorsV2.primary : null,
+        onTap: _openQuiz,
+        onLongPress: _openStats,
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(17),
+                border: Border.all(color: accent.withValues(alpha: 0.26)),
+              ),
+              child: Icon(
+                done
+                    ? Icons.check_rounded
+                    : Icons.psychology_alt_rounded,
+                size: 22,
+                color: accent,
+              ),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          done ? 'Quiz complete' : "Today's quiz",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypeV2.title(size: 15),
+                        ),
+                      ),
+                      if (done) ...[
+                        const SizedBox(width: 8),
+                        for (var i = 0; i < 3; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 2),
+                            child: Icon(
+                              i < stars
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              size: 13,
+                              color: i < stars
+                                  ? AppColorsV2.tertiary
+                                  : AppColorsV2.onSurfaceVariant
+                                      .withValues(alpha: 0.4),
+                            ),
+                          ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    done
+                        ? '${p.todayCorrect}/${p.todayTotal} correct'
+                            '${p.currentStreak > 1 ? "  ·  ${p.currentStreak} day streak" : ""}'
+                        : p.currentStreak > 0
+                            ? '10 questions  ·  keep a ${p.currentStreak} day streak'
+                            : '10 questions from the Quran',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypeV2.caption(
+                        size: 11, color: AppColorsV2.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (done)
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _openStats,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: AppColorsV2.surfaceHigh,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(color: AppColorsV2.hairline),
+                  ),
+                  child: Text('Stats',
+                      style: AppTypeV2.caption(
+                          size: 10.5, color: AppColorsV2.onSurface)),
+                ),
+              )
+            else
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: AppColorsV2.primary,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(Icons.arrow_forward_rounded,
+                    size: 16, color: AppColorsV2.onPrimary),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -7,8 +7,11 @@ import 'package:shared_preferences/shared_preferences.dart'; // Added for perman
 import 'package:url_launcher/url_launcher.dart'; 
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/screens/changelog_screen.dart';
 import 'package:quran_recitation/screens/downloads_screen.dart';
 import 'package:quran_recitation/screens/login_screen.dart';
+import 'package:quran_recitation/screens/quiz_screen.dart';
+import 'package:quran_recitation/screens/quiz_stats_screen.dart';
 // `hide TextDirection`: package:intl exports its own TextDirection class (with
 // LTR/RTL constants), which shadows the one from dart:ui that every Flutter
 // widget expects and turns `TextDirection.rtl` into a compile error further
@@ -16,6 +19,9 @@ import 'package:quran_recitation/screens/login_screen.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:quran_recitation/services/interleaved_audio_service.dart';
 import 'package:quran_recitation/services/notification_service.dart';
+import 'package:quran_recitation/services/quiz_storage.dart';
+import 'package:quran_recitation/services/adhan_service.dart';
+import 'package:quran_recitation/services/time_format.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/glass.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
@@ -585,6 +591,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 22),
 
               const _SectionHeader(
+                  icon: Icons.psychology_alt_rounded, text: 'Daily Quiz'),
+              const SizedBox(height: 10),
+              const _QuizSection(),
+
+              const SizedBox(height: 22),
+
+              const _SectionHeader(
+                  icon: Icons.volume_up_rounded, text: 'Adhan'),
+              const SizedBox(height: 10),
+              const _AdhanSection(),
+
+              const SizedBox(height: 22),
+
+              const _SectionHeader(
                   icon: Icons.notifications_active_rounded,
                   text: 'Daily Reminder'),
               const SizedBox(height: 10),
@@ -606,6 +626,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 22),
               const _SectionHeader(icon: Icons.info_outline_rounded, text: 'About'),
               const SizedBox(height: 10),
+              _TileButton(
+                icon: Icons.history_rounded,
+                iconColor: _kGold,
+                title: "What's new",
+                subtitle: 'Every change, v1.0.0 to today',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                      builder: (_) => const ChangelogScreen()),
+                ),
+                background: AppColorsV2.surfaceLow,
+              ),
+              const SizedBox(height: 12),
               GlassPanel(
                 padding: const EdgeInsets.all(16),
                 borderRadius: BorderRadius.circular(24),
@@ -743,6 +776,414 @@ class _TinyLabel extends StatelessWidget {
       );
 }
 
+/// Adhan controls.
+///
+/// Per prayer rather than one global switch, because that is how people
+/// actually live with it — Fajr loud, Dhuhr silent while at work. Tapping a
+/// row cycles Adhan → Silent → Off, which is faster than a dropdown for three
+/// states and needs no modal.
+class _AdhanSection extends StatefulWidget {
+  const _AdhanSection();
+
+  @override
+  State<_AdhanSection> createState() => _AdhanSectionState();
+}
+
+class _AdhanSectionState extends State<_AdhanSection> {
+  bool _loading = true;
+  bool _enabled = false;
+  Map<String, AdhanMode> _modes = <String, AdhanMode>{};
+  MapEntry<String, DateTime>? _next;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final enabled = await AdhanService.isEnabled();
+    final modes = await AdhanService.allModes();
+    final next = await AdhanService.nextAudible();
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _enabled = enabled;
+      _modes = modes;
+      _next = next;
+    });
+  }
+
+  Future<void> _toggleMaster(bool on) async {
+    setState(() => _enabled = on);
+    if (on && _modes.values.every((m) => m == AdhanMode.off)) {
+      // Turning it on with every prayer off would do nothing at all, so the
+      // first enable opts into the obvious thing rather than making the user
+      // tap five more times to reach it.
+      await AdhanService.enableAll();
+    } else {
+      await AdhanService.setEnabled(on);
+    }
+    await _load();
+  }
+
+  Future<void> _cycle(String prayer) async {
+    const order = <AdhanMode>[AdhanMode.full, AdhanMode.notify, AdhanMode.off];
+    final current = _modes[prayer] ?? AdhanMode.off;
+    final next = order[(order.indexOf(current) + 1) % order.length];
+    setState(() => _modes = <String, AdhanMode>{..._modes, prayer: next});
+    await AdhanService.setMode(prayer, next);
+    await _load();
+  }
+
+  Color _modeColor(AdhanMode mode) {
+    switch (mode) {
+      case AdhanMode.full:
+        return _kGreen;
+      case AdhanMode.notify:
+        return _kGold;
+      case AdhanMode.off:
+        return AppColorsV2.onSurfaceVariant;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _GlassCard(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const _IconBox(icon: Icons.campaign_rounded, color: _kGreen),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Play the adhan',
+                        style: GoogleFonts.outfit(
+                            color: AppColorsV2.onSurface,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700)),
+                    Text(
+                      _loading
+                          ? 'Checking…'
+                          : !_enabled
+                              ? 'Off'
+                              : _next == null
+                                  ? 'No prayer selected'
+                                  : 'Next: ${_next!.key} at '
+                                      '${TimeFormat.clock(_next!.value)}',
+                      style: GoogleFonts.outfit(
+                          color: AppColorsV2.onSurfaceVariant, fontSize: 11.5),
+                    ),
+                  ],
+                ),
+              ),
+              _Toggle(
+                value: _enabled,
+                onChanged: _loading ? null : _toggleMaster,
+              ),
+            ],
+          ),
+
+          if (_enabled) ...[
+            const Divider(color: Colors.white10, height: 20),
+            for (final prayer in AdhanService.prayers)
+              InkWell(
+                onTap: () => _cycle(prayer),
+                borderRadius: BorderRadius.circular(10),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          AdhanService.prayerLabels[prayer] ?? prayer,
+                          style: GoogleFonts.outfit(
+                              color: AppColorsV2.onSurface,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 11, vertical: 4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: _modeColor(_modes[prayer] ?? AdhanMode.off)
+                                .withValues(alpha: 0.45),
+                          ),
+                          color: _modeColor(_modes[prayer] ?? AdhanMode.off)
+                              .withValues(alpha: 0.10),
+                        ),
+                        child: Text(
+                          (_modes[prayer] ?? AdhanMode.off).label,
+                          style: GoogleFonts.outfit(
+                            color: _modeColor(_modes[prayer] ?? AdhanMode.off),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const Divider(color: Colors.white10, height: 20),
+            Row(
+              children: [
+                const Icon(Icons.info_outline_rounded,
+                    size: 14, color: AppColorsV2.onSurfaceVariant),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    'Plays at alarm volume, so it is heard on silent. If it '
+                    'never fires, allow the app to run in the background in '
+                    'your phone settings.',
+                    style: GoogleFonts.outfit(
+                        color: AppColorsV2.onSurfaceVariant,
+                        fontSize: 11,
+                        height: 1.45),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The app's switch.
+///
+/// Material's `Switch` fills its whole track with the active colour on this
+/// palette, so an enabled toggle reads as a solid green pill with no visible
+/// thumb — it stops looking like a control. This keeps the thumb bright and
+/// the track translucent, so "on" is obvious and the shape still says switch.
+/// It also sidesteps the `activeColor`/`activeThumbColor` deprecation churn.
+class _Toggle extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  const _Toggle({required this.value, this.onChanged});
+
+  static const Duration _dur = Duration(milliseconds: 170);
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onChanged == null;
+
+    return Opacity(
+      opacity: disabled ? 0.45 : 1,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: disabled ? null : () => onChanged!(!value),
+        child: AnimatedContainer(
+          duration: _dur,
+          curve: Curves.easeOutCubic,
+          width: 48,
+          height: 28,
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: value
+                ? _kGreen.withValues(alpha: 0.22)
+                : AppColorsV2.surfaceHighest,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: value
+                  ? _kGreen.withValues(alpha: 0.7)
+                  : AppColorsV2.outlineVariant,
+              width: 1.2,
+            ),
+          ),
+          child: AnimatedAlign(
+            duration: _dur,
+            curve: Curves.easeOutCubic,
+            alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+            child: AnimatedContainer(
+              duration: _dur,
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: value
+                    ? _kGreen
+                    : AppColorsV2.onSurfaceVariant.withValues(alpha: 0.8),
+                shape: BoxShape.circle,
+                boxShadow: value
+                    ? [
+                        BoxShadow(
+                          color: _kGreen.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          spreadRadius: -1,
+                        ),
+                      ]
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Daily quiz status, with the two entry points.
+///
+/// This exists in Settings as well as on the home screen because the streak is
+/// the thing people come looking for, and they look for it where the numbers
+/// live.
+class _QuizSection extends StatefulWidget {
+  const _QuizSection();
+
+  @override
+  State<_QuizSection> createState() => _QuizSectionState();
+}
+
+class _QuizSectionState extends State<_QuizSection> {
+  QuizProgress? _p;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final p = await QuizStorage.load();
+    if (mounted) setState(() => _p = p);
+  }
+
+  Future<void> _go(Widget screen) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(builder: (_) => screen),
+    );
+    if (mounted) _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = _p;
+    final done = p?.playedToday ?? false;
+
+    return GlassPanel(
+      padding: const EdgeInsets.all(16),
+      borderRadius: BorderRadius.circular(24),
+      tint: AppColorsV2.surfaceLow,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const _IconBox(
+                  icon: Icons.local_fire_department_rounded, color: _kGold),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p == null
+                          ? 'Loading…'
+                          : p.currentStreak == 0
+                              ? 'No streak yet'
+                              : '${p.currentStreak} day streak',
+                      style: AppTypeV2.title(size: 14),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      p == null
+                          ? ' '
+                          : done
+                              ? 'Today is done  ·  ${p.totalStars} stars all time'
+                              : 'Today is waiting  ·  best ${p.bestStreak} days',
+                      style: AppTypeV2.caption(
+                          size: 11, color: AppColorsV2.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _MiniAction(
+                  icon: done
+                      ? Icons.replay_rounded
+                      : Icons.play_arrow_rounded,
+                  label: done ? 'Play again' : 'Start today',
+                  filled: !done,
+                  onTap: () => _go(const QuizScreen()),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _MiniAction(
+                  icon: Icons.insights_rounded,
+                  label: 'Progress',
+                  onTap: () => _go(const QuizStatsScreen()),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small square-shouldered button used inside the settings panels.
+class _MiniAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool filled;
+  final VoidCallback onTap;
+
+  const _MiniAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.filled = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = filled ? AppColorsV2.onPrimary : AppColorsV2.onSurface;
+    return GlassPressable(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          color: filled ? _kGreen : AppColorsV2.surfaceHigh,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: filled ? Colors.transparent : AppColorsV2.hairline,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 15, color: fg),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypeV2.caption(size: 11.5, color: fg),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Daily reminder status and controls.
 ///
 /// A scheduled notification that silently fails is the worst kind of bug: the
@@ -814,16 +1255,70 @@ class _NotificationSectionState extends State<_NotificationSection> {
             value: _status,
           ),
           const Divider(color: Colors.white10, height: 16),
-          _InfoRow(
-            icon: Icons.notifications_none_rounded,
-            label: 'Send a test now',
-            value: _next == null ? '' : 'next ${DateFormat('EEE d MMM').format(_next!)}',
-            actionText: 'Test',
+          // Deliberately not an _InfoRow. Label + chip + "next Fri 29 Aug" is
+          // more than one line can hold on a 360dp phone, and squeezing it
+          // ellipsised the label away. Stacking the two strings gives both
+          // room and reads better besides.
+          InkWell(
             onTap: () async {
               await NotificationService.showInstantNotification();
               await NotificationService.scheduleDailyReminders();
               await _refresh();
             },
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  const Icon(Icons.notifications_none_rounded,
+                      color: Colors.white24, size: 16),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Send a test now',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.outfit(
+                              color: Colors.white38, fontSize: 13),
+                        ),
+                        if (_next != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'Next reminder '
+                            '${DateFormat('EEE d MMM').format(_next!)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              color: _kGold.withValues(alpha: 0.85),
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: _kGold.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(color: _kGold.withValues(alpha: 0.3)),
+                    ),
+                    child: Text('Test',
+                        style: GoogleFonts.manrope(
+                            color: _kGold,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ),
+            ),
           ),
           // Only shown when it is actually the problem — an unconditional
           // "grant exact alarms" row is noise for the users who already have it.
@@ -1601,12 +2096,23 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // `Expanded` on the label rather than a `Spacer` after it. A Spacer only
+    // works while everything fits: the moment label + chip + value exceed the
+    // row it claims negative space and the children draw on top of each other,
+    // which is exactly what the reminder row was doing.
     Widget child = Row(children: [
         Icon(icon, color: Colors.white24, size: 16),
         const SizedBox(width: 10),
-        Text(label, style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13)),
-        const Spacer(),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13),
+          ),
+        ),
         if (actionText != null) ...[
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
@@ -1616,15 +2122,19 @@ class _InfoRow extends StatelessWidget {
             ),
             child: Text(actionText!, style: GoogleFonts.manrope(color: _kGold, fontSize: 12, fontWeight: FontWeight.w800)),
           ),
-          const SizedBox(width: 8),
         ],
-        Text(value,
-            style: GoogleFonts.outfit(
-                color: actionText != null ? _kGold : Colors.white70, 
-                fontSize: 13, 
-                fontWeight: actionText != null ? FontWeight.w800 : FontWeight.w500)),
+        if (value.isNotEmpty) ...[
+          const SizedBox(width: 8),
+          Text(value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.outfit(
+                  color: actionText != null ? _kGold : Colors.white70,
+                  fontSize: 13,
+                  fontWeight: actionText != null ? FontWeight.w800 : FontWeight.w500)),
+        ],
       ]);
-      
+
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
