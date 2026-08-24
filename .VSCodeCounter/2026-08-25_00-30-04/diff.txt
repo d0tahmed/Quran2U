@@ -1,0 +1,125 @@
+Date : 2026-08-25 00:30:04
+Directory : /home/ahmed/Desktop/Quran2U
+Total : 67 files,  12850 codes, 1648 comments, 1270 blanks, all 15768 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| Dart       |         51 |     12,361 |      1,621 |      1,172 |     15,154 |
+| Markdown   |          1 |        317 |          0 |         88 |        405 |
+| XML        |          8 |        149 |         21 |          8 |        178 |
+| YAML       |          2 |         10 |          1 |          1 |         12 |
+| Swift      |          1 |          4 |          0 |          0 |          4 |
+| Properties |          1 |          3 |          5 |          1 |          9 |
+| CMake      |          2 |          3 |          0 |          0 |          3 |
+| C++        |          1 |          3 |          0 |          0 |          3 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                   | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                      |         67 |     12,850 |      1,648 |      1,270 |     15,768 |
+| . (Files)                                                                              |          3 |        327 |          1 |         89 |        417 |
+| android                                                                                |          9 |        152 |         26 |          9 |        187 |
+| android (Files)                                                                        |          1 |          3 |          5 |          1 |          9 |
+| android/app                                                                            |          8 |        149 |         21 |          8 |        178 |
+| android/app/src                                                                        |          8 |        149 |         21 |          8 |        178 |
+| android/app/src/main                                                                   |          8 |        149 |         21 |          8 |        178 |
+| android/app/src/main (Files)                                                           |          1 |         20 |         10 |          2 |         32 |
+| android/app/src/main/res                                                               |          7 |        129 |         11 |          6 |        146 |
+| android/app/src/main/res/drawable                                                      |          5 |          0 |          5 |          0 |          5 |
+| android/app/src/main/res/layout                                                        |          1 |        126 |          6 |          6 |        138 |
+| android/app/src/main/res/xml                                                           |          1 |          3 |          0 |          0 |          3 |
+| lib                                                                                    |         51 |     12,361 |      1,621 |      1,172 |     15,154 |
+| lib (Files)                                                                            |          1 |         40 |         24 |          7 |         71 |
+| lib/data                                                                               |          5 |      3,138 |        196 |         70 |      3,404 |
+| lib/models                                                                             |          2 |        215 |         36 |         44 |        295 |
+| lib/providers                                                                          |          3 |        299 |         60 |         58 |        417 |
+| lib/screens                                                                            |         21 |      5,619 |        438 |        419 |      6,476 |
+| lib/services                                                                           |         12 |      1,889 |        542 |        381 |      2,812 |
+| lib/ui_v2                                                                              |          7 |      1,161 |        325 |        193 |      1,679 |
+| lib/ui_v2 (Files)                                                                      |          4 |        830 |        237 |        137 |      1,204 |
+| lib/ui_v2/widgets                                                                      |          3 |        331 |         88 |         56 |        475 |
+| linux                                                                                  |          1 |          1 |          0 |          0 |          1 |
+| linux/flutter                                                                          |          1 |          1 |          0 |          0 |          1 |
+| macos                                                                                  |          1 |          4 |          0 |          0 |          4 |
+| macos/Flutter                                                                          |          1 |          4 |          0 |          0 |          4 |
+| windows                                                                                |          2 |          5 |          0 |          0 |          5 |
+| windows/flutter                                                                        |          2 |          5 |          0 |          0 |          5 |
++----------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                                               | language   | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| /home/ahmed/Desktop/Quran2U/README.md                                                  | Markdown   |        317 |          0 |         88 |        405 |
+| /home/ahmed/Desktop/Quran2U/analysis_options.yaml                                      | YAML       |          9 |          0 |          0 |          9 |
+| /home/ahmed/Desktop/Quran2U/android/app/src/main/AndroidManifest.xml                   | XML        |         20 |         10 |          2 |         32 |
+| /home/ahmed/Desktop/Quran2U/android/app/src/main/res/drawable/widget_background.xml    | XML        |          0 |          1 |          0 |          1 |
+| /home/ahmed/Desktop/Quran2U/android/app/src/main/res/drawable/widget_cell_active.xml   | XML        |          0 |          1 |          0 |          1 |
+| /home/ahmed/Desktop/Quran2U/android/app/src/main/res/drawable/widget_cell_normal.xml   | XML        |          0 |          1 |          0 |          1 |
+| /home/ahmed/Desktop/Quran2U/android/app/src/main/res/drawable/widget_pill.xml          | XML        |          0 |          1 |          0 |          1 |
+| /home/ahmed/Desktop/Quran2U/android/app/src/main/res/drawable/widget_row_highlight.xml | XML        |          0 |          1 |          0 |          1 |
+| /home/ahmed/Desktop/Quran2U/android/app/src/main/res/layout/prayer_times_widget.xml    | XML        |        126 |          6 |          6 |        138 |
+| /home/ahmed/Desktop/Quran2U/android/app/src/main/res/xml/prayer_times_widget_info.xml  | XML        |          3 |          0 |          0 |          3 |
+| /home/ahmed/Desktop/Quran2U/android/gradle.properties                                  | Properties |          3 |          5 |          1 |          9 |
+| /home/ahmed/Desktop/Quran2U/lib/data/changelog_data.dart                               | Dart       |        477 |         44 |         27 |        548 |
+| /home/ahmed/Desktop/Quran2U/lib/data/daily_inspiration_data.dart                       | Dart       |        418 |         82 |          8 |        508 |
+| /home/ahmed/Desktop/Quran2U/lib/data/quran_root_lexicon.dart                           | Dart       |      1,296 |         19 |         11 |      1,326 |
+| /home/ahmed/Desktop/Quran2U/lib/data/quran_surah_data.dart                             | Dart       |        136 |         26 |         13 |        175 |
+| /home/ahmed/Desktop/Quran2U/lib/data/quran_theme_index.dart                            | Dart       |        811 |         25 |         11 |        847 |
+| /home/ahmed/Desktop/Quran2U/lib/main.dart                                              | Dart       |         40 |         24 |          7 |         71 |
+| /home/ahmed/Desktop/Quran2U/lib/models/share_card_style.dart                           | Dart       |         68 |         17 |         15 |        100 |
+| /home/ahmed/Desktop/Quran2U/lib/models/word_insight.dart                               | Dart       |        147 |         19 |         29 |        195 |
+| /home/ahmed/Desktop/Quran2U/lib/providers/reading_progress_provider.dart               | Dart       |        176 |         22 |         27 |        225 |
+| /home/ahmed/Desktop/Quran2U/lib/providers/search_providers.dart                        | Dart       |         18 |         13 |          8 |         39 |
+| /home/ahmed/Desktop/Quran2U/lib/providers/word_insight_providers.dart                  | Dart       |        105 |         25 |         23 |        153 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/ayah_word_picker.dart                          | Dart       |        546 |         26 |         30 |        602 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/changelog_screen.dart                          | Dart       |        492 |         36 |         47 |        575 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/daily_inspiration_screen.dart                  | Dart       |       -241 |        -36 |         -2 |       -279 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/downloads_screen.dart                          | Dart       |          1 |          0 |          0 |          1 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/duas_screen.dart                               | Dart       |          3 |          0 |          0 |          3 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/hadith_reader_screen.dart                      | Dart       |          1 |          0 |          0 |          1 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/home_screen.dart                               | Dart       |        552 |         61 |         22 |        635 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/login_screen.dart                              | Dart       |         14 |         -2 |         -3 |          9 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/main_shell.dart                                | Dart       |         83 |         42 |          8 |        133 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/now_playing_screen.dart                        | Dart       |         25 |          5 |          8 |         38 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/prayer_times_screen.dart                       | Dart       |         -6 |          0 |          1 |         -5 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/quiz_screen.dart                               | Dart       |        574 |         36 |         52 |        662 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/quiz_stats_screen.dart                         | Dart       |        539 |         57 |         48 |        644 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/quran_search_screen.dart                       | Dart       |        645 |         36 |         50 |        731 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/read_quran_screen.dart                         | Dart       |         99 |         14 |          8 |        121 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/read_tab_screen.dart                           | Dart       |         62 |          1 |          1 |         64 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/settings_screen.dart                           | Dart       |        593 |         74 |         44 |        711 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/share_ayah_screen.dart                         | Dart       |        502 |         51 |         44 |        597 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/surah_detail_screen.dart                       | Dart       |        106 |          8 |          4 |        118 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/tafseer_screen.dart                            | Dart       |          1 |          0 |          0 |          1 |
+| /home/ahmed/Desktop/Quran2U/lib/screens/word_insight_screen.dart                       | Dart       |      1,028 |         29 |         57 |      1,114 |
+| /home/ahmed/Desktop/Quran2U/lib/services/adhan_service.dart                            | Dart       |        127 |         49 |         28 |        204 |
+| /home/ahmed/Desktop/Quran2U/lib/services/arabic_text_utils.dart                        | Dart       |        107 |         26 |         20 |        153 |
+| /home/ahmed/Desktop/Quran2U/lib/services/database_helper.dart                          | Dart       |         27 |          4 |          3 |         34 |
+| /home/ahmed/Desktop/Quran2U/lib/services/hijri_date.dart                               | Dart       |         85 |         16 |         19 |        120 |
+| /home/ahmed/Desktop/Quran2U/lib/services/notification_service.dart                     | Dart       |        115 |         64 |         26 |        205 |
+| /home/ahmed/Desktop/Quran2U/lib/services/perf_governor.dart                            | Dart       |         58 |         46 |         21 |        125 |
+| /home/ahmed/Desktop/Quran2U/lib/services/quiz_engine.dart                              | Dart       |        443 |        105 |         65 |        613 |
+| /home/ahmed/Desktop/Quran2U/lib/services/quiz_storage.dart                             | Dart       |        203 |         46 |         40 |        289 |
+| /home/ahmed/Desktop/Quran2U/lib/services/quran_search_service.dart                     | Dart       |        519 |        114 |        112 |        745 |
+| /home/ahmed/Desktop/Quran2U/lib/services/time_format.dart                              | Dart       |         15 |         14 |          8 |         37 |
+| /home/ahmed/Desktop/Quran2U/lib/services/widget_service.dart                           | Dart       |         -5 |         43 |          0 |         38 |
+| /home/ahmed/Desktop/Quran2U/lib/services/word_insight_service.dart                     | Dart       |        195 |         15 |         39 |        249 |
+| /home/ahmed/Desktop/Quran2U/lib/ui_v2/app_colors.dart                                  | Dart       |          4 |         18 |          3 |         25 |
+| /home/ahmed/Desktop/Quran2U/lib/ui_v2/app_theme.dart                                   | Dart       |         40 |          0 |         -1 |         39 |
+| /home/ahmed/Desktop/Quran2U/lib/ui_v2/app_typography.dart                              | Dart       |         91 |         28 |         13 |        132 |
+| /home/ahmed/Desktop/Quran2U/lib/ui_v2/glass.dart                                       | Dart       |        695 |        191 |        122 |      1,008 |
+| /home/ahmed/Desktop/Quran2U/lib/ui_v2/widgets/calm_light_background.dart               | Dart       |        117 |         35 |         21 |        173 |
+| /home/ahmed/Desktop/Quran2U/lib/ui_v2/widgets/glass_panel.dart                         | Dart       |         10 |         28 |          4 |         42 |
+| /home/ahmed/Desktop/Quran2U/lib/ui_v2/widgets/q_kit.dart                               | Dart       |        204 |         25 |         31 |        260 |
+| /home/ahmed/Desktop/Quran2U/linux/flutter/generated_plugins.cmake                      | CMake      |          1 |          0 |          0 |          1 |
+| /home/ahmed/Desktop/Quran2U/macos/Flutter/GeneratedPluginRegistrant.swift              | Swift      |          4 |          0 |          0 |          4 |
+| /home/ahmed/Desktop/Quran2U/pubspec.yaml                                               | YAML       |          1 |          1 |          1 |          3 |
+| /home/ahmed/Desktop/Quran2U/windows/flutter/generated_plugin_registrant.cc             | C++        |          3 |          0 |          0 |          3 |
+| /home/ahmed/Desktop/Quran2U/windows/flutter/generated_plugins.cmake                    | CMake      |          2 |          0 |          0 |          2 |
+| Total                                                                                  |            |     12,850 |      1,648 |      1,270 |     15,768 |
++----------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
