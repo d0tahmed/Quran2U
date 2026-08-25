@@ -41,6 +41,9 @@ class GlassPanel extends StatelessWidget {
   /// Never set this on a widget that lives inside a scroll view.
   final bool blur;
 
+  /// Set true when this panel's height animates. See [FrostedCard.animatedSize].
+  final bool animatedSize;
+
   const GlassPanel({
     super.key,
     required this.child,
@@ -53,6 +56,7 @@ class GlassPanel extends StatelessWidget {
     this.accent,
     this.onTap,
     this.blur = false,
+    this.animatedSize = false,
   });
 
   /// Maps the legacy `blurSigma` knob onto the tiered system so the two APIs
@@ -96,6 +100,7 @@ class GlassPanel extends StatelessWidget {
       edgeIntensity: edge == null ? 0.22 : 0.48,
       accent: accent,
       elevated: boxShadow != null && boxShadow!.isNotEmpty,
+      animatedSize: animatedSize,
       onTap: onTap,
       child: child,
     );

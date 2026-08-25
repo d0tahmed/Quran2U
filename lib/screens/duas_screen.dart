@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../models/dua.dart';
 import '../data/hisnul_muslim_db.dart';
 import '../ui_v2/app_colors.dart';
@@ -64,7 +63,7 @@ class _DuasScreenState extends State<DuasScreen> {
         iconTheme: const IconThemeData(color: Colors.white70),
         title: Text(
           'Hisnul Muslim',
-          style: GoogleFonts.manrope(
+          style: AppTypeV2.manrope(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -84,10 +83,10 @@ class _DuasScreenState extends State<DuasScreen> {
                 TextField(
                   controller: _searchController,
                   onChanged: (value) => setState(() {}),
-                  style: GoogleFonts.manrope(color: Colors.white, fontSize: 14),
+                  style: AppTypeV2.manrope(color: Colors.white, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Search duas...',
-                    hintStyle: GoogleFonts.manrope(color: Colors.white54, fontSize: 14),
+                    hintStyle: AppTypeV2.manrope(color: Colors.white54, fontSize: 14),
                     prefixIcon: const Icon(Icons.search, color: Colors.white54, size: 20),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
@@ -126,7 +125,7 @@ class _DuasScreenState extends State<DuasScreen> {
                       menuMaxHeight: MediaQuery.of(context).size.height * 0.55,
                       dropdownColor: AppColorsV2.surfaceHigh,
                       icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
-                      style: GoogleFonts.manrope(
+                      style: AppTypeV2.manrope(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
@@ -164,10 +163,13 @@ class _DuasScreenState extends State<DuasScreen> {
                 ? Center(
                     child: Text(
                       'No duas found.',
-                      style: GoogleFonts.manrope(color: Colors.white54),
+                      style: AppTypeV2.manrope(color: Colors.white54),
                     ),
                   )
                 : ListView.separated(
+                    // Rows hold no state worth preserving off-screen; the default
+                    // wraps every one of them in an AutomaticKeepAlive element.
+                    addAutomaticKeepAlives: false,
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                     itemCount: _filteredDuas.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 16),
@@ -212,7 +214,7 @@ class _DuaCard extends StatelessWidget {
                   ),
                   child: Text(
                     dua.category,
-                    style: GoogleFonts.manrope(
+                    style: AppTypeV2.manrope(
                       color: _kGold,
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
@@ -225,7 +227,7 @@ class _DuaCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             dua.title,
-            style: GoogleFonts.manrope(
+            style: AppTypeV2.manrope(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -253,7 +255,7 @@ class _DuaCard extends StatelessWidget {
           // Transliteration
           Text(
             dua.transliteration,
-            style: GoogleFonts.outfit(
+            style: AppTypeV2.outfit(
               color: Colors.white,
               fontSize: 14,
               fontStyle: FontStyle.italic,
@@ -274,7 +276,7 @@ class _DuaCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   dua.englishTranslation,
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color: Colors.white,
                     fontSize: 14,
                     height: 1.5,
@@ -297,7 +299,7 @@ class _DuaCard extends StatelessWidget {
                   child: Text(
                     dua.urduTranslation,
                     textAlign: TextAlign.right,
-                    style: GoogleFonts.notoNastaliqUrdu(
+                    style: AppTypeV2.notoNastaliqUrdu(
                       color: Colors.white,
                       fontSize: 15,
                       height: 2.0,
@@ -314,7 +316,7 @@ class _DuaCard extends StatelessWidget {
             alignment: Alignment.bottomRight,
             child: Text(
               dua.reference,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: Colors.white24,
                 fontSize: 10,
                 fontWeight: FontWeight.w600,

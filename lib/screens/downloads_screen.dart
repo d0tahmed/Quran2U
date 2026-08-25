@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/services/download_service.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
@@ -37,7 +36,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
         ),
         title: Text(
           'Downloads',
-          style: GoogleFonts.manrope(
+          style: AppTypeV2.manrope(
             color: AppColorsV2.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.w900,
@@ -55,7 +54,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Text(
                 'OFFLINE SURAHs',
-                style: GoogleFonts.manrope(
+                style: AppTypeV2.manrope(
                   color: AppColorsV2.onSurfaceVariant,
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
@@ -70,7 +69,7 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                     child: CircularProgressIndicator(color: _kGreen)),
                 error: (e, _) => Center(
                     child: Text('Error: $e',
-                        style: GoogleFonts.manrope(color: Colors.white54))),
+                        style: AppTypeV2.manrope(color: Colors.white54))),
                 data: (downloaded) {
                   if (downloaded.isEmpty) {
                     return _buildEmpty();
@@ -80,6 +79,9 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
                         child: CircularProgressIndicator(color: _kGreen)),
                     error: (e, _) => const SizedBox.shrink(),
                     data: (surahs) => ListView.builder(
+                      // Rows hold no state worth preserving off-screen; the default
+                      // wraps every one of them in an AutomaticKeepAlive element.
+                      addAutomaticKeepAlives: false,
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                       itemCount: downloaded.length,
                       itemBuilder: (ctx, i) {
@@ -131,14 +133,14 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
               color: Colors.white12, size: 64),
           const SizedBox(height: 16),
           Text('No downloads yet',
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                   color: Colors.white38,
                   fontSize: 16,
                   fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           Text('Open any Surah and tap the\ndownload button to save offline',
               textAlign: TextAlign.center,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                   color: Colors.white24, fontSize: 12, height: 1.6)),
         ],
       ),
@@ -152,20 +154,20 @@ class _DownloadsScreenState extends ConsumerState<DownloadsScreen> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text('Delete Download',
-              style: GoogleFonts.manrope(color: Colors.white, fontWeight: FontWeight.w800)),
+              style: AppTypeV2.manrope(color: Colors.white, fontWeight: FontWeight.w800)),
           content: Text(
               'This will remove the downloaded audio files from your device.',
-              style: GoogleFonts.manrope(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w600)),
+              style: AppTypeV2.manrope(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w600)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: Text('Cancel',
-                  style: GoogleFonts.manrope(color: Colors.white38, fontWeight: FontWeight.w700)),
+                  style: AppTypeV2.manrope(color: Colors.white38, fontWeight: FontWeight.w700)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: Text('Delete',
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                       color: Colors.red, fontWeight: FontWeight.w800)),
             ),
           ],
@@ -245,7 +247,7 @@ class _DownloadedTileState extends State<_DownloadedTile> {
             child: Center(
               child: Text(
                 '${widget.surahNumber}',
-                style: GoogleFonts.manrope(
+                style: AppTypeV2.manrope(
                     color: _kGreen,
                     fontWeight: FontWeight.w900,
                     fontSize: 13),
@@ -263,7 +265,7 @@ class _DownloadedTileState extends State<_DownloadedTile> {
                     Flexible(
                       child: Text(widget.surahName,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.manrope(
+                          style: AppTypeV2.manrope(
                               color: Colors.white,
                               fontSize: 14,
                               fontWeight: FontWeight.w900)),
@@ -285,7 +287,7 @@ class _DownloadedTileState extends State<_DownloadedTile> {
                   widget.imamName.split(' ').length > 1
                       ? widget.imamName.split(' ').skip(1).join(' ')
                       : widget.imamName,
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                       color: AppColorsV2.onSurfaceVariant, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 6),
@@ -307,7 +309,7 @@ class _DownloadedTileState extends State<_DownloadedTile> {
                       ),
                     const SizedBox(width: 4),
                     Text(_size,
-                        style: GoogleFonts.manrope(
+                        style: AppTypeV2.manrope(
                             color: Colors.white24, fontSize: 10, fontWeight: FontWeight.w700)),
                   ],
                 ),
@@ -349,7 +351,7 @@ class _Badge extends StatelessWidget {
           Icon(icon, color: color, size: 10),
           const SizedBox(width: 3),
           Text(label,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                   color: color,
                   fontSize: 9,
                   fontWeight: FontWeight.w800)),

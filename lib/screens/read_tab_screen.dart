@@ -1,9 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:quran_recitation/screens/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/models/hadith_model.dart';
 import 'package:quran_recitation/providers/providers.dart';
@@ -65,7 +62,7 @@ class ReadTabScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
               child: Text(
                 'Read & Explore',
-                style: GoogleFonts.outfit(
+                style: AppTypeV2.outfit(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -104,7 +101,7 @@ class ReadTabScreen extends ConsumerWidget {
                           children: [
                             Text(
                               'Ask the Quran',
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                 color: AppColorsV2.onSurface,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
@@ -115,7 +112,7 @@ class ReadTabScreen extends ConsumerWidget {
                               'Search by meaning, not just words',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                 color: AppColorsV2.onSurfaceVariant,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -132,37 +129,24 @@ class ReadTabScreen extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: NotificationListener<UserScrollNotification>(
-                onNotification: (notif) {
-                  if (notif.direction == ScrollDirection.reverse) {
-                    if (ref.read(navBarVisibleProvider)) {
-                      ref.read(navBarVisibleProvider.notifier).state = false;
-                    }
-                  } else if (notif.direction == ScrollDirection.forward) {
-                    if (!ref.read(navBarVisibleProvider)) {
-                      ref.read(navBarVisibleProvider.notifier).state = true;
-                    }
-                  }
-                  return true;
-                },
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
-                  child: _BentoActionsRow(
-                    onRead: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ReadQuranScreen()),
-                    ),
-                    onTafseer: () {
-                      if (surahList.isEmpty) return;
-                      _showTafseerSurahPicker(context, surahList);
-                    },
-                    onBukhari:  () => _showHadithSectionPicker(context, ref, HadithCollection.bukhari),
-                    onMuslim:   () => _showHadithSectionPicker(context, ref, HadithCollection.muslim),
-                    onAbuDawud: () => _showHadithSectionPicker(context, ref, HadithCollection.abuDawud),
-                    onTirmidhi: () => _showHadithSectionPicker(context, ref, HadithCollection.tirmidhi),
-                    onNasai:    () => _showHadithSectionPicker(context, ref, HadithCollection.nasai),
-                    onIbnMajah: () => _showHadithSectionPicker(context, ref, HadithCollection.ibnMajah),
+              // Nav-dock hiding removed: the dock is fixed across the app.
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                child: _BentoActionsRow(
+                  onRead: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ReadQuranScreen()),
                   ),
+                  onTafseer: () {
+                    if (surahList.isEmpty) return;
+                    _showTafseerSurahPicker(context, surahList);
+                  },
+                  onBukhari:  () => _showHadithSectionPicker(context, ref, HadithCollection.bukhari),
+                  onMuslim:   () => _showHadithSectionPicker(context, ref, HadithCollection.muslim),
+                  onAbuDawud: () => _showHadithSectionPicker(context, ref, HadithCollection.abuDawud),
+                  onTirmidhi: () => _showHadithSectionPicker(context, ref, HadithCollection.tirmidhi),
+                  onNasai:    () => _showHadithSectionPicker(context, ref, HadithCollection.nasai),
+                  onIbnMajah: () => _showHadithSectionPicker(context, ref, HadithCollection.ibnMajah),
                 ),
               ),
             ),
@@ -242,10 +226,10 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Tafseer',
-                        style: GoogleFonts.manrope(
+                        style: AppTypeV2.manrope(
                             color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
                     Text('Choose a Surah to explore',
-                        style: GoogleFonts.manrope(color: Colors.white38, fontSize: 12),
+                        style: AppTypeV2.manrope(color: Colors.white38, fontSize: 12),
                         overflow: TextOverflow.ellipsis),
                   ]),
                 ),
@@ -274,6 +258,9 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
             const Divider(color: Colors.white10, height: 1),
             Expanded(
               child: ListView.builder(
+                // Rows hold no state worth preserving off-screen; the default
+                // wraps every one of them in an AutomaticKeepAlive element.
+                addAutomaticKeepAlives: false,
                 controller:  scrollCtrl,
                 padding:     const EdgeInsets.fromLTRB(16, 8, 16, 40),
                 itemCount:   filtered.length,
@@ -306,7 +293,7 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
                           ),
                           child: Text(
                             s.number.toString().padLeft(3, '0'),
-                            style: GoogleFonts.manrope(
+                            style: AppTypeV2.manrope(
                               color:       _kAmber,
                               fontSize:    10,
                               fontWeight:  FontWeight.w900,
@@ -318,10 +305,10 @@ class _TafseerSurahPickerSheetState extends State<_TafseerSurahPickerSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(s.name,
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                     color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
                             Text('${s.nameTranslation} • ${s.ayahCount} verses',
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                     color: Colors.white38, fontSize: 11)),
                           ],
                         )),
@@ -453,7 +440,7 @@ class _BentoActionsRow extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
           child: Text(
             'The Noble Quran',
-            style: GoogleFonts.outfit(
+            style: AppTypeV2.outfit(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -507,7 +494,7 @@ class _BentoActionsRow extends StatelessWidget {
                             mainAxisAlignment:  MainAxisAlignment.end,
                             children: [
                               Text('Read Quran',
-                                  style: GoogleFonts.manrope(
+                                  style: AppTypeV2.manrope(
                                     color:       Colors.white,
                                     fontSize:    20,
                                     fontWeight:  FontWeight.w900,
@@ -515,7 +502,7 @@ class _BentoActionsRow extends StatelessWidget {
                                   )),
                               const SizedBox(height: 4),
                               Text('Continue reading',
-                                  style: GoogleFonts.manrope(
+                                  style: AppTypeV2.manrope(
                                     color:      _kGreen,
                                     fontSize:   12,
                                     fontWeight: FontWeight.w700,
@@ -578,7 +565,7 @@ class _BentoActionsRow extends StatelessWidget {
                           mainAxisAlignment:  MainAxisAlignment.end,
                           children: [
                             Text('Tafseer',
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                   color:        Colors.white,
                                   fontSize:     20,
                                   fontWeight:   FontWeight.w900,
@@ -586,7 +573,7 @@ class _BentoActionsRow extends StatelessWidget {
                                 )),
                             const SizedBox(height: 4),
                             Text('Meanings & context',
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                   color:      _kAmber,
                                   fontSize:   12,
                                   fontWeight: FontWeight.w700,
@@ -618,7 +605,7 @@ class _BentoActionsRow extends StatelessWidget {
           padding: const EdgeInsets.only(left: 4, bottom: 12),
           child: Text(
             'Hadith Collections',
-            style: GoogleFonts.outfit(
+            style: AppTypeV2.outfit(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -764,7 +751,7 @@ class _HadithBentoCard extends StatelessWidget {
                       mainAxisAlignment:  MainAxisAlignment.end,
                       children: [
                         Text(label,
-                            style: GoogleFonts.manrope(
+                            style: AppTypeV2.manrope(
                               color:        Colors.white,
                               fontSize:     20,
                               fontWeight:   FontWeight.w900,
@@ -772,7 +759,7 @@ class _HadithBentoCard extends StatelessWidget {
                             )),
                         const SizedBox(height: 4),
                         Text(subtitle,
-                            style: GoogleFonts.manrope(
+                            style: AppTypeV2.manrope(
                               color:      accent,
                               fontSize:   12,
                               fontWeight: FontWeight.w700,
@@ -910,13 +897,13 @@ class _HadithSectionPickerSheetState
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Ahadees',
-                        style: GoogleFonts.manrope(
+                        style: AppTypeV2.manrope(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w900)),
                     Text('${widget.collection.displayName} — Choose a book',
                         style:
-                            GoogleFonts.manrope(color: Colors.white38, fontSize: 12)),
+                            AppTypeV2.manrope(color: Colors.white38, fontSize: 12)),
                   ]),
                 ),
               ]),
@@ -955,7 +942,7 @@ class _HadithSectionPickerSheetState
                             fontWeight: FontWeight.w700,
                             fontFamily: lang.isRtl
                                 ? null
-                                : GoogleFonts.manrope().fontFamily,
+                                : AppTypeV2.manrope().fontFamily,
                           ),
                         ),
                       ),
@@ -1006,7 +993,7 @@ class _HadithSectionPickerSheetState
                         Text(
                           'Could not load Hadiths.\nCheck your internet connection.',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.manrope(
+                          style: AppTypeV2.manrope(
                               color: Colors.white38, fontSize: 13, height: 1.6),
                         ),
                         const SizedBox(height: 16),
@@ -1030,6 +1017,9 @@ class _HadithSectionPickerSheetState
                       .toList();
 
                   return ListView.builder(
+                    // Rows hold no state worth preserving off-screen; the default
+                    // wraps every one of them in an AutomaticKeepAlive element.
+                    addAutomaticKeepAlives: false,
                     controller: scrollCtrl,
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
                     itemCount: filtered.length,
@@ -1070,7 +1060,7 @@ class _HadithSectionPickerSheetState
                               ),
                               child: Text(
                                 section.number.toString().padLeft(2, '0'),
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                     color: _kAmber,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w900),
@@ -1082,12 +1072,12 @@ class _HadithSectionPickerSheetState
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(section.name,
-                                      style: GoogleFonts.manrope(
+                                      style: AppTypeV2.manrope(
                                           color: Colors.white,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w800)),
                                   Text('${section.hadithCount} hadiths',
-                                      style: GoogleFonts.manrope(
+                                      style: AppTypeV2.manrope(
                                           color: Colors.white38, fontSize: 11)),
                                 ],
                               ),

@@ -66,7 +66,12 @@ class AdhanService : Service() {
             }
         }
 
-        val prayerIndex = intent?.getIntExtra(EXTRA_PRAYER, 0) ?: 0
+        // -1, not 0. Defaulting a missing prayer index to zero meant a
+        // malformed start silently announced "Fajr" — a plausible-looking
+        // wrong answer, which is the worst kind of wrong for this app. Out of
+        // range now falls through to the neutral label rather than naming a
+        // prayer nobody told us about.
+        val prayerIndex = intent?.getIntExtra(EXTRA_PRAYER, -1) ?: -1
         val mode = intent?.getStringExtra(EXTRA_MODE) ?: AdhanScheduler.MODE_FULL
         val label = AdhanScheduler.LABELS.getOrElse(prayerIndex) { "Prayer" }
 

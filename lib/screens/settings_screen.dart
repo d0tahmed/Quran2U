@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:quran_recitation/screens/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Added for permanent save
 import 'package:url_launcher/url_launcher.dart'; 
 import 'package:quran_recitation/models/models.dart';
@@ -26,6 +23,9 @@ import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/ui_v2/glass.dart';
 import 'package:quran_recitation/ui_v2/widgets/glass_panel.dart';
 import 'package:quran_recitation/ui_v2/app_typography.dart';
+
+/// Where bug reports go.
+const String _kInstagramUrl = 'https://www.instagram.com/officialquran2u/';
 
 const _kGreen = AppColorsV2.primary;
 const _kGold = AppColorsV2.tertiary;
@@ -58,33 +58,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  /// Bug reports go to Instagram DMs.
+  ///
+  /// `externalApplication` rather than the default launch mode: a plain
+  /// instagram.com link opened in an in-app webview lands on a logged-out
+  /// page asking the user to sign in, which is where most reports would die.
+  /// Forcing an external launch hands the URL to the installed Instagram app
+  /// when there is one, and to the browser when there is not.
   Future<void> _reportBug() async {
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      path: 'd0tahmedgithub@gmail.com', 
-      queryParameters: {
-        'subject': 'Bug Report: Quran2U App',
-        'body': 'Describe the bug here...\n\n',
-      },
-    );
-    
+    final uri = Uri.parse(_kInstagramUrl);
     try {
-      if (!await launchUrl(emailLaunchUri)) {
-        throw Exception('Could not launch email app');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Could not open email app. Email us at d0tahmedgithub@gmail.com',
-              style: GoogleFonts.manrope(fontWeight: FontWeight.w700),
-            ),
-            backgroundColor: Colors.red.shade800,
-          ),
-        );
-      }
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (opened) return;
+    } catch (_) {
+      // Fall through to the message below.
     }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Could not open Instagram. Find us at @officialquran2u',
+          style: AppTypeV2.manrope(fontWeight: FontWeight.w700),
+        ),
+        backgroundColor: AppColorsV2.surfaceHigh,
+      ),
+    );
   }
 
   @override
@@ -106,26 +105,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       backgroundColor: _kBg,
       body: SafeArea(
         bottom: false,
-        child: NotificationListener<UserScrollNotification>(
-          onNotification: (notif) {
-            if (notif.direction == ScrollDirection.reverse) {
-              if (ref.read(navBarVisibleProvider)) {
-                ref.read(navBarVisibleProvider.notifier).state = false;
-              }
-            } else if (notif.direction == ScrollDirection.forward) {
-              if (!ref.read(navBarVisibleProvider)) {
-                ref.read(navBarVisibleProvider.notifier).state = true;
-              }
-            }
-            return true;
-          },
-          child: ListView(
+        // No scroll listener: the nav dock is fixed. On the longest screen in
+        // the app that is one provider read fewer per scroll notification.
+        child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 140),
             children: [
               Center(
                 child: Text(
                   'Quran2U',
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color: _kGreen,
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
@@ -138,7 +126,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
               Text(
                 'Settings',
-                style: GoogleFonts.manrope(
+                style: AppTypeV2.manrope(
                   color: AppColorsV2.onSurface,
                   fontSize: 34,
                   fontWeight: FontWeight.w900,
@@ -148,7 +136,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 4),
               Text(
                 'Personalize your spiritual experience',
-                style: GoogleFonts.manrope(
+                style: AppTypeV2.manrope(
                   color: AppColorsV2.onSurfaceVariant,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -188,7 +176,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         alignment: Alignment.center,
                         child: Text(
                           selectedImam.name.split(' ').last.characters.first.toUpperCase(),
-                          style: GoogleFonts.manrope(
+                          style: AppTypeV2.manrope(
                             color: _kGreen,
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -210,7 +198,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 'CURRENT RECITER',
                                 overflow: TextOverflow.ellipsis,
                                 maxLines: 1,
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                   color: _kGreen,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w900,
@@ -221,7 +209,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             const SizedBox(height: 8),
                             Text(
                               selectedImam.name,
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                 color: AppColorsV2.onSurface,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
@@ -232,7 +220,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             const SizedBox(height: 2),
                             Text(
                               selectedImam.country,
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                 color: AppColorsV2.onSurfaceVariant,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -296,7 +284,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               children: [
                                 Text(
                                   'Audio Tarjumah',
-                                  style: GoogleFonts.manrope(
+                                  style: AppTypeV2.manrope(
                                     color: isTarjumahSupported ? AppColorsV2.onSurface : Colors.grey,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w900,
@@ -307,7 +295,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   isTarjumahSupported
                                       ? 'Voice Translation after Ayah'
                                       : 'Not available for Sheikh Bandar',
-                                  style: GoogleFonts.manrope(
+                                  style: AppTypeV2.manrope(
                                     color: isTarjumahSupported
                                         ? AppColorsV2.onSurfaceVariant
                                         : Colors.redAccent.withValues(alpha: 0.8),
@@ -347,7 +335,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             const Divider(color: Colors.white10, height: 1),
                             const SizedBox(height: 14),
                             Text('Audio Language',
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                     color: Colors.white,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800)),
@@ -387,7 +375,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                           if (_audioLang == TranslationMode.urdu)
                                             const SizedBox(width: 6),
                                           Text('Urdu',
-                                              style: GoogleFonts.manrope(
+                                              style: AppTypeV2.manrope(
                                                   color: _audioLang == TranslationMode.urdu
                                                       ? _kGold
                                                       : Colors.white54,
@@ -432,7 +420,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                           if (_audioLang == TranslationMode.english)
                                             const SizedBox(width: 6),
                                           Text('English',
-                                              style: GoogleFonts.manrope(
+                                              style: AppTypeV2.manrope(
                                                   color: _audioLang == TranslationMode.english
                                                       ? _kGold
                                                       : Colors.white54,
@@ -534,7 +522,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     child: Text(
                                       'Surah ${bulkState.currentSurah} of 114  ·  '
                                       '${(bulkState.overallProgress * 100).toStringAsFixed(0)}%',
-                                      style: GoogleFonts.manrope(
+                                      style: AppTypeV2.manrope(
                                           color: _kGreen,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700),
@@ -550,13 +538,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
                                     child: Text('Cancel',
-                                        style: GoogleFonts.manrope(fontSize: 12)),
+                                        style: AppTypeV2.manrope(fontSize: 12)),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
                               Text(bulkState.status,
-                                  style: GoogleFonts.manrope(
+                                  style: AppTypeV2.manrope(
                                       color: AppColorsV2.onSurfaceVariant, fontSize: 10),
                                   overflow: TextOverflow.ellipsis),
                               const SizedBox(height: 8),
@@ -618,7 +606,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.bug_report_rounded,
                 iconColor: AppColorsV2.danger,
                 title: 'Report a Bug',
-                subtitle: 'Help us improve the app',
+                subtitle: 'Message us on Instagram — @officialquran2u',
                 onTap: _reportBug,
                 background: AppColorsV2.surfaceLow,
               ),
@@ -672,10 +660,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         );
                       },
                     ),
-                    const Divider(color: Colors.white10, height: 16),
-                    const _InfoRow(icon: Icons.library_music_outlined, label: 'Audio', value: 'mp3quran.net'),
-                    const Divider(color: Colors.white10, height: 16),
-                    const _InfoRow(icon: Icons.api_outlined, label: 'Data', value: 'api.quran.com'),
                   ],
                 ),
               ),
@@ -687,7 +671,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Text(
                       'Made with ❤️ by d0tahmed',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.manrope(
+                      style: AppTypeV2.manrope(
                         color: Colors.white.withValues(alpha: 0.72),
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
@@ -698,7 +682,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Text(
                       'A gift for my mom and my late grandmother,\nmay ALLAH reward both',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.manrope(
+                      style: AppTypeV2.manrope(
                         color: Colors.white.withValues(alpha: 0.48),
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -713,12 +697,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 
+  // Sheets no longer hide the dock on the way in and restore it on the way
+  // out. A modal route covers the dock anyway, and the restore was guarded by
+  // `context.mounted` — so a sheet dismissed as its screen was disposed left
+  // the dock hidden with nothing left running to bring it back.
   void _showTajweedGuide(BuildContext context) async {
-    ref.read(navBarVisibleProvider.notifier).state = false;
     await showModalBottomSheet(
       context: context,
       backgroundColor: AppColorsV2.surfaceLow,
@@ -727,9 +713,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => const _TajweedGuideSheet(),
     );
-    if (context.mounted) {
-      ref.read(navBarVisibleProvider.notifier).state = true;
-    }
   }
 }
 
@@ -748,7 +731,7 @@ class _SectionHeader extends StatelessWidget {
               text.toUpperCase(),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: AppColorsV2.onSurfaceVariant,
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -767,7 +750,7 @@ class _TinyLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
         text,
-        style: GoogleFonts.manrope(
+        style: AppTypeV2.manrope(
           color: AppColorsV2.onSurfaceVariant.withValues(alpha: 0.55),
           fontSize: 10,
           fontWeight: FontWeight.w900,
@@ -850,6 +833,10 @@ class _AdhanSectionState extends State<_AdhanSection> {
   @override
   Widget build(BuildContext context) {
     return _GlassCard(
+      // This card's height animates, so it opts out of the glass gradient
+      // cache — see FrostedCard.animatedSize. Without it the unfold stuttered
+      // and took the rest of the screen's cached surfaces down with it.
+      animatedSize: true,
       child: Column(
         children: [
           Row(
@@ -861,7 +848,7 @@ class _AdhanSectionState extends State<_AdhanSection> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Play the adhan',
-                        style: GoogleFonts.outfit(
+                        style: AppTypeV2.outfit(
                             color: AppColorsV2.onSurface,
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700)),
@@ -874,7 +861,7 @@ class _AdhanSectionState extends State<_AdhanSection> {
                                   ? 'No prayer selected'
                                   : 'Next: ${_next!.key} at '
                                       '${TimeFormat.clock(_next!.value)}',
-                      style: GoogleFonts.outfit(
+                      style: AppTypeV2.outfit(
                           color: AppColorsV2.onSurfaceVariant, fontSize: 11.5),
                     ),
                   ],
@@ -887,7 +874,46 @@ class _AdhanSectionState extends State<_AdhanSection> {
             ],
           ),
 
-          if (_enabled) ...[
+          // The per-prayer list drops in and folds away rather than appearing
+          // whole. An `if` alone made the card jump to its new height in a
+          // single frame, which reads as a glitch — the eye has nothing to
+          // follow, so the five rows seem to have been there all along and
+          // the toggle seems not to have done anything.
+          //
+          // AnimatedSize animates the CARD, and the rows inside slide up from
+          // under the divider via the ClipRect, so the motion looks like a
+          // panel unfolding instead of a box being stretched.
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: ClipRect(
+              child: Align(
+                alignment: Alignment.topCenter,
+                heightFactor: _enabled ? 1 : 0,
+                // RepaintBoundary so the rows are rasterised once and the
+                // unfold only moves the clip over them.
+                //
+                // It works here precisely because the list's own size never
+                // changes — it is always laid out at full height and the Align
+                // above only reveals more of it — so the cached layer stays
+                // valid for the whole animation. Without the boundary every
+                // frame re-paints five rows, their dividers and their pills,
+                // none of which have changed.
+                child: RepaintBoundary(child: _prayerList(context)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The five per-prayer rows plus the footnote. Always built, so
+  /// AnimatedSize has something to measure on the way closed as well as open.
+  Widget _prayerList(BuildContext context) {
+    return Column(
+      children: [
             const Divider(color: Colors.white10, height: 20),
             for (final prayer in AdhanService.prayers)
               InkWell(
@@ -900,7 +926,7 @@ class _AdhanSectionState extends State<_AdhanSection> {
                       Expanded(
                         child: Text(
                           AdhanService.prayerLabels[prayer] ?? prayer,
-                          style: GoogleFonts.outfit(
+                          style: AppTypeV2.outfit(
                               color: AppColorsV2.onSurface,
                               fontSize: 13,
                               fontWeight: FontWeight.w600),
@@ -920,7 +946,7 @@ class _AdhanSectionState extends State<_AdhanSection> {
                         ),
                         child: Text(
                           (_modes[prayer] ?? AdhanMode.off).label,
-                          style: GoogleFonts.outfit(
+                          style: AppTypeV2.outfit(
                             color: _modeColor(_modes[prayer] ?? AdhanMode.off),
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
@@ -939,10 +965,11 @@ class _AdhanSectionState extends State<_AdhanSection> {
                 const SizedBox(width: 9),
                 Expanded(
                   child: Text(
-                    'Plays at alarm volume, so it is heard on silent. If it '
-                    'never fires, allow the app to run in the background in '
-                    'your phone settings.',
-                    style: GoogleFonts.outfit(
+                    'Plays at alarm volume, so it is heard on silent. If the '
+                    'adhan stops firing, your phone is closing the app in the '
+                    'background — allow it to run unrestricted, and turn off '
+                    'battery optimisation for Quran2U.',
+                    style: AppTypeV2.outfit(
                         color: AppColorsV2.onSurfaceVariant,
                         fontSize: 11,
                         height: 1.45),
@@ -950,9 +977,7 @@ class _AdhanSectionState extends State<_AdhanSection> {
                 ),
               ],
             ),
-          ],
-        ],
-      ),
+      ],
     );
   }
 }
@@ -1281,7 +1306,7 @@ class _NotificationSectionState extends State<_NotificationSection> {
                           'Send a test now',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.outfit(
+                          style: AppTypeV2.outfit(
                               color: Colors.white38, fontSize: 13),
                         ),
                         if (_next != null) ...[
@@ -1291,7 +1316,7 @@ class _NotificationSectionState extends State<_NotificationSection> {
                             '${DateFormat('EEE d MMM').format(_next!)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.outfit(
+                            style: AppTypeV2.outfit(
                               color: _kGold.withValues(alpha: 0.85),
                               fontSize: 11.5,
                               fontWeight: FontWeight.w700,
@@ -1311,7 +1336,7 @@ class _NotificationSectionState extends State<_NotificationSection> {
                       border: Border.all(color: _kGold.withValues(alpha: 0.3)),
                     ),
                     child: Text('Test',
-                        style: GoogleFonts.manrope(
+                        style: AppTypeV2.manrope(
                             color: _kGold,
                             fontSize: 12,
                             fontWeight: FontWeight.w800)),
@@ -1373,7 +1398,7 @@ class _PlaybackSpeedCardState extends ConsumerState<_PlaybackSpeedCard> {
             children: [
               Text(
                 'Playback Speed',
-                style: GoogleFonts.manrope(
+                style: AppTypeV2.manrope(
                   color: AppColorsV2.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
@@ -1389,7 +1414,7 @@ class _PlaybackSpeedCardState extends ConsumerState<_PlaybackSpeedCard> {
                 ),
                 child: Text(
                   '${_speed.toStringAsFixed(2)}x',
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color: _kGreen,
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
@@ -1478,7 +1503,7 @@ class _TileButton extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 title,
-                style: GoogleFonts.manrope(
+                style: AppTypeV2.manrope(
                   color: AppColorsV2.onSurface,
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
@@ -1488,7 +1513,7 @@ class _TileButton extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: GoogleFonts.manrope(
+                style: AppTypeV2.manrope(
                   color: AppColorsV2.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1501,7 +1526,6 @@ class _TileButton extends StatelessWidget {
 
 extension on _QuranDownloadTile {
   void show(BuildContext context, WidgetRef ref) async {
-    ref.read(navBarVisibleProvider.notifier).state = false;
     await showModalBottomSheet(
       context: context,
       backgroundColor: AppColorsV2.surfaceLow,
@@ -1511,9 +1535,6 @@ extension on _QuranDownloadTile {
       ),
       builder: (_) => _DownloadWizardSheet(ref: ref),
     );
-    if (context.mounted) {
-      ref.read(navBarVisibleProvider.notifier).state = true;
-    }
   }
 }
 
@@ -1572,10 +1593,10 @@ class _TajweedGuideSheet extends StatelessWidget {
                 const SizedBox(width: 14),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Tajweed Guide',
-                      style: GoogleFonts.outfit(
+                      style: AppTypeV2.outfit(
                           color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                   Text('Color-coded pronunciation rules',
-                      style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+                      style: AppTypeV2.outfit(color: Colors.white38, fontSize: 12)),
                 ])),
               ]),
             ),
@@ -1583,6 +1604,9 @@ class _TajweedGuideSheet extends StatelessWidget {
             const Divider(color: Colors.white10, height: 1),
             Expanded(
               child: ListView.separated(
+                // Rows hold no state worth preserving off-screen; the default
+                // wraps every one of them in an AutomaticKeepAlive element.
+                addAutomaticKeepAlives: false,
                 controller: scrollCtrl,
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
                 itemCount: _rules.length,
@@ -1614,7 +1638,7 @@ class _TajweedGuideSheet extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(rule.name,
-                                  style: GoogleFonts.outfit(
+                                  style: AppTypeV2.outfit(
                                       color: Colors.white,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600)),
@@ -1625,7 +1649,7 @@ class _TajweedGuideSheet extends StatelessWidget {
                                       fontFamily: AppTypeV2.amiriFamily)),
                               const SizedBox(height: 2),
                               Text(rule.description,
-                                  style: GoogleFonts.outfit(
+                                  style: AppTypeV2.outfit(
                                       color: Colors.white38, fontSize: 11, height: 1.3)),
                             ],
                           ),
@@ -1697,11 +1721,11 @@ class _QuranDownloadTile extends ConsumerWidget {
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Downloading Quran…',
-                  style: GoogleFonts.outfit(
+                  style: AppTypeV2.outfit(
                       color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
               Text(
                 'Surah ${bulkState.currentSurah} of 114  ·  ${(bulkState.overallProgress * 100).toStringAsFixed(0)}%',
-                style: GoogleFonts.outfit(color: _kGreen, fontSize: 11),
+                style: AppTypeV2.outfit(color: _kGreen, fontSize: 11),
               ),
             ])),
             TextButton(
@@ -1710,12 +1734,12 @@ class _QuranDownloadTile extends ConsumerWidget {
                   foregroundColor: Colors.red, padding: EdgeInsets.zero,
                   minimumSize: const Size(56, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-              child: Text('Cancel', style: GoogleFonts.outfit(fontSize: 12)),
+              child: Text('Cancel', style: AppTypeV2.outfit(fontSize: 12)),
             ),
           ]),
           const SizedBox(height: 12),
           Text(bulkState.status,
-              style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10),
+              style: AppTypeV2.outfit(color: Colors.white38, fontSize: 10),
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8),
           ClipRRect(
@@ -1750,10 +1774,10 @@ class _QuranDownloadTile extends ConsumerWidget {
           const SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Download Entire Quran',
-                style: GoogleFonts.outfit(
+                style: AppTypeV2.outfit(
                     color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
             Text('Save all 114 Surahs offline',
-                style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+                style: AppTypeV2.outfit(color: Colors.white38, fontSize: 11)),
           ])),
           const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 13),
         ]),
@@ -1762,7 +1786,6 @@ class _QuranDownloadTile extends ConsumerWidget {
   }
 
   void _showDownloadWizard(BuildContext context, WidgetRef ref) async {
-    ref.read(navBarVisibleProvider.notifier).state = false;
     await showModalBottomSheet(
       context: context,
       backgroundColor: AppColorsV2.surfaceLow,
@@ -1771,9 +1794,6 @@ class _QuranDownloadTile extends ConsumerWidget {
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => _DownloadWizardSheet(ref: ref),
     );
-    if (context.mounted) {
-      ref.read(navBarVisibleProvider.notifier).state = true;
-    }
   }
 }
 
@@ -1825,17 +1845,17 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
                       const Icon(Icons.downloading_rounded, color: _kGreen, size: 22),
                       const SizedBox(width: 10),
                       Text('Download Entire Quran',
-                          style: GoogleFonts.outfit(
+                          style: AppTypeV2.outfit(
                               color: Colors.white, fontSize: 18,
                               fontWeight: FontWeight.bold)),
                     ]),
                     const SizedBox(height: 4),
                     Text('Downloads all 114 Surahs offline.',
-                        style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+                        style: AppTypeV2.outfit(color: Colors.white38, fontSize: 12)),
                     const SizedBox(height: 22),
 
                     Text('STEP 1 — SELECT RECITER',
-                        style: GoogleFonts.outfit(
+                        style: AppTypeV2.outfit(
                             color: Colors.white38, fontSize: 10,
                             fontWeight: FontWeight.w600, letterSpacing: 1.4)),
                     const SizedBox(height: 10),
@@ -1847,7 +1867,7 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
                     const SizedBox(height: 20),
 
                     Text('STEP 2 — TRANSLATION',
-                        style: GoogleFonts.outfit(
+                        style: AppTypeV2.outfit(
                             color: Colors.white38, fontSize: 10,
                             fontWeight: FontWeight.w600, letterSpacing: 1.4)),
                     const SizedBox(height: 10),
@@ -1861,14 +1881,14 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Include Urdu Tarjumah',
-                                  style: GoogleFonts.outfit(
+                                  style: AppTypeV2.outfit(
                                       color: Colors.white, fontSize: 13,
                                       fontWeight: FontWeight.w600)),
                               Text(
                                 _withTarjumah
                                     ? 'Per-ayah (Shamshad Ali Khan) · ~4× storage'
                                     : 'Recitation only · ~570 MB per reciter',
-                                style: GoogleFonts.outfit(
+                                style: AppTypeV2.outfit(
                                     color: _withTarjumah ? _kGold : Colors.white38,
                                     fontSize: 10, height: 1.4),
                               ),
@@ -1901,7 +1921,7 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
                             _withTarjumah
                                 ? 'Est. ~2.5 GB (Arabic + Urdu per ayah)'
                                 : 'Est. ~570 MB (full Surah MP3s)',
-                            style: GoogleFonts.outfit(
+                            style: AppTypeV2.outfit(
                                 color: Colors.white38, fontSize: 11, height: 1.4),
                           ),
                         ),
@@ -1918,7 +1938,7 @@ class _DownloadWizardSheetState extends State<_DownloadWizardSheet> {
                           onPressed: canStart ? () => _start(ctx, imams) : null,
                           icon: const Icon(Icons.download_rounded, size: 18),
                           label: Text('Start Download',
-                              style: GoogleFonts.outfit(
+                              style: AppTypeV2.outfit(
                                   fontSize: 14, fontWeight: FontWeight.w600)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _kGreen,
@@ -1996,12 +2016,12 @@ class _ImamChoice extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(imam.name,
-                  style: GoogleFonts.outfit(
+                  style: AppTypeV2.outfit(
                       color: selected ? Colors.white : Colors.white70,
                       fontSize: 13,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
               Text(imam.country,
-                  style: GoogleFonts.outfit(color: Colors.white30, fontSize: 10)),
+                  style: AppTypeV2.outfit(color: Colors.white30, fontSize: 10)),
             ])),
           ]),
         ),
@@ -2013,7 +2033,16 @@ class _ImamChoice extends StatelessWidget {
 class _GlassCard extends StatelessWidget {
   final Widget child;
   final Color? accentColor;
-  const _GlassCard({required this.child, this.accentColor});
+
+  /// Set on a card that grows and shrinks — the adhan panel. See
+  /// [FrostedCard.animatedSize] for why a resizing card must not cache.
+  final bool animatedSize;
+
+  const _GlassCard({
+    required this.child,
+    this.accentColor,
+    this.animatedSize = false,
+  });
 
   @override
   Widget build(BuildContext context) => FrostedCard(
@@ -2023,6 +2052,7 @@ class _GlassCard extends StatelessWidget {
         accent: accentColor,
         edgeColor: accentColor,
         edgeIntensity: accentColor == null ? 0.18 : 0.36,
+        animatedSize: animatedSize,
         child: child,
       );
 }
@@ -2050,12 +2080,12 @@ class _ChoiceRow extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(label,
-                  style: GoogleFonts.outfit(
+                  style: AppTypeV2.outfit(
                       color: selected ? Colors.white : Colors.white70,
                       fontSize: 13,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
               Text(subtitle,
-                  style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+                  style: AppTypeV2.outfit(color: Colors.white38, fontSize: 11)),
             ])),
             if (selected) Icon(Icons.check_rounded, color: accentColor, size: 18),
           ]),
@@ -2108,7 +2138,7 @@ class _InfoRow extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.outfit(color: Colors.white38, fontSize: 13),
+            style: AppTypeV2.outfit(color: Colors.white38, fontSize: 13),
           ),
         ),
         if (actionText != null) ...[
@@ -2120,7 +2150,7 @@ class _InfoRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: _kGold.withValues(alpha: 0.3)),
             ),
-            child: Text(actionText!, style: GoogleFonts.manrope(color: _kGold, fontSize: 12, fontWeight: FontWeight.w800)),
+            child: Text(actionText!, style: AppTypeV2.manrope(color: _kGold, fontSize: 12, fontWeight: FontWeight.w800)),
           ),
         ],
         if (value.isNotEmpty) ...[
@@ -2128,7 +2158,7 @@ class _InfoRow extends StatelessWidget {
           Text(value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.outfit(
+              style: AppTypeV2.outfit(
                   color: actionText != null ? _kGold : Colors.white70,
                   fontSize: 13,
                   fontWeight: actionText != null ? FontWeight.w800 : FontWeight.w500)),
@@ -2180,7 +2210,7 @@ class _QuranAccountSection extends ConsumerWidget {
                   children: [
                     Text(
                       'Quran.com Cloud Sync',
-                      style: GoogleFonts.manrope(
+                      style: AppTypeV2.manrope(
                         color: AppColorsV2.onSurface,
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
@@ -2190,7 +2220,7 @@ class _QuranAccountSection extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       isLoggedIn ? 'Signed in to Quran.com' : 'Signed out',
-                      style: GoogleFonts.manrope(
+                      style: AppTypeV2.manrope(
                         color: isLoggedIn ? _kGreen : AppColorsV2.onSurfaceVariant,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -2205,7 +2235,7 @@ class _QuranAccountSection extends ConsumerWidget {
           if (isLoggedIn) ...[
             Text(
               'Your bookmarks (saved Surahs & Ayahs) are safely backed up to the cloud.',
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: AppColorsV2.onSurfaceVariant,
                 fontSize: 12,
                 height: 1.5,
@@ -2219,7 +2249,7 @@ class _QuranAccountSection extends ConsumerWidget {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Syncing bookmarks...', style: GoogleFonts.manrope(fontWeight: FontWeight.w600)),
+                          content: Text('Syncing bookmarks...', style: AppTypeV2.manrope(fontWeight: FontWeight.w600)),
                           backgroundColor: _kCard,
                           duration: const Duration(seconds: 1),
                         ),
@@ -2228,7 +2258,7 @@ class _QuranAccountSection extends ConsumerWidget {
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Sync Complete', style: GoogleFonts.manrope(fontWeight: FontWeight.w600, color: _kGreen)),
+                            content: Text('Sync Complete', style: AppTypeV2.manrope(fontWeight: FontWeight.w600, color: _kGreen)),
                             backgroundColor: _kCard,
                             duration: const Duration(seconds: 2),
                           ),
@@ -2243,7 +2273,7 @@ class _QuranAccountSection extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.sync_rounded, size: 18),
-                    label: Text('Sync Now', style: GoogleFonts.manrope(fontWeight: FontWeight.w700)),
+                    label: Text('Sync Now', style: AppTypeV2.manrope(fontWeight: FontWeight.w700)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -2260,7 +2290,7 @@ class _QuranAccountSection extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: const Icon(Icons.logout_rounded, size: 18),
-                    label: Text('Sign Out', style: GoogleFonts.manrope(fontWeight: FontWeight.w700)),
+                    label: Text('Sign Out', style: AppTypeV2.manrope(fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],
@@ -2268,7 +2298,7 @@ class _QuranAccountSection extends ConsumerWidget {
           ] else ...[
             Text(
               'Sign in to securely back up your saved Ayahs and Surahs to the cloud and access them across devices.',
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: AppColorsV2.onSurfaceVariant,
                 fontSize: 12,
                 height: 1.5,
@@ -2292,7 +2322,7 @@ class _QuranAccountSection extends ConsumerWidget {
                 icon: const Icon(Icons.login_rounded, size: 18),
                 label: Text(
                   'Sign in & Sync Data',
-                  style: GoogleFonts.manrope(fontWeight: FontWeight.w800, fontSize: 14),
+                  style: AppTypeV2.manrope(fontWeight: FontWeight.w800, fontSize: 14),
                 ),
               ),
             ),
@@ -2304,7 +2334,6 @@ class _QuranAccountSection extends ConsumerWidget {
 }
 
 void _showTranslationSheet(BuildContext context, WidgetRef ref) async {
-  ref.read(navBarVisibleProvider.notifier).state = false;
   await showModalBottomSheet(
     context: context,
     backgroundColor: AppColorsV2.surfaceLow,
@@ -2316,9 +2345,6 @@ void _showTranslationSheet(BuildContext context, WidgetRef ref) async {
       child: const _TranslationSearchSheet(),
     ),
   );
-  if (context.mounted) {
-    ref.read(navBarVisibleProvider.notifier).state = true;
-  }
 }
 
 class _TranslationSearchSheet extends ConsumerStatefulWidget {
@@ -2350,7 +2376,7 @@ class _TranslationSearchSheetState extends ConsumerState<_TranslationSearchSheet
         const SizedBox(height: 16),
         Text(
           'Select Translation',
-          style: GoogleFonts.outfit(
+          style: AppTypeV2.outfit(
               color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
@@ -2396,6 +2422,9 @@ class _TranslationSearchSheetState extends ConsumerState<_TranslationSearchSheet
               }).toList();
 
               return ListView.builder(
+                // Rows hold no state worth preserving off-screen; the default
+                // wraps every one of them in an AutomaticKeepAlive element.
+                addAutomaticKeepAlives: false,
                 padding: const EdgeInsets.only(bottom: 20),
                 itemCount: filtered.length,
                 itemBuilder: (ctx, i) {

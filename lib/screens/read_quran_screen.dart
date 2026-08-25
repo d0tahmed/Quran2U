@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
 import 'package:quran_recitation/providers/reading_progress_provider.dart';
@@ -124,7 +123,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
             Expanded(
               child: Text(
                 'Page $pageNum saved — Home continues from here',
-                style: GoogleFonts.manrope(
+                style: AppTypeV2.manrope(
                   color: AppColorsV2.onSurface,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
@@ -205,7 +204,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                               const Spacer(),
                               Text(
                                 'Surahs',
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 14,
@@ -229,10 +228,10 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                             controller: searchController,
                             focusNode: searchFocusNode,
                             onChanged: (v) => setSheetState(() => query = v),
-                            style: GoogleFonts.manrope(color: Colors.white),
+                            style: AppTypeV2.manrope(color: Colors.white),
                             decoration: InputDecoration(
                               hintText: 'Search surah by name or number…',
-                              hintStyle: GoogleFonts.manrope(color: Colors.white38, fontWeight: FontWeight.w600),
+                              hintStyle: AppTypeV2.manrope(color: Colors.white38, fontWeight: FontWeight.w600),
                               prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
                               filled: true,
                               fillColor: Colors.white.withValues(alpha: 0.06),
@@ -262,7 +261,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                                 child: Text(
                                   'Failed to load surahs.\n$e',
                                   textAlign: TextAlign.center,
-                                  style: GoogleFonts.manrope(
+                                  style: AppTypeV2.manrope(
                                     color: Colors.white54,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -275,7 +274,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                                 return Center(
                                   child: Text(
                                     'No surahs found',
-                                    style: GoogleFonts.manrope(
+                                    style: AppTypeV2.manrope(
                                       color: Colors.white38,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -284,6 +283,9 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                               }
 
                               return ListView.separated(
+                                // Rows hold no state worth preserving off-screen; the default
+                                // wraps every one of them in an AutomaticKeepAlive element.
+                                addAutomaticKeepAlives: false,
                                 controller: scrollController,
                                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                                 itemCount: list.length,
@@ -310,7 +312,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                                       ),
                                       child: Text(
                                         s.number.toString().padLeft(2, '0'),
-                                        style: GoogleFonts.manrope(
+                                        style: AppTypeV2.manrope(
                                           color: _kGold,
                                           fontWeight: FontWeight.w900,
                                           fontSize: 12,
@@ -319,14 +321,14 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                                     ),
                                     title: Text(
                                       s.name,
-                                      style: GoogleFonts.manrope(
+                                      style: AppTypeV2.manrope(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w900,
                                       ),
                                     ),
                                     subtitle: Text(
                                       '${s.nameTranslation} • ${s.ayahCount} verses',
-                                      style: GoogleFonts.manrope(
+                                      style: AppTypeV2.manrope(
                                         color: Colors.white54,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -442,7 +444,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                             ),
                             Text(
                               'Read Quran',
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                 fontWeight: FontWeight.w900,
                                 fontSize: 18,
                                 color: Colors.white,
@@ -461,7 +463,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                               ),
                               child: Text(
                                 'Page $_currentPage',
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                   color: _kGreen,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
@@ -483,7 +485,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
                         unselectedLabelColor: Colors.white38,
                         indicatorWeight: 3,
                         dividerColor: Colors.transparent,
-                        labelStyle: GoogleFonts.manrope(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.2),
+                        labelStyle: AppTypeV2.manrope(fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.2),
                         onTap: (_) => setState(() {}),
                         tabs: const [
                           Tab(text: 'Uthmani'),
@@ -789,7 +791,7 @@ class _ReadQuranScreenState extends ConsumerState<ReadQuranScreen> with TickerPr
             Text(
               message,
               textAlign: TextAlign.center,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: Colors.white54,
                 fontSize: 16,
                 height: 1.5,

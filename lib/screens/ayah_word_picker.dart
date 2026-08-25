@@ -10,7 +10,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:quran_recitation/models/word_insight.dart';
 import 'package:quran_recitation/providers/word_insight_providers.dart';
@@ -318,7 +317,7 @@ class _AyahWordPickerSheet extends ConsumerWidget {
                           children: [
                             Text(
                               'Explore a word',
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                 color: AppColorsV2.onSurface,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
@@ -330,7 +329,7 @@ class _AyahWordPickerSheet extends ConsumerWidget {
                               surahName.isEmpty
                                   ? 'Ayah $surahNumber:$ayahNumber'
                                   : '$surahName · $surahNumber:$ayahNumber',
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                 color: AppColorsV2.onSurfaceVariant,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -358,7 +357,7 @@ class _AyahWordPickerSheet extends ConsumerWidget {
                         child: Text(
                           'Tap any word for its root, deep meaning and every '
                           'place it appears in the Quran.',
-                          style: GoogleFonts.manrope(
+                          style: AppTypeV2.manrope(
                             color: AppColorsV2.onSurfaceVariant,
                             fontSize: 11.5,
                             height: 1.5,
@@ -392,6 +391,9 @@ class _AyahWordPickerSheet extends ConsumerWidget {
                             context, scrollController, fallback);
                       }
                       return ListView.separated(
+                        // Rows hold no state worth preserving off-screen; the default
+                        // wraps every one of them in an AutomaticKeepAlive element.
+                        addAutomaticKeepAlives: false,
                         controller: scrollController,
                         padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
                         itemCount: words.length,
@@ -450,7 +452,7 @@ class _AyahWordPickerSheet extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Text(
                   'Loading word-by-word meanings…',
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color: AppColorsV2.onSurfaceVariant,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
@@ -530,7 +532,7 @@ class _WordRow extends StatelessWidget {
               ),
               child: Text(
                 '${word.position}',
-                style: GoogleFonts.manrope(
+                style: AppTypeV2.manrope(
                   color: _kGold,
                   fontSize: 10,
                   fontWeight: FontWeight.w900,
@@ -547,7 +549,7 @@ class _WordRow extends StatelessWidget {
                       word.transliteration,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.manrope(
+                      style: AppTypeV2.manrope(
                         color: AppColorsV2.onSurfaceVariant,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w800,
@@ -560,7 +562,7 @@ class _WordRow extends StatelessWidget {
                         word.translation,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.manrope(
+                        style: AppTypeV2.manrope(
                           color: AppColorsV2.onSurface,
                           fontSize: 13.5,
                           height: 1.4,

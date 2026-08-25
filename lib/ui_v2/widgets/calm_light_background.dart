@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
+import 'package:quran_recitation/ui_v2/glass.dart';
 
 /// Sakina backdrop.
 ///
@@ -44,8 +45,14 @@ class _CalmLightBackgroundState extends State<CalmLightBackground>
     super.initState();
     // 24 s period — alive, never noticeable.
     _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 24))
-          ..repeat(reverse: true);
+        AnimationController(vsync: this, duration: const Duration(seconds: 24));
+
+    // The one animation in the app that never stops, so it is also the one
+    // that has to yield first. On a phone the perf governor has already judged
+    // to be struggling, the drift is parked at a fixed position rather than
+    // run: it is decoration with a twenty-four second period, and it should
+    // not be competing for frames with the content.
+    if (!GlassConfig.reduced) _controller.repeat(reverse: true);
   }
 
   @override
@@ -154,7 +161,21 @@ class _Drift extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: controller,
-      child: child,
+      // A RepaintBoundary AROUND THE GLOW, under the Transform.
+      //
+      // There is already one around the whole drifting layer, and on its own
+      // it is not enough. A boundary stops a repaint escaping to its parent;
+      // it does nothing about the content inside it changing, and here the
+      // content changes on every single frame — so both 440-pixel radial
+      // gradients were re-rasterised sixty times a second, for the whole life
+      // of the app, for an effect with a twenty-four second period that nobody
+      // is meant to notice.
+      //
+      // With a boundary here the gradient is rasterised ONCE and cached as a
+      // texture. Each frame then only moves that texture, which the compositor
+      // does without touching a pixel of it. Same drift, and the raster thread
+      // stops doing the work entirely.
+      child: RepaintBoundary(child: child),
       builder: (context, built) {
         final t = controller.value * math.pi + phase;
         return Transform.translate(

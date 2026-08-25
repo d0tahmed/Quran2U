@@ -27,21 +27,36 @@ class AdhanReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             AdhanScheduler.ACTION_FIRE -> {
-                val prayer = intent.getIntExtra(AdhanScheduler.EXTRA_PRAYER, -1)
-                Log.d(TAG, "adhan alarm for prayer index $prayer")
+                // The prayer comes out of the intent's DATA, not its extras.
+                // Extras are ignored by Intent.filterEquals, which is what the
+                // system uses to tell one PendingIntent from another — so an
+                // identity kept in the extras can drift onto the wrong alarm.
+                // That drift is what once played the Asr adhan at Dhuhr.
+                val stamp = AdhanScheduler.stampFromUri(intent.data)
+                val prayer = AdhanScheduler.indexFromUri(intent.data)
+                Log.d(TAG, "adhan alarm ${intent.data}")
 
-                if (prayer in AdhanScheduler.KEYS.indices &&
+                if (stamp != null &&
+                    prayer in AdhanScheduler.KEYS.indices &&
                     AdhanScheduler.isEnabled(context)
                 ) {
                     val mode = AdhanScheduler.modeFor(context, prayer)
-                    if (mode != AdhanScheduler.MODE_OFF) {
+                    // shouldSound checks this occurrence against the live
+                    // schedule and against what has already sounded today. A
+                    // stale alarm — one left over from a schedule that has
+                    // since been replaced — dies here rather than announcing
+                    // the wrong prayer.
+                    if (mode != AdhanScheduler.MODE_OFF &&
+                        AdhanScheduler.shouldSound(context, stamp, prayer)
+                    ) {
                         startAdhan(context, prayer, mode)
                     }
                 }
 
-                // Re-arm immediately: the slot we just consumed has to be
-                // refilled, and this is the one moment we are guaranteed to be
-                // running even if the app is never opened again.
+                // Re-arm regardless of whether we sounded: the occurrence we
+                // just consumed has to be replaced, and this is the one moment
+                // we are guaranteed to be running even if the app is never
+                // opened again.
                 AdhanScheduler.rearm(context)
             }
 

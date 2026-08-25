@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:quran_recitation/models/models.dart';
@@ -54,20 +53,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: Colors.transparent,
       body: SafeArea(
         bottom: false,
-        child: NotificationListener<UserScrollNotification>(
-          onNotification: (notif) {
-            if (notif.direction == ScrollDirection.reverse) {
-              if (ref.read(navBarVisibleProvider)) {
-                ref.read(navBarVisibleProvider.notifier).state = false;
-              }
-            } else if (notif.direction == ScrollDirection.forward) {
-              if (!ref.read(navBarVisibleProvider)) {
-                ref.read(navBarVisibleProvider.notifier).state = true;
-              }
-            }
-            return true;
-          },
-          child: CustomScrollView(
+        // The scroll listener that used to hide the nav dock is gone — the
+        // dock is fixed now. That also takes a provider read (and sometimes a
+        // write) off every scroll notification on this screen.
+        child: CustomScrollView(
             slivers: [
               // ── Bismillah masthead ──────────────────────────────────────
               const SliverToBoxAdapter(child: _Masthead()),
@@ -225,7 +214,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -1318,21 +1306,41 @@ class _SurahRow extends ConsumerWidget {
 // List entrance + shimmer
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// The staggered entrance for the first rows of the surah list.
+///
+/// SLIDE ONLY — THE FADE WAS COSTING MORE THAN IT WAS WORTH
+/// --------------------------------------------------------
+/// This used to slide AND fade. An opacity strictly between 0 and 1 forces a
+/// compositing layer, and with a stagger every one of these rows is mid-fade
+/// at the same time — so opening the app pushed up to eight full-width layers
+/// at once, on the first second of the first screen, which is exactly where a
+/// phone is already busiest inflating the route.
+///
+/// A translate does not push a layer at all. Dropping the fade removes every
+/// one of those layers and the entrance still reads as an entrance: the eye
+/// follows the movement, not the alpha ramp.
+///
+/// The row count is down from seventeen to eight as well. Rows nine to
+/// seventeen are below the fold on every phone this app targets, so their
+/// animation was work nobody ever saw.
 class _AnimatedRow extends StatelessWidget {
   final Widget child;
   final int index;
   const _AnimatedRow({required this.child, required this.index});
 
+  /// Roughly a screenful. Past this the entrance is invisible.
+  static const int _animatedRows = 8;
+
   @override
   Widget build(BuildContext context) {
-    if (index > 16) return child;
+    if (index >= _animatedRows) return child;
     return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 260 + index * 30),
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 240 + index * 28),
       curve: Curves.easeOutCubic,
       builder: (_, v, c) => Transform.translate(
-        offset: Offset(0, 16 * (1 - v)),
-        child: Opacity(opacity: v.clamp(0.0, 1.0), child: c),
+        offset: Offset(0, 18 * (1 - v)),
+        child: c,
       ),
       child: child,
     );

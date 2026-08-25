@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:quran_recitation/providers/providers.dart';
+import 'package:quran_recitation/ui_v2/app_typography.dart';
 import 'package:quran_recitation/screens/login_screen.dart';
 import 'package:quran_recitation/screens/surah_detail_screen.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
@@ -73,7 +73,7 @@ class BookmarksScreen extends ConsumerWidget {
                             Flexible(
                               child: Text(
                                 'Saved',
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                   color:        AppColorsV2.onSurface,
                                   fontSize:     28,
                                   fontWeight:   FontWeight.w900,
@@ -96,7 +96,7 @@ class BookmarksScreen extends ConsumerWidget {
                                   '${bookmarks.length} ITEMS',
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
-                                  style: GoogleFonts.manrope(
+                                  style: AppTypeV2.manrope(
                                     color:      _kGreen,
                                     fontWeight: FontWeight.w900,
                                     fontSize:   10,
@@ -142,12 +142,15 @@ class BookmarksScreen extends ConsumerWidget {
                               child: CircularProgressIndicator(color: _kGreen)),
                           error: (e, _) => Center(
                               child: Text('Error loading data',
-                                  style: GoogleFonts.manrope(color: Colors.white54))),
+                                  style: AppTypeV2.manrope(color: Colors.white54))),
                           data: (surahs) {
                             final sorted = bookmarks.toList()
                               ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
                             return ListView.builder(
+                              // Rows hold no state worth preserving off-screen; the default
+                              // wraps every one of them in an AutomaticKeepAlive element.
+                              addAutomaticKeepAlives: false,
                               padding: const EdgeInsets.only(top: 16, bottom: 32),
                               physics: const BouncingScrollPhysics(),
                               itemCount: sorted.length,
@@ -191,13 +194,13 @@ class BookmarksScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           Text('No Saved Items',
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
           const SizedBox(height: 8),
           Text(
             'Your bookmarked Surahs\nwill appear here.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.manrope(
+            style: AppTypeV2.manrope(
               color:      AppColorsV2.onSurfaceVariant,
               fontSize:   14,
               height:     1.5,
@@ -264,7 +267,7 @@ class _SyncButton extends ConsumerWidget {
           const SizedBox(width: 6),
           Text(
             isSyncing ? 'Syncing…' : 'Sync',
-            style: GoogleFonts.manrope(
+            style: AppTypeV2.manrope(
               color:      _kGreen,
               fontSize:   12,
               fontWeight: FontWeight.w800,
@@ -317,7 +320,7 @@ class _SyncStatusBanner extends StatelessWidget {
         Expanded(
           child: Text(
             syncState.message ?? '',
-            style: GoogleFonts.manrope(
+            style: AppTypeV2.manrope(
               color:      color,
               fontSize:   12,
               fontWeight: FontWeight.w700,
@@ -361,13 +364,13 @@ class _LoginNudgeBanner extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Sync with Quran.com',
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color:      Colors.white,
                     fontSize:   13,
                     fontWeight: FontWeight.w800,
                   )),
               Text('Sign in to back up your bookmarks to the cloud.',
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color:      AppColorsV2.onSurfaceVariant,
                     fontSize:   11,
                     height:     1.4,
@@ -419,7 +422,7 @@ class _BookmarkTile extends ConsumerWidget {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content:          Text('Bookmark removed',
-              style: GoogleFonts.manrope(fontWeight: FontWeight.w700, color: Colors.white)),
+              style: AppTypeV2.manrope(fontWeight: FontWeight.w700, color: Colors.white)),
           backgroundColor:  AppColorsV2.surfaceLow,
           behavior:         SnackBarBehavior.floating,
           shape:            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -482,7 +485,7 @@ class _BookmarkTile extends ConsumerWidget {
             ),
             title: Text(
               surah.name,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color:        AppColorsV2.onSurface,
                 fontSize:     16,
                 fontWeight:   FontWeight.w900,
@@ -493,7 +496,7 @@ class _BookmarkTile extends ConsumerWidget {
               Expanded(
                 child: Text(
                   'Saved on ${DateFormat('MMM d, yyyy').format(bookmark.createdAt)}',
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color:      AppColorsV2.onSurfaceVariant,
                     fontSize:   12,
                     fontWeight: FontWeight.w600,
@@ -511,7 +514,7 @@ class _BookmarkTile extends ConsumerWidget {
                   ),
                   child: Text(
                     'Ayah ${bookmark.ayahNumber}',
-                    style: GoogleFonts.manrope(
+                    style: AppTypeV2.manrope(
                       color:      _kGreen,
                       fontSize:   10,
                       fontWeight: FontWeight.w800,

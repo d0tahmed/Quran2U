@@ -107,8 +107,8 @@ const List<ChangelogEntry> kChangelog = <ChangelogEntry>[
   // ───────────────────────────────────────────────────────────────────────────
   ChangelogEntry(
     version: '4.0.0',
-    headline: 'The adhan arrives, the widget stops drifting, '
-        'and the Quran starts asking the questions',
+    headline: 'The adhan arrives, and the Quran starts '
+        'asking the questions',
     year: 2026,
     month: 8,
     day: 24,
@@ -138,22 +138,6 @@ const List<ChangelogEntry> kChangelog = <ChangelogEntry>[
         ],
       ),
       ChangeGroup(
-        title: 'The home screen widget',
-        icon: _fix,
-        items: <String>[
-          'Fixed the widget showing the wrong prayer after the app had been '
-              'closed for a few hours. It held only one day of times and had '
-              'no way past them until the app was reopened.',
-          'The app now publishes seven days of prayer times at once, and the '
-              'widget redraws itself on an alarm set for the exact minute of '
-              'the next prayer. No polling, no waiting on the system to notice.',
-          'Once the last prayer of the day has passed, the widget rolls over '
-              'to tomorrow\'s real Fajr instead of freezing on Isha.',
-          'The widget and the adhan read the same schedule, so they can no '
-              'longer disagree about when a prayer is.',
-        ],
-      ),
-      ChangeGroup(
         title: 'Daily Quiz',
         icon: _new,
         items: <String>[
@@ -170,9 +154,14 @@ const List<ChangelogEntry> kChangelog = <ChangelogEntry>[
               'topic, your weakest area called out, and all-time accuracy.',
           'Every answer explains itself the moment you tap, and links straight '
               'to the surah it came from.',
+          'A Hint on every question — a real one, drawn from the same data the '
+              'question was built from, that narrows the field without giving '
+              'the answer away. Hints are counted, never penalised.',
           'The surah dataset behind it — all 114 chapters with names, '
               'meanings, revelation place and ayah counts — is bundled, so the '
               'quiz works with no connection.',
+          'A progress calendar you can tap: any day shows what you scored, or '
+              'when it unlocks if it has not come round yet.',
         ],
       ),
       ChangeGroup(
@@ -215,6 +204,21 @@ const List<ChangelogEntry> kChangelog = <ChangelogEntry>[
               'text style, which is why text-heavy screens hitched.',
           'Fixed the Daily section lagging while scrolling — a glass panel '
               'with a real backdrop blur had crept into a scroll view.',
+          'Fixed the Settings scroll stutter. Two hundred and eight places in '
+              'the app were re-resolving a font on every build; a list only '
+              'builds the rows it is about to show, so that cost landed '
+              'squarely on the frames doing the scrolling. Resolved once per '
+              'weight now, and reused.',
+          'Glass gradients are cached and shared between identical surfaces, '
+              'so a long list no longer builds a hundred of them mid-fling.',
+          'Pressing a card no longer rebuilds it — only the transform moves.',
+          'Switching tabs is instant. The old fade left the incoming page '
+              'translucent for a moment, which washed the screen dark and read '
+              'as a shadow of the page you had just left.',
+          'The app now measures its own frame times on the device it is '
+              'actually running on and eases off the heavier effects if that '
+              'phone cannot afford them — instead of guessing from a model '
+              'name.',
         ],
       ),
       ChangeGroup(
@@ -225,12 +229,19 @@ const List<ChangelogEntry> kChangelog = <ChangelogEntry>[
               'surfaces that genuinely float — the nav dock, sheets, dialogs — '
               'and a convincing frosted surface everywhere blur would cost '
               'frames.',
-          'Specular rims, a soft sheen and a press response on every glass '
-              'surface, so cards feel physical instead of flat.',
+          'The navigation dock is a proper glass island now. One highlight '
+              'travels along it to whatever you tapped instead of four '
+              'separate buttons fading against each other, and the fill is '
+              'thin enough that the page actually shows through.',
+          'Layered speculars, an inner bevel and a lit top edge on every glass '
+              'surface, so they read as panes with thickness rather than flat '
+              'tinted rectangles.',
           'Fixed quick-action tiles drawing their label outside the card, and '
               'the prayer countdown pill not sitting flush to the edge.',
           'Fixed the enabled toggle rendering as a solid green pill with no '
               'visible thumb.',
+          'The adhan settings now unfold when you switch them on instead of '
+              'snapping to their new height.',
         ],
       ),
       ChangeGroup(
@@ -250,11 +261,19 @@ const List<ChangelogEntry> kChangelog = <ChangelogEntry>[
               'capture used a debug-only check that throws in release builds, '
               'which is why it failed on real phones and never in testing.',
           'Fixed an image leak in the same share flow.',
+          'Fixed the adhan announcing the wrong prayer. An alarm used to be '
+              'identified by its place in a queue, and that queue is rebuilt '
+              'every time the app opens — so an alarm set for one prayer could '
+              'be delivered carrying the next one\'s name. Each alarm now '
+              'carries which prayer on which day, and the adhan refuses to '
+              'sound at all if the clock does not agree with the schedule.',
           'Fixed the daily reminder row in Settings overlapping its own '
               'button.',
-          'Fixed the quiz calendar sitting off-centre.',
+          'Fixed the quiz calendar running off the edge of its card.',
           'Fixed the progress calendar labelling itself a day early for '
               'anyone west of UTC.',
+          'Report a Bug now opens Instagram, and the About panel has been '
+              'trimmed to what people actually look for.',
           'Corrected a mislabelled Settings section.',
         ],
       ),

@@ -53,35 +53,67 @@ enum GlassTier {
 extension GlassTierX on GlassTier {
   double get sigma {
     switch (this) {
+      // Wider than it used to be, and paired with a much thinner tint below.
+      // A heavy blur seen through a light tint reads as glass; a light blur
+      // seen through a heavy tint reads as a painted panel, whatever the
+      // sigma says.
       case GlassTier.overlay:
-        return 24;
+        return 34;
       case GlassTier.sheet:
-        return 20;
+        return 26;
       case GlassTier.panel:
-        return 14;
+        return 16;
       case GlassTier.subtle:
-        return 8;
+        return 10;
     }
   }
 
   /// Opacity of the tint sitting on top of the blur.
+  ///
+  /// WHY THESE ARE LOW.
+  ///
+  /// The overlay tier was at 0.55 and the nav dock looked like a solid slab —
+  /// because it was one. On a dark canvas a 55% dark tint over a dark blur is
+  /// simply dark: the blur has nothing left to show through, so none of the
+  /// work behind it is visible and the surface reads as opaque paint.
+  ///
+  /// Glass on a dark UI needs the fill to get out of the way. What actually
+  /// sells it is not the tint at all — it is the rim, the top lip and the
+  /// saturated, moving content underneath. Those are free to be strong only
+  /// once the fill is weak.
   double get tintOpacity {
     switch (this) {
       case GlassTier.overlay:
-        return 0.55;
+        return 0.30;
       case GlassTier.sheet:
-        return 0.72;
-      case GlassTier.panel:
         return 0.58;
+      case GlassTier.panel:
+        return 0.46;
       case GlassTier.subtle:
-        return 0.45;
+        return 0.34;
+    }
+  }
+
+  /// How hard the thickness overlay is pushed. Chrome that floats over
+  /// scrolling content gets the strongest lip, because that highlight is
+  /// doing most of the work of saying "this is a pane above the page".
+  double get gloss {
+    switch (this) {
+      case GlassTier.overlay:
+        return 1.75;
+      case GlassTier.sheet:
+        return 1.30;
+      case GlassTier.panel:
+        return 1.0;
+      case GlassTier.subtle:
+        return 0.8;
     }
   }
 
   double get elevation {
     switch (this) {
       case GlassTier.overlay:
-        return 26;
+        return 22;
       case GlassTier.sheet:
         return 40;
       case GlassTier.panel:
@@ -195,7 +227,24 @@ class _PaintCache {
   static const int _cap = 96;
   static final Map<_PaintKey, Paint> _entries = <_PaintKey, Paint>{};
 
-  static Paint of(_PaintKey key, Paint Function() build) {
+  /// [store] false builds the paint and throws it away.
+  ///
+  /// WHY AN OPT-OUT EXISTS, AND WHY IT MATTERS MORE THAN IT LOOKS.
+  ///
+  /// The key includes the surface's size, which is right for a screen full of
+  /// static cards and actively harmful for one that is animating its height.
+  /// A resizing surface misses on every single frame, and each miss does not
+  /// merely cost a shader — it INSERTS. Sixty inserts a second fill a
+  /// ninety-six entry cache in under two seconds and start evicting, and what
+  /// gets evicted is every other card on the screen. One animating panel
+  /// turns a warm cache cold for everything around it, so the whole screen
+  /// starts rebuilding shaders it had already paid for.
+  ///
+  /// That is what made the adhan panel stutter as it unfolded. Surfaces that
+  /// animate their size pass `cache: false` and simply do not take part.
+  static Paint of(_PaintKey key, Paint Function() build, {bool store = true}) {
+    if (!store) return build();
+
     // Dart maps keep insertion order, so remove-then-reinsert promotes an
     // entry to newest and `keys.first` is always the least recently used.
     final hit = _entries.remove(key);
@@ -245,11 +294,15 @@ class SpecularBorderPainter extends CustomPainter {
   /// Colour of the rim light — ivory by default, gold for accented surfaces.
   final Color color;
 
+  /// False on a surface whose size animates. See [_PaintCache.of].
+  final bool cache;
+
   const SpecularBorderPainter({
     required this.borderRadius,
     this.width = 1.0,
     this.intensity = 0.30,
     this.color = const Color(0xFFECEFE9),
+    this.cache = true,
   });
 
   /// The bottom-right glint is warmed towards this, not left ivory.
@@ -267,6 +320,19 @@ class SpecularBorderPainter extends CustomPainter {
     final rect = Offset.zero & size;
     final rrect = borderRadius.toRRect(rect.deflate(width / 2));
 
+    // A diagonal rim is right for a card, and wrong for an island.
+    //
+    // On a roughly square card, top-left to bottom-right runs the light
+    // across the whole surface. On something four times wider than it is
+    // tall — the nav dock, a pill, a toolbar — that same diagonal is almost
+    // horizontal, so the bright end lands on the left cap and the entire top
+    // EDGE, which is the edge a person actually reads as the lit one, stays
+    // dim. Below that aspect ratio the gradient is turned vertical so the
+    // whole top edge lights up and the whole bottom edge falls away.
+    final wide = size.width > size.height * 2.2;
+    final from = wide ? rect.topCenter : rect.topLeft;
+    final to = wide ? rect.bottomCenter : rect.bottomRight;
+
     final paint = _PaintCache.of(
       _PaintKey(1, _q(size.width), _q(size.height), color.toARGB32(),
           (intensity * 1000).round(), width.round(), borderRadius.topLeft.x),
@@ -275,8 +341,8 @@ class SpecularBorderPainter extends CustomPainter {
         ..strokeWidth = width
         ..isAntiAlias = true
         ..shader = ui.Gradient.linear(
-          rect.topLeft,
-          rect.bottomRight,
+          from,
+          to,
           <Color>[
             color.withValues(alpha: intensity),
             color.withValues(alpha: intensity * 0.52),
@@ -287,6 +353,7 @@ class SpecularBorderPainter extends CustomPainter {
           ],
           <double>[0.0, 0.16, 0.40, 0.63, 0.87, 1.0],
         ),
+      store: cache,
     );
 
     canvas.drawRRect(rrect, paint);
@@ -311,12 +378,19 @@ class SpecularBorderPainter extends CustomPainter {
           rect.topCenter,
           rect.bottomCenter,
           <Color>[
-            Colors.black.withValues(alpha: 0.16 * intensity / 0.30),
-            Colors.black.withValues(alpha: 0.04 * intensity / 0.30),
+            // Clamped: the bevel is scaled off the rim intensity, and a caller
+            // is free to pass a rim brighter than the scale expects. An alpha
+            // over 1.0 asserts in debug and is undefined in release, which is
+            // the worst pair of failure modes to leave to chance.
+            Colors.black
+                .withValues(alpha: (0.16 * intensity / 0.30).clamp(0.0, 0.34)),
+            Colors.black
+                .withValues(alpha: (0.04 * intensity / 0.30).clamp(0.0, 0.10)),
             Colors.transparent,
           ],
           <double>[0.0, 0.28, 0.62],
         ),
+      store: cache,
     );
 
     canvas.drawRRect(inner, bevel);
@@ -327,7 +401,8 @@ class SpecularBorderPainter extends CustomPainter {
       old.borderRadius != borderRadius ||
       old.width != width ||
       old.intensity != intensity ||
-      old.color != color;
+      old.color != color ||
+      old.cache != cache;
 }
 
 /// The body of a liquid-glass surface: the tint, and the light falling
@@ -352,11 +427,15 @@ class LiquidSurfacePainter extends CustomPainter {
   /// Strength of the thickness overlay, 0 disables it.
   final double depth;
 
+  /// False on a surface whose size animates. See [_PaintCache.of].
+  final bool cache;
+
   const LiquidSurfacePainter({
     required this.borderRadius,
     required this.tint,
     this.accent,
     this.depth = 1.0,
+    this.cache = true,
   });
 
   @override
@@ -393,6 +472,7 @@ class LiquidSurfacePainter extends CustomPainter {
                   ],
             const <double>[0.0, 0.28, 0.62, 1.0],
           ),
+        store: cache,
       );
       canvas.drawRRect(rrect, body);
     }
@@ -403,23 +483,32 @@ class LiquidSurfacePainter extends CustomPainter {
     // One near-vertical pass carries both cues at once: the lit lip along the
     // top and the shadow pooling at the bottom. Two separate fills would look
     // the same and cost twice as much.
+    //
+    // Same aspect-ratio rule as the rim: on a wide island the pass has to run
+    // straight down, or the "top lip" ends up smeared across the width and
+    // stops reading as an edge at all.
+    final wide = size.width > size.height * 2.2;
+
     final gloss = _PaintCache.of(
       _PaintKey(4, _q(size.width), _q(size.height), 0, 0,
           (depth * 1000).round(), borderRadius.topLeft.x),
       () => Paint()
         ..isAntiAlias = true
         ..shader = ui.Gradient.linear(
-          Offset(size.width * 0.18, 0),
-          Offset(size.width * 0.72, size.height),
+          wide ? Offset(size.width * 0.5, 0) : Offset(size.width * 0.18, 0),
+          wide
+              ? Offset(size.width * 0.5, size.height)
+              : Offset(size.width * 0.72, size.height),
           <Color>[
-            Colors.white.withValues(alpha: 0.075 * depth),
-            Colors.white.withValues(alpha: 0.026 * depth),
+            Colors.white.withValues(alpha: (0.075 * depth).clamp(0.0, 0.30)),
+            Colors.white.withValues(alpha: (0.026 * depth).clamp(0.0, 0.14)),
             Colors.transparent,
             Colors.transparent,
-            Colors.black.withValues(alpha: 0.10 * depth),
+            Colors.black.withValues(alpha: (0.10 * depth).clamp(0.0, 0.22)),
           ],
           const <double>[0.0, 0.10, 0.34, 0.74, 1.0],
         ),
+      store: cache,
     );
     canvas.drawRRect(rrect, gloss);
   }
@@ -429,6 +518,7 @@ class LiquidSurfacePainter extends CustomPainter {
       old.borderRadius != borderRadius ||
       old.tint != tint ||
       old.accent != accent ||
+      old.cache != cache ||
       old.depth != depth;
 }
 
@@ -458,6 +548,9 @@ class _GlassOverlays extends StatelessWidget {
   final double edgeIntensity;
   final Color edgeColor;
 
+  /// False when this surface animates its size.
+  final bool cache;
+
   const _GlassOverlays({
     required this.child,
     required this.borderRadius,
@@ -466,6 +559,7 @@ class _GlassOverlays extends StatelessWidget {
     this.tint,
     this.accent,
     this.depth = 1.0,
+    this.cache = true,
   });
 
   @override
@@ -480,12 +574,14 @@ class _GlassOverlays extends StatelessWidget {
               tint: t,
               accent: accent,
               depth: depth,
+              cache: cache,
             ),
       foregroundPainter: edgeIntensity > 0
           ? SpecularBorderPainter(
               borderRadius: borderRadius,
               intensity: edgeIntensity,
               color: edgeColor,
+              cache: cache,
             )
           : null,
       // Deliberately NOT isComplex: a gradient stroke around an rrect is
@@ -706,6 +802,7 @@ class GlassSurface extends StatelessWidget {
           // above, inside the blur where it belongs.
           child: _GlassOverlays(
             borderRadius: br,
+            depth: tier.gloss,
             edgeIntensity: edgeIntensity,
             edgeColor: edgeColor ?? AppColorsV2.onSurface,
             child: Padding(padding: padding, child: child),
@@ -764,6 +861,13 @@ class FrostedCard extends StatelessWidget {
   /// Adds a coloured bloom under the card. Use on at most one card per screen.
   final Color? glow;
 
+  /// Set true when this card's HEIGHT is animated — an expanding panel, a
+  /// list that grows. The gradient cache is keyed by size, so a card that
+  /// resizes misses on every frame and, worse, evicts the entries every other
+  /// card on screen is relying on. Opting out costs one shader per frame for
+  /// this card and keeps the cache warm for everything else.
+  final bool animatedSize;
+
   const FrostedCard({
     super.key,
     required this.child,
@@ -778,6 +882,7 @@ class FrostedCard extends StatelessWidget {
     this.elevated = false,
     this.accent,
     this.glow,
+    this.animatedSize = false,
   });
 
   BorderRadius get _br => borderRadius ?? BorderRadius.circular(radius);
@@ -797,6 +902,7 @@ class FrostedCard extends StatelessWidget {
       accent: accent,
       edgeIntensity: edgeIntensity,
       edgeColor: edgeColor ?? AppColorsV2.onSurface,
+      cache: !animatedSize,
       child: Padding(padding: padding, child: child),
     );
 

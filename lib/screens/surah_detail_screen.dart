@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/providers/providers.dart';
@@ -168,7 +167,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
                   error: (e, _) => Center(
                     child: Text(
                       'Error: $e',
-                      style: GoogleFonts.manrope(color: Colors.white54),
+                      style: AppTypeV2.manrope(color: Colors.white54),
                     ),
                   ),
                 ),
@@ -260,7 +259,7 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
                   children: [
                     Text(
                       '${surah.name} (${surah.nameTranslation})',
-                      style: GoogleFonts.manrope(
+                      style: AppTypeV2.manrope(
                         color: AppColorsV2.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -321,6 +320,9 @@ class _SurahDetailScreenState extends ConsumerState<SurahDetailScreen>
         return false;
       },
       child: ListView.builder(
+      // Rows hold no state worth preserving off-screen; the default
+      // wraps every one of them in an AutomaticKeepAlive element.
+      addAutomaticKeepAlives: false,
       controller: _scrollCtrl,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
       itemCount: ayahs.length + headerCount,
@@ -513,7 +515,7 @@ class _TagPill extends StatelessWidget {
           text.toUpperCase(),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
-          style: GoogleFonts.manrope(
+          style: AppTypeV2.manrope(
             color: color,
             fontSize: 10,
             fontWeight: FontWeight.w900,
@@ -611,7 +613,7 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
                           : (widget.tarjumahMode ? 'TARJUMAH MODE' : 'RECITING'),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
-                      style: GoogleFonts.manrope(
+                      style: AppTypeV2.manrope(
                         color: AppColorsV2.onSurfaceVariant,
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
@@ -621,7 +623,7 @@ class _MiniPlaybackBarState extends ConsumerState<_MiniPlaybackBar> {
                     const SizedBox(height: 2),
                     Text(
                       imam?.name ?? widget.surah.name,
-                      style: GoogleFonts.manrope(
+                      style: AppTypeV2.manrope(
                         color: AppColorsV2.onSurface,
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
@@ -819,7 +821,7 @@ class _VerseCard extends StatelessWidget {
                         ),
                         child: Text(
                           '${ayah.numberInSurah}',
-                          style: GoogleFonts.manrope(
+                          style: AppTypeV2.manrope(
                             color: _kGold,
                             fontSize: 11,
                             fontWeight: FontWeight.w900,
@@ -859,7 +861,7 @@ class _VerseCard extends StatelessWidget {
                                   ? (isEnglishAudio ? 'ENGLISH' : 'اردو')
                                   : 'عربی',
                               maxLines: 1,
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                 color: _kGold,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900,
@@ -961,7 +963,7 @@ class _VerseCard extends StatelessWidget {
                     ayah.translation,
                     textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
                     textAlign: isRtl ? TextAlign.right : TextAlign.left,
-                    style: GoogleFonts.manrope(
+                    style: AppTypeV2.manrope(
                       color: AppColorsV2.onSurfaceVariant,
                       fontSize: 13,
                       height: 1.65,
@@ -1022,7 +1024,7 @@ class _DownloadSheet extends StatelessWidget {
                   Flexible(
                     child: Text(surah.name,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.outfit(
+                        style: AppTypeV2.outfit(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.bold)),
@@ -1037,7 +1039,7 @@ class _DownloadSheet extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(imam.name,
-                  style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+                  style: AppTypeV2.outfit(color: Colors.white38, fontSize: 12)),
               const SizedBox(height: 20),
 
               _SheetOption(
@@ -1072,7 +1074,7 @@ class _DownloadSheet extends StatelessWidget {
                           color: Colors.red, size: 18),
                       const SizedBox(width: 10),
                       Text('Delete all downloads for this Surah',
-                          style: GoogleFonts.outfit(
+                          style: AppTypeV2.outfit(
                               color: Colors.red, fontSize: 13)),
                     ],
                   ),
@@ -1137,13 +1139,13 @@ class _SheetOption extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: GoogleFonts.outfit(
+                      style: AppTypeV2.outfit(
                           color: disabled ? Colors.white38 : Colors.white,
                           fontSize: 13,
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style: GoogleFonts.outfit(
+                      style: AppTypeV2.outfit(
                           color: Colors.white38, fontSize: 11, height: 1.4)),
                 ],
               ),
@@ -1177,7 +1179,7 @@ class _DoneChip extends StatelessWidget {
           const Icon(Icons.check_rounded, color: _kGreen, size: 11),
           const SizedBox(width: 3),
           Text('Saved',
-              style: GoogleFonts.outfit(
+              style: AppTypeV2.outfit(
                   color: _kGreen, fontSize: 10, fontWeight: FontWeight.w600)),
         ],
       ),

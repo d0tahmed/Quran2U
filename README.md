@@ -85,7 +85,7 @@ together, and their results are merged rather than chosen between.
 | **Hisnul Muslim** | Authentic supplications, categorised, with transliteration and references. |
 | **Prayer times & Qibla** | Computed on-device (Karachi method, Hanafi) with a live countdown and a compass-based Qibla finder. |
 | **Daily Inspiration** | A pool of 56 ayah-and-hadith pairs, one surfaced per calendar day. Every Arabic text is taken verbatim from the Quran.com API — never retyped — so the diacritics are exactly as published. |
-| **Daily Quiz** | Ten questions a day drawn from the Quran's own structure — surah names and their meanings, revelation place, order, ayah counts, themes, and the ayah of the day. Easy to hard, one quiz per calendar day, identical on every device. Each answer explains itself the moment you tap and links to the surah it came from. |
+| **Daily Quiz** | Ten questions a day drawn from the Quran's own structure — surah names and their meanings, revelation place, order, ayah counts, themes, and the ayah of the day. Easy to hard, one quiz per calendar day, identical on every device. Each question offers a real hint, and each answer explains itself the moment you tap and links to the surah it came from. |
 | **Progress** | Stars per quiz, a streak that counts days attempted rather than days scored well, a twelve-week completion calendar, per-topic mastery bars and all-time accuracy. |
 
 ### Sharing
@@ -186,6 +186,8 @@ lib/
 ├── providers/                 # Riverpod providers and notifiers
 ├── screens/                   # UI, one file per screen
 ├── services/                  # API clients, audio, notifications, storage
+│   ├── hifz_storage.dart           # Memorisation state + review schedule
+│   └── hifz_audio.dart             # Ayah-level repeat player
 ├── data/                      # Bundled datasets
 │   ├── quran_theme_index.dart      # 72 themes, 461 verse references
 │   ├── quran_root_lexicon.dart     # Trilateral roots and surface forms
@@ -279,10 +281,19 @@ being deliberate about compositing layers. Four decisions carry most of it:
   constructed when scrolled into view. High-churn providers — download progress,
   the update check — are scoped into local `Consumer`s so a progress tick
   repaints a progress bar rather than the screen.
-- **Font lookups are cached per weight.** `GoogleFonts.x()` runs a variant
-  search and a registry check on every call; `AppTypeV2` resolves each family
-  once, keyed by `FontWeight` (google_fonts returns a different family per
-  weight, so a single cached string would silently render synthetic bold).
+- **Font lookups are cached per weight, everywhere.** `GoogleFonts.x()` builds a
+  variant key, runs a closest-match search over the family's variant map and
+  checks the loaded-font registry — on every call, on every build. Around two
+  hundred call sites did that inline. A list only inflates the rows it is about
+  to show, so the cost landed precisely on the frames doing the scrolling, which
+  is what made Settings the slowest screen in the app. `AppTypeV2` now exposes
+  drop-in `manrope()` / `outfit()` / `amiri()` equivalents that return a plain
+  `TextStyle` with an already-resolved family, and every screen goes through
+  them. Only `app_theme.dart` still touches google_fonts directly, once, at
+  startup. Note that google_fonts returns a **different family per weight**
+  (`Manrope_bold` vs `Manrope_regular`), so the cache is keyed by `FontWeight` —
+  a single cached string would silently render one real weight and synthesise
+  the rest.
 
 ### Notable implementation details
 
@@ -314,12 +325,27 @@ being deliberate about compositing layers. Four decisions carry most of it:
   `setAndAllowWhileIdle` alarm for the exact minute of the next transition.
 - **The adhan reads that same schedule**, which is the point. A widget and an
   adhan that each computed prayer times independently would eventually disagree,
-  and the user would be told two different things by one app. Slot zero uses
-  `setAlarmClock` — the one alarm class Android will not defer — and the rest use
-  `setExactAndAllowWhileIdle`, with a plain `setAndAllowWhileIdle` fallback for
-  devices that refuse both. Playback runs in a foreground service on
+  and the user would be told two different things by one app. The soonest prayer
+  uses `setAlarmClock` — the one alarm class Android will not defer — and the
+  rest use `setExactAndAllowWhileIdle`, with a plain `setAndAllowWhileIdle`
+  fallback for devices that refuse both. Playback runs in a foreground service on
   `USAGE_ALARM`, so it is heard on silent, and holds a wake lock capped at seven
   minutes so a stuck player cannot outlive the recitation.
+- **An adhan alarm is identified by its data URI, never by a queue position.**
+  The first version numbered the pending alarms — slot 0 was "next", slot 1 the
+  one after — and carried the prayer's identity in the intent's extras. Extras
+  are the one part of an Intent that `filterEquals` ignores, and `filterEquals`
+  is how `PendingIntent` decides whether two requests are the same. So all the
+  slots were, to the system, one intent distinguished only by request code,
+  while the slot-to-prayer mapping changed on every re-arm as the day advanced.
+  Re-arm before Dhuhr and slot 0 means Dhuhr; re-arm after it and slot 0 means
+  Asr. Lose that race and an alarm set for Dhuhr's minute announces Asr — which
+  is exactly what happened. Alarms now carry `quran2u://adhan/<yyyymmdd>/<index>`
+  as their **data**, which `filterEquals` does compare, so a prayer's identity
+  cannot drift onto another prayer's alarm and cancelling one cancels precisely
+  one. As a second line, the receiver looks the occurrence up in the live
+  schedule and refuses to sound if the clock disagrees by more than fifteen
+  minutes, so a stale alarm dies silently rather than calling the wrong prayer.
 - **The quiz is seeded, not random.** `Random(dayIndex)` means every device
   generates the same ten questions for a given date without a server, a payload
   or a sync — and nobody can reroll into an easier quiz. Question generators
@@ -390,9 +416,14 @@ Shipped in 4.0.0:
 - [x] Bundle surah metadata rather than fetching it, so the quiz and the index
       work on a first launch with no connection
 
-Next:
+Next — 4.1.0:
 
-- [ ] Spaced repetition — feed missed questions back in at a higher rate
+- [ ] **Hifz Mode** — retrieval-based memorisation with a spaced review
+      schedule, an ayah-level repeat loop and word-by-word reveal. The engine
+      and both screens are written and sit in the tree unreferenced; the entry
+      point lands in 4.1.0 once it has had a proper testing pass
+- [ ] Spaced repetition for the quiz too — feed missed questions back in at a
+      higher rate
 - [ ] A separate, shorter adhan for Fajr
 - [ ] Expand the Word Study root lexicon beyond its current coverage
 - [ ] Grow the search theme index — it is designed to be appended to

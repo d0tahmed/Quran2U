@@ -12,7 +12,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:quran_recitation/models/models.dart';
 import 'package:quran_recitation/models/word_insight.dart';
@@ -72,7 +71,7 @@ class WordInsightScreen extends ConsumerWidget {
         scrolledUnderElevation: 0,
         title: Text(
           'Word Study',
-          style: GoogleFonts.manrope(
+          style: AppTypeV2.manrope(
             color: AppColorsV2.onSurface,
             fontSize: 17,
             fontWeight: FontWeight.w900,
@@ -92,7 +91,7 @@ class WordInsightScreen extends ConsumerWidget {
                   backgroundColor: AppColorsV2.surfaceHigh,
                   content: Text(
                     'Word copied',
-                    style: GoogleFonts.manrope(
+                    style: AppTypeV2.manrope(
                       color: AppColorsV2.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
@@ -225,7 +224,7 @@ class _HeroWordCard extends StatelessWidget {
             Text(
               transliteration.trim(),
               textAlign: TextAlign.center,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: _kGold,
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
@@ -238,7 +237,7 @@ class _HeroWordCard extends StatelessWidget {
             Text(
               meaning.trim(),
               textAlign: TextAlign.center,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: AppColorsV2.onSurface,
                 fontSize: 16,
                 height: 1.5,
@@ -290,7 +289,7 @@ class _RootCard extends StatelessWidget {
           if (isParticle)
             Text(
               analysis.particleNote,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: AppColorsV2.onSurface,
                 fontSize: 14,
                 height: 1.7,
@@ -329,7 +328,7 @@ class _RootCard extends StatelessWidget {
                           analysis.entry!.transliteration,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.manrope(
+                          style: AppTypeV2.manrope(
                             color: AppColorsV2.onSurface,
                             fontSize: 15,
                             fontWeight: FontWeight.w900,
@@ -347,7 +346,7 @@ class _RootCard extends StatelessWidget {
             Text(
               'No trilateral root could be resolved for this form. It may be a '
               'proper noun, a foreign-origin term, or a rare pattern.',
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: AppColorsV2.onSurfaceVariant,
                 fontSize: 13,
                 height: 1.6,
@@ -365,7 +364,7 @@ class _RootCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     analysis.grammarHint,
-                    style: GoogleFonts.manrope(
+                    style: AppTypeV2.manrope(
                       color: AppColorsV2.onSurfaceVariant,
                       fontSize: 12.5,
                       height: 1.6,
@@ -380,7 +379,7 @@ class _RootCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'FAMILY OF THIS ROOT',
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: AppColorsV2.onSurfaceVariant,
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
@@ -468,7 +467,7 @@ class _ConfidenceChip extends StatelessWidget {
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: tint,
                 fontSize: 10.5,
                 fontWeight: FontWeight.w900,
@@ -501,7 +500,7 @@ class _NoLexiconCard extends StatelessWidget {
         'the tafsīr excerpt explains how it functions in this ayah — together '
         'they are the classical way of reading a word: usage first, then '
         'commentary.',
-        style: GoogleFonts.manrope(
+        style: AppTypeV2.manrope(
           color: AppColorsV2.onSurfaceVariant,
           fontSize: 13.5,
           height: 1.75,
@@ -592,7 +591,7 @@ class _OccurrencesCard extends StatelessWidget {
                 Text(
                   'Showing the first ${result.items.length} of '
                   '${result.totalResults} matches.',
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color: AppColorsV2.onSurfaceVariant,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
@@ -654,7 +653,7 @@ class _OccurrenceTile extends StatelessWidget {
                 ),
                 child: Text(
                   occurrence.verseKey,
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color: _kGold,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w900,
@@ -666,7 +665,7 @@ class _OccurrenceTile extends StatelessWidget {
                 child: Text(
                   surahName,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color: AppColorsV2.onSurfaceVariant,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
@@ -677,7 +676,7 @@ class _OccurrenceTile extends StatelessWidget {
                 Text(
                   'THIS AYAH',
                   maxLines: 1,
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color: _kGreen,
                     fontSize: 9.5,
                     fontWeight: FontWeight.w900,
@@ -705,7 +704,7 @@ class _OccurrenceTile extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               occurrence.translation,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: AppColorsV2.onSurfaceVariant,
                 fontSize: 12.5,
                 height: 1.6,
@@ -801,7 +800,7 @@ class _ContextCard extends StatelessWidget {
                 children: [
                   Text(
                     text,
-                    style: GoogleFonts.manrope(
+                    style: AppTypeV2.manrope(
                       color: AppColorsV2.onSurface,
                       fontSize: 13.5,
                       height: 1.8,
@@ -811,7 +810,7 @@ class _ContextCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text(
                     'Excerpt — Tafsīr Ibn Kathīr (abridged), via Quran.com',
-                    style: GoogleFonts.manrope(
+                    style: AppTypeV2.manrope(
                       color: AppColorsV2.onSurfaceVariant,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -881,7 +880,7 @@ class _Shell extends StatelessWidget {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.manrope(
+                  style: AppTypeV2.manrope(
                     color: AppColorsV2.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
@@ -926,7 +925,7 @@ class _SectionCard extends StatelessWidget {
           if (subtitle != null && subtitle!.isNotEmpty) ...[
             Text(
               subtitle!,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: tint,
                 fontSize: 13,
                 height: 1.5,
@@ -937,7 +936,7 @@ class _SectionCard extends StatelessWidget {
           ],
           Text(
             body,
-            style: GoogleFonts.manrope(
+            style: AppTypeV2.manrope(
               color: AppColorsV2.onSurface,
               fontSize: 13.5,
               height: 1.8,
@@ -976,7 +975,7 @@ class _Pill extends StatelessWidget {
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: tint,
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
@@ -1012,7 +1011,7 @@ class _Stat extends StatelessWidget {
         children: [
           Text(
             value,
-            style: GoogleFonts.manrope(
+            style: AppTypeV2.manrope(
               color: tint,
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -1021,7 +1020,7 @@ class _Stat extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: GoogleFonts.manrope(
+            style: AppTypeV2.manrope(
               color: AppColorsV2.onSurfaceVariant,
               fontSize: 11,
               fontWeight: FontWeight.w800,
@@ -1046,7 +1045,7 @@ class _Retry extends StatelessWidget {
       children: [
         Text(
           message,
-          style: GoogleFonts.manrope(
+          style: AppTypeV2.manrope(
             color: AppColorsV2.onSurfaceVariant,
             fontSize: 12.5,
             height: 1.6,
@@ -1059,7 +1058,7 @@ class _Retry extends StatelessWidget {
           icon: const Icon(Icons.refresh_rounded, size: 16),
           label: Text(
             'Try again',
-            style: GoogleFonts.manrope(fontWeight: FontWeight.w800),
+            style: AppTypeV2.manrope(fontWeight: FontWeight.w800),
           ),
           style: TextButton.styleFrom(
             foregroundColor: _kGreen,
@@ -1098,7 +1097,7 @@ class _Disclaimer extends StatelessWidget {
               'Lane) and are offered for reflection, not as a fatwā. For rulings '
               'and detailed exegesis, return to the full tafsīr and to qualified '
               'scholars.',
-              style: GoogleFonts.manrope(
+              style: AppTypeV2.manrope(
                 color: AppColorsV2.onSurfaceVariant,
                 fontSize: 11.5,
                 height: 1.65,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:quran_recitation/data/daily_inspiration_data.dart';
 import 'package:quran_recitation/ui_v2/app_colors.dart';
 import 'package:quran_recitation/screens/share_ayah_screen.dart';
@@ -63,7 +62,7 @@ class DailyInspirationScreen extends StatelessWidget {
                             Flexible(
                               child: Text('Daily Inspiration',
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.manrope(
+                                  style: AppTypeV2.manrope(
                                       color: Colors.white,
                                       fontSize: 24,
                                       fontWeight: FontWeight.w900,
@@ -72,7 +71,7 @@ class DailyInspirationScreen extends StatelessWidget {
                           ],
                         ),
                         Text('A daily dose of Quran & Sunnah',
-                            style: GoogleFonts.manrope(
+                            style: AppTypeV2.manrope(
                                 color: AppColorsV2.onSurfaceVariant, fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 24),
 
@@ -83,7 +82,7 @@ class DailyInspirationScreen extends StatelessWidget {
                           Flexible(
                             child: Text('Ayah of the Day',
                                 overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                     color: _kGold,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w900,
@@ -137,7 +136,7 @@ class DailyInspirationScreen extends StatelessWidget {
                               textAlign: TextAlign.center,
                               maxLines: 6,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                   color: Colors.white70,
                                   fontSize: 15,
                                   height: 1.6,
@@ -145,7 +144,7 @@ class DailyInspirationScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             Text(todayData.referenceAyah,
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                     color: _kGold,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w900)),
@@ -162,7 +161,7 @@ class DailyInspirationScreen extends StatelessWidget {
                           Flexible(
                             child: Text('Hadith of the Day',
                                 overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                     color: _kGreen,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w900,
@@ -181,7 +180,7 @@ class DailyInspirationScreen extends StatelessWidget {
                               textAlign: TextAlign.center,
                               maxLines: 7,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.manrope(
+                              style: AppTypeV2.manrope(
                                   color: Colors.white70,
                                   fontSize: 15,
                                   height: 1.6,
@@ -189,7 +188,7 @@ class DailyInspirationScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             Text(todayData.referenceHadith,
-                                style: GoogleFonts.manrope(
+                                style: AppTypeV2.manrope(
                                     color: _kGreen,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w900)),

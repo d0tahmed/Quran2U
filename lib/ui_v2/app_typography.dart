@@ -36,10 +36,128 @@ class AppTypeV2 {
   static String? playfairFamily(FontWeight weight) => _playfair.putIfAbsent(
       weight, () => GoogleFonts.playfairDisplay(fontWeight: weight).fontFamily);
 
+  static final Map<FontWeight, String?> _outfit = <FontWeight, String?>{};
+  static final Map<FontWeight, String?> _nastaliq = <FontWeight, String?>{};
+
+  static String? outfitFamily(FontWeight weight) => _outfit.putIfAbsent(
+      weight, () => GoogleFonts.outfit(fontWeight: weight).fontFamily);
+
+  static String? nastaliqFamily(FontWeight weight) => _nastaliq.putIfAbsent(
+      weight, () => GoogleFonts.notoNastaliqUrdu(fontWeight: weight).fontFamily);
+
   /// Arabic is only ever requested at the default variant, exactly as the
   /// original `GoogleFonts.amiri().fontFamily` call sites did, so one entry is
   /// the whole cache.
   static final String? amiriFamily = GoogleFonts.amiri().fontFamily;
+
+  // ── Drop-in replacements for direct GoogleFonts calls ─────────────────────
+  //
+  // WHY THESE EXIST — AND WHY SETTINGS WAS THE SLOWEST SCREEN IN THE APP.
+  //
+  // The helpers above only cache for code that goes through this class. Around
+  // a hundred and ninety call sites still reached for `GoogleFonts.manrope(…)`
+  // and `GoogleFonts.outfit(…)` inline — sixty-seven of them in Settings alone.
+  // Every one of those builds a variant key, runs a closest-match search over
+  // the family's variant map, and checks the loaded-font registry. Per call.
+  // Per build.
+  //
+  // A list only inflates the rows it is about to show, so that cost lands
+  // exactly during a scroll, on exactly the frames that have no budget for it.
+  // That is the Settings scroll lag: not layout, not paint, but font
+  // resolution running dozens of times for every newly visible row.
+  //
+  // These return a plain TextStyle with an already-resolved family, so the
+  // rendered result is identical to what GoogleFonts produced and the lookup
+  // happens once per weight for the life of the process.
+  static TextStyle manrope({
+    Color? color,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+    double? height,
+    FontStyle? fontStyle,
+  }) =>
+      TextStyle(
+        fontFamily: manropeFamily(fontWeight ?? FontWeight.w400),
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        height: height,
+        fontStyle: fontStyle,
+      );
+
+  static TextStyle outfit({
+    Color? color,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+    double? height,
+    FontStyle? fontStyle,
+  }) =>
+      TextStyle(
+        fontFamily: outfitFamily(fontWeight ?? FontWeight.w400),
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        height: height,
+        fontStyle: fontStyle,
+      );
+
+  static TextStyle notoNastaliqUrdu({
+    Color? color,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+    double? height,
+    FontStyle? fontStyle,
+  }) =>
+      TextStyle(
+        fontFamily: nastaliqFamily(fontWeight ?? FontWeight.w400),
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        height: height,
+        fontStyle: fontStyle,
+      );
+
+  static TextStyle amiri({
+    Color? color,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+    double? height,
+    FontStyle? fontStyle,
+  }) =>
+      TextStyle(
+        fontFamily: amiriFamily,
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        height: height,
+        fontStyle: fontStyle,
+      );
+
+  static TextStyle playfairDisplay({
+    Color? color,
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+    double? height,
+    FontStyle? fontStyle,
+  }) =>
+      TextStyle(
+        fontFamily: playfairFamily(fontWeight ?? FontWeight.w400),
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        height: height,
+        fontStyle: fontStyle,
+      );
 
   // ── Display (serif) ───────────────────────────────────────────────────────
   static TextStyle display({
