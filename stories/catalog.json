@@ -12179,6 +12179,22 @@
     "en": "The fire that became cool",
     "ur": "آگ جو ٹھنڈی ہو گئی"
    }
+  },
+  {
+   "id": "revelation",
+   "number": 6,
+   "category": "seerah",
+   "status": "soon",
+   "art": "night",
+   "title": {
+    "en": "The First Revelation",
+    "ur": "پہلی وحی"
+   },
+   "arabic": "بَدْءُ الوَحْي",
+   "tagline": {
+    "en": "Read, in the name of your Lord",
+    "ur": "پڑھو، اپنے رب کے نام سے"
+   }
   }
  ]
 }
