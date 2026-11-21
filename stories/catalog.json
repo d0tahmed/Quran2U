@@ -1,5 +1,35 @@
 {
  "version": 1,
+ "topics": [
+  {
+   "id": "prophets",
+   "title": {
+    "en": "Prophets",
+    "ur": "انبیاء"
+   }
+  },
+  {
+   "id": "revelation",
+   "title": {
+    "en": "The Revelation",
+    "ur": "وحی"
+   }
+  },
+  {
+   "id": "migration",
+   "title": {
+    "en": "The Migration",
+    "ur": "ہجرت"
+   }
+  },
+  {
+   "id": "battles",
+   "title": {
+    "en": "The Battles",
+    "ur": "غزوات"
+   }
+  }
+ ],
  "stories": [
   {
    "id": "yunus",
@@ -5124,7 +5154,8 @@
       }
      ]
     }
-   }
+   },
+   "topic": "prophets"
   },
   {
    "id": "hijrah",
@@ -12130,7 +12161,8 @@
       }
      ]
     }
-   }
+   },
+   "topic": "migration"
   },
   {
    "id": "yusuf",
@@ -12146,7 +12178,8 @@
    "tagline": {
     "en": "From the well to the palace",
     "ur": "کنویں سے محل تک"
-   }
+   },
+   "topic": "prophets"
   },
   {
    "id": "musa",
@@ -12162,7 +12195,8 @@
    "tagline": {
     "en": "The staff and the sea",
     "ur": "عصا اور سمندر"
-   }
+   },
+   "topic": "prophets"
   },
   {
    "id": "ibrahim",
@@ -12178,7 +12212,8 @@
    "tagline": {
     "en": "The fire that became cool",
     "ur": "آگ جو ٹھنڈی ہو گئی"
-   }
+   },
+   "topic": "prophets"
   },
   {
    "id": "revelation",
@@ -12194,6 +12229,24 @@
    "tagline": {
     "en": "Read, in the name of your Lord",
     "ur": "پڑھو، اپنے رب کے نام سے"
+   },
+   "topic": "revelation"
+  },
+  {
+   "id": "badr",
+   "number": 7,
+   "category": "seerah",
+   "topic": "battles",
+   "status": "soon",
+   "art": "desert",
+   "title": {
+    "en": "The Battle of Badr",
+    "ur": "غزوۂ بدر"
+   },
+   "arabic": "غَزْوَةُ بَدْر",
+   "tagline": {
+    "en": "A small band, and the help of Allah",
+    "ur": "چھوٹا سا لشکر، اور اللہ کی مدد"
    }
   }
  ]
