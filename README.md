@@ -39,7 +39,7 @@ Instagram: [@officialquran2u](https://www.instagram.com/officialquran2u/)
 - [Notifications](#notifications)
 - [Accounts and sync](#accounts-and-sync)
 - [Settings](#settings)
-- [Quran2U Helper](#quran2u-helper)
+- [Ahmed, the Quran2U helper](#ahmed-the-quran2u-helper)
 - [What works offline](#what-works-offline)
 - [Privacy](#privacy)
 - [Sources and credits](#sources-and-credits)
@@ -65,7 +65,7 @@ at the top of the screen.
 
 | Tab | What you'll find there |
 |---|---|
-| **Home** | Today's prayer times and the next prayer, the Ramadan card in Ramadan, your Tajweed streak, the newest story, continue reading and continue listening, the daily ayah, the daily quiz, quick links to Duas, Tafseer, Hadith and Qibla, and the Quran2U Helper. |
+| **Home** | Today's prayer times and the next prayer, the Ramadan card in Ramadan, your Tajweed streak, the newest story, continue reading and continue listening, the daily ayah, the daily quiz, quick links to Duas, Tafseer, Hadith and Qibla, and Ahmed, the helper, near the top. |
 | **Listen** | Every surah with your chosen reciter, tarjumah, and the full player. |
 | **Read** | The mushaf, the surah list, Tafseer, Bookmarks, Ask the Quran and Learn Tajweed. |
 | **Stories** | Stories of the Prophets and the Seerah, told and recited. |
@@ -274,16 +274,22 @@ between, with the Arabic and its meaning on screen.
   the notification.
 - **Qibla compass.** Point your phone and turn until it lines up.
 - **Hijri date** on Home, next to today's date. If the moon was sighted a day
-  earlier or later where you live, adjust it by up to two days in Ramadan
-  settings.
+  earlier or later where you live, adjust it by up to two days in Settings.
 
 ---
 
 ## Ramadan mode
 
-Ramadan mode turns on by itself a week before Ramadan and stays through Eid and
-the six fasts of Shawwal. You can also set it to **Auto**, **On** or **Off**
-(Settings, Ramadan mode).
+**Before Ramadan**, Home shows a countdown: the days to Ramadan, the dua
+*Allahumma balighna Ramadan* ("O Allah, let us reach Ramadan"), and a lock with
+the day Ramadan mode opens. You can hide the countdown in Settings.
+
+**Ramadan mode opens by itself 4 days before Ramadan**, so you have time to set
+your reading plan, and stays through Eid and the six fasts of Shawwal. There is
+nothing to switch on.
+
+**A celebration** of lights, lanterns, a crescent and stars on the first day of
+Ramadan, and of lights, balloons and dates on Eid al-Fitr and Eid al-Adha.
 
 **Every day of Ramadan**
 
@@ -291,8 +297,9 @@ the six fasts of Shawwal. You can also set it to **Auto**, **On** or **Off**
   "Iftar in 2h 27m".
 - **Notifications** when Sehri ends in 10 minutes, and at Iftar with the dua for
   breaking the fast. Each can be turned off.
-- **A 30-day timetable** of Sehri and Iftar for your location, which you can
-  share as an image.
+- **A 30-day timetable** of Sehri and Iftar for your location, and a
+  ready-made **post to share** on WhatsApp status and Instagram, with the whole
+  month's timings.
 - **The prayer widget** says Sehri and Iftar instead of Fajr and Maghrib.
 - **A daily checklist**: the fast, the five prayers, taraweeh, Quran, dhikr and
   sadaqah, with a ring for the day and a 30-day calendar. A fast marked as
@@ -327,9 +334,6 @@ the six fasts of Shawwal. You can also set it to **Auto**, **On** or **Off**
 
 **Eid**
 
-- **Zakat al-Fitr**: enter the amount for one person announced where you live
-  and the number of people in your family. You get a reminder on the 27th and
-  29th until you mark it given.
 - An Eid countdown, the Eid takbeer, and an **Eid Mubarak card** to share.
 - **Six fasts of Shawwal**: tap "I fasted today" and watch the six fill up.
 
@@ -389,7 +393,7 @@ Every notification can be managed in Settings.
 | **Daily ayah** | Once a day at the time you choose, with that day's ayah |
 | **Tajweed streak** | At your practice time, when your streak is at risk, and a last call before midnight |
 | **New story** | When a new episode of Stories of the Prophets comes out |
-| **Ramadan** | Sehri ending in 10 minutes, Iftar, the odd nights of the last ten, and Zakat al-Fitr |
+| **Ramadan** | Sehri ending in 10 minutes, Iftar, and the odd nights of the last ten |
 | **Update** | When a new version of the app is ready |
 
 ---
@@ -421,28 +425,28 @@ Open Settings from your profile picture.
 - **Live highlighting** on or off.
 - **Adhan** for each prayer, and **daily reminder** time, with a test button.
 - **Tajweed:** daily goal, reminder time and your progress.
-- **Ramadan mode:** Auto, On or Off, the Hijri date adjustment, and Ramadan
-  notifications.
+- **Ramadan:** the countdown on Home (on or off), the Hijri date adjustment,
+  and, while Ramadan mode is on, its notifications.
 - **Downloads:** offline surahs, or download the entire Quran.
 - **Accounts:** Quran.com and Google sign-in, sync, and the leaderboard.
 - **What's new:** every change, from version 1.0.0 to today.
-- **Quran2U Helper:** ask how to use anything in the app.
+- **Ahmed, the helper:** ask how to use anything in the app.
 - **Report a bug:** message us on Instagram.
 
 ---
 
-## Quran2U Helper
+## Ahmed, the Quran2U helper
 
-Not sure where something is? Ask the helper, from the card on Home or from
-Settings.
+Ask Ahmed from the card near the top of Home, or from Settings.
 
-- **Ask in your own words**, like "how do I download a surah?" or "why is the
-  adhan not playing?". Answers come with a button that takes you straight to
-  the right screen.
+- **How to use the app**, in your own words, like "how do I download a surah?".
+  Answers come with a button that takes you straight to the right screen.
+- **Ayahs and hadith on a topic**, like "ayahs about patience" or "I feel
+  lonely", quoted word for word from the ones built into the app, with their
+  references.
+- **No fatwas.** For a ruling, ask a scholar you trust.
+- **Anything harmful is refused.**
 - **Most answers come from the app itself**, instantly and offline.
-- **It only answers questions about the app.** Questions about religious
-  rulings are sent to a scholar you trust, and to Ask the Quran for what the
-  Quran says.
 
 ---
 
@@ -472,11 +476,12 @@ Settings.
   progress is saved so you can get it back. Nothing else is stored. If you
   don't sign in, nothing leaves your phone.
 - **Quran.com sign-in** is used only to sync your bookmarks.
-- **The helper** answers most questions on your phone. A question it can't
-  answer there is sent to the Quran2U help service to be answered from the
-  app's guide, so please don't type personal details in it.
-- **Ramadan mode** keeps your checklist, khatm plan and Zakat al-Fitr amount on
-  your phone only.
+- **Ahmed, the helper,** answers most questions on your phone. A question he
+  can't answer there is sent to the Quran2U help service to be answered from
+  the app's guide. Questions he turns away (harmful, fatwas, off topic) are
+  noted there without your name or any id, and deleted after 30 days. Please
+  don't type personal details in it.
+- **Ramadan mode** keeps your checklist and khatm plan on your phone only.
 
 ---
 
