@@ -444,6 +444,10 @@ Ask Ahmed from the card near the top of Home, or from Settings.
 - **Ayahs and hadith on a topic**, like "ayahs about patience" or "I feel
   lonely", quoted word for word from the ones built into the app, with their
   references.
+- **He does things for you**: "play Surah Yasin with Urdu tarjumah", "play the
+  story of Yunus", "take me to Bukhari 1", "turn on dark mode", "stop all
+  notifications", "turn off the adhan", "open my downloads", or "download Surah
+  Mulk" (he asks which reciter, and with tarjumah or not). Each change has an Undo.
 - **No fatwas.** For a ruling, ask a scholar you trust.
 - **Anything harmful is refused.**
 - **Most answers come from the app itself**, instantly and offline.
